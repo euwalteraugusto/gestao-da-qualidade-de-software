@@ -1,0 +1,66 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< br.gqs:aula-10-ci-cd-jenkins >--------------------
+[INFO] Building Aula 10 - CI/CD com GitHub Actions e Jenkins 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-10-ci-cd-jenkins ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\target
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ aula-10-ci-cd-jenkins ---
+[INFO] argLine set to "-javaagent:C:\\Users\\Walter\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Walter\\Desktop\\Gest�o de Qualidade de Software\\gestao-da-qualidade-de-software\\aulas\\aula-10-ci-cd-jenkins\\target\\jacoco.exec"
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-10-ci-cd-jenkins ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-10-ci-cd-jenkins ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 7 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-10-ci-cd-jenkins ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ aula-10-ci-cd-jenkins ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 4 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ aula-10-ci-cd-jenkins ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running br.gqs.aula10.AplicacaoTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.934 s -- in br.gqs.aula10.AplicacaoTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.12:report (report) @ aula-10-ci-cd-jenkins ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\target\jacoco.exec
+[INFO] Analyzed bundle 'Aula 10 - CI/CD com GitHub Actions e Jenkins' with 6 classes
+[INFO] 
+[INFO] --- jar:3.4.1:jar (default-jar) @ aula-10-ci-cd-jenkins ---
+[INFO] Building jar: C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\target\myapp.jar
+[INFO] 
+[INFO] --- jacoco:0.8.12:check (check) @ aula-10-ci-cd-jenkins ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\target\jacoco.exec
+[INFO] Analyzed bundle 'aula-10-ci-cd-jenkins' with 6 classes
+[WARNING] Rule violated for bundle aula-10-ci-cd-jenkins: lines covered ratio is 0.83, but expected minimum is 0.85
+[WARNING] Rule violated for bundle aula-10-ci-cd-jenkins: branches covered ratio is 0.50, but expected minimum is 0.85
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:11 min
+[INFO] Finished at: 2026-11-10T15:48:36-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.jacoco:jacoco-maven-plugin:0.8.12:check (check) on project aula-10-ci-cd-jenkins: Coverage checks have not been met. See log for details. -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

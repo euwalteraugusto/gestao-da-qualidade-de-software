@@ -1,0 +1,35 @@
+# Deployment de staging usado pelo Jenkinsfile (kubectl apply -f k8s/deployment.yaml).
+# A tag da imagem é substituída pelo pipeline (kubectl set image ... myapp:<GIT_COMMIT>).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5   # necessário para "kubectl rollout undo" (rollback)
+  selector:
+    matchLabels:
+      app: myapp
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:latest
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

@@ -1,0 +1,151 @@
+// Pipeline declarativo da Aula 10 (Atividade 2 + exercícios: estágio PMD e rollback automático).
+// Pré-requisitos no Jenkins: JDK 17 e Maven configurados em "Global Tool Configuration"
+// (nomes JDK17 e Maven3), plugins Pipeline, JUnit, Warnings NG (recordIssues), JaCoCo e Slack Notification,
+// credencial "nvd-api-key" (Secret text) e Docker + kubectl no agente que faz o deploy.
+// NÃO foi executado aqui (não há Jenkins/Docker/Kubernetes nesta máquina); veja o README.
+pipeline {
+    agent any
+
+    tools {
+        jdk 'JDK17'
+        maven 'Maven3'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        IMAGEM = "myapp:${env.GIT_COMMIT}"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn -B -ntp clean package -DskipTests'
+                // Cada ramo paralelo roda em workspace próprio (evita corrida no diretório target/)
+                stash name: 'fonte', includes: '**', excludes: '.git/**'
+            }
+        }
+
+        // Testes unitários e de integração em paralelo (desafio da aula)
+        stage('Testes') {
+            parallel {
+                stage('Unitários') {
+                    agent any
+                    steps {
+                        unstash 'fonte'
+                        sh 'mvn -B -ntp test'
+                    }
+                    post {
+                        always {
+                            junit 'target/surefire-reports/**/*.xml'
+                        }
+                    }
+                }
+                stage('Integração') {
+                    agent any
+                    steps {
+                        unstash 'fonte'
+                        // Requer Docker no agente (TestContainers); só os *IT, sem gate de cobertura
+                        sh 'mvn -B -ntp verify -Pintegration-tests -Dtest=NenhumUnitario -Dsurefire.failIfNoSpecifiedTests=false -Djacoco.skip=true'
+                    }
+                    post {
+                        always {
+                            junit allowEmptyResults: true, testResults: 'target/failsafe-reports/**/*.xml'
+                        }
+                    }
+                }
+            }
+        }
+
+        // Exercício: estágio de análise PMD (+ Checkstyle)
+        stage('Análise estática') {
+            steps {
+                sh 'mvn -B -ntp checkstyle:check pmd:check'
+            }
+            post {
+                always {
+                    recordIssues enabledForFailure: true, tools: [pmdParser(pattern: 'target/pmd.xml'),
+                                                                   checkStyle(pattern: 'target/checkstyle-result.xml')]
+                }
+            }
+        }
+
+        // Quality gate de cobertura: o build quebra se linhas/ramos < 85% (regra jacoco:check do pom)
+        stage('Gate de cobertura') {
+            steps {
+                sh 'mvn -B -ntp verify'
+            }
+            post {
+                always {
+                    jacoco execPattern: 'target/jacoco.exec'
+                }
+            }
+        }
+
+        // Quality gate de segurança: falha com qualquer CVE de CVSS >= 7
+        stage('OWASP Dependency-Check') {
+            environment {
+                NVD_API_KEY = credentials('nvd-api-key')
+            }
+            steps {
+                sh 'mvn -B -ntp verify -Psecurity -DskipTests'
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'target/dependency-check-report.*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Aprovação manual') {
+            when {
+                branch 'main'
+            }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input message: 'Publicar em staging?', ok: 'Publicar'
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    sh "docker build -t ${IMAGEM} ."
+                    try {
+                        sh 'kubectl apply -f k8s/deployment.yaml'
+                        sh "kubectl set image deployment/myapp myapp=${IMAGEM}"
+                        // Falha se o rollout não ficar saudável dentro do prazo
+                        sh 'kubectl rollout status deployment/myapp --timeout=120s'
+                    } catch (err) {
+                        // Rollback automático para a revisão anterior
+                        echo "Deploy falhou (${err.getMessage()}); executando rollback."
+                        sh 'kubectl rollout undo deployment/myapp'
+                        sh 'kubectl rollout status deployment/myapp --timeout=120s'
+                        error('Deploy revertido (rollback executado).')
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        }
+        failure {
+            slackSend channel: '#alerts', message: "Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (${env.BUILD_URL})"
+        }
+        cleanup {
+            cleanWs()
+        }
+    }
+}

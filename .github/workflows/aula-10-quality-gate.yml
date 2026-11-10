@@ -1,0 +1,49 @@
+# Aula 10 - Atividade 3: quality gate em Pull Requests com SonarQube/SonarCloud.
+# Correções em relação ao slide: sonarqube-scan-action@master (mutável/inseguro) -> versão fixa;
+# o slide não compilava nem gerava cobertura antes do scan; "# comentário" dentro de args quebraria o scan.
+# Secrets: SONAR_TOKEN (obrigatório) e SONAR_HOST_URL (só para SonarQube; omitir no SonarCloud).
+# Sem SONAR_TOKEN o scan é pulado com aviso (ex.: PRs de forks não recebem segredos).
+name: Aula 10 - Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'aulas/aula-10-ci-cd-jenkins/**'
+      - '.github/workflows/aula-10-quality-gate.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+defaults:
+  run:
+    working-directory: aulas/aula-10-ci-cd-jenkins
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # o Sonar precisa do histórico para atribuir "novo código"
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Compilar e gerar cobertura (JaCoCo XML)
+        run: mvn -B -ntp clean verify
+      - name: Aviso quando o segredo não existe
+        if: env.SONAR_TOKEN == ''
+        run: echo "::warning title=Sonar pulado::Defina o secret SONAR_TOKEN para executar o Quality Gate."
+      - name: SonarQube Scan
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v8.4.1
+        with:
+          projectBaseDir: aulas/aula-10-ci-cd-jenkins
+          args: >
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300

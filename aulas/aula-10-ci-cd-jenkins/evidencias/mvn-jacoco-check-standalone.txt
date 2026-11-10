@@ -1,0 +1,17 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< br.gqs:aula-10-ci-cd-jenkins >--------------------
+[INFO] Building Aula 10 - CI/CD com GitHub Actions e Jenkins 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.12:check (check) @ aula-10-ci-cd-jenkins ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\target\jacoco.exec
+[INFO] Analyzed bundle 'aula-10-ci-cd-jenkins' with 6 classes
+[INFO] All coverage checks have been met.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  11.076 s
+[INFO] Finished at: 2026-11-10T15:51:45-03:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,136 @@
+# Aula 10 - Desafio integrado: testes unitários e de integração em PARALELO e deploy condicionado a
+#   1) todos os testes passarem, 2) cobertura > 85% e 3) nenhuma vulnerabilidade no OWASP Dependency-Check.
+#
+# Segredos (Settings -> Secrets and variables -> Actions):
+#   NVD_API_KEY  chave gratuita da API do NVD (sem ela o OWASP fica muito lento e o passo é PULADO com aviso)
+# Aprovação manual antes do deploy: Settings -> Environments -> "staging" -> Required reviewers.
+name: Aula 10 - Pipeline Integrado
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'aulas/aula-10-ci-cd-jenkins/**'
+      - '.github/workflows/aula-10-pipeline-integrado.yml'
+  pull_request:
+    paths:
+      - 'aulas/aula-10-ci-cd-jenkins/**'
+      - '.github/workflows/aula-10-pipeline-integrado.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: aulas/aula-10-ci-cd-jenkins
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build
+        run: mvn -B -ntp clean package -DskipTests
+      - name: Guardar JAR para o deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: aula-10-jar
+          path: aulas/aula-10-ci-cd-jenkins/target/myapp.jar
+
+  # --- Jobs paralelos (ambos dependem só do build) ---
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      # verify = testes unitários + relatório JaCoCo + GATE de cobertura (>= 85%, regra no pom.xml)
+      - name: Testes unitários + gate de cobertura
+        run: mvn -B -ntp verify
+      - name: Publicar JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aula-10-jacoco
+          path: aulas/aula-10-ci-cd-jenkins/target/site/jacoco
+          if-no-files-found: ignore
+
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest   # já traz Docker, necessário para o TestContainers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      # Só os *IT (Failsafe); testes unitários e gate de cobertura ficam no outro job
+      - name: Testes de integração (TestContainers)
+        run: >
+          mvn -B -ntp verify -Pintegration-tests
+          -Dtest=NenhumUnitario -Dsurefire.failIfNoSpecifiedTests=false -Djacoco.skip=true
+
+  security:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Cache da base de vulnerabilidades
+        if: env.NVD_API_KEY != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: nvd-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: nvd-${{ runner.os }}-
+      # Falha o job se existir CVE com CVSS >= 7 (failBuildOnCVSS no pom.xml, perfil "security")
+      - name: OWASP Dependency-Check
+        if: env.NVD_API_KEY != ''
+        run: mvn -B -ntp verify -Psecurity -DskipTests
+      - name: Aviso quando o segredo não existe
+        if: env.NVD_API_KEY == ''
+        run: echo "::warning title=OWASP pulado::Defina o secret NVD_API_KEY para executar o Dependency-Check."
+      - name: Publicar relatório OWASP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aula-10-owasp
+          path: aulas/aula-10-ci-cd-jenkins/target/dependency-check-report.*
+          if-no-files-found: ignore
+
+  # --- Deploy: só roda se TUDO acima passou (needs) e apenas na main ---
+  deploy-staging:
+    needs: [unit-tests, integration-tests, security]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging      # configure "Required reviewers" para a aprovação manual
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: aula-10-jar
+          path: aulas/aula-10-ci-cd-jenkins/target
+      - name: Build da imagem Docker
+        run: docker build -t myapp:${{ github.sha }} .
+      - name: Smoke test do container
+        run: docker run --rm myapp:${{ github.sha }}
+      # Deploy real no Kubernetes exigiria um cluster e um kubeconfig em secret (KUBE_CONFIG): ver README.
+      - name: Deploy (simulado)
+        run: echo "kubectl apply -f k8s/deployment.yaml && kubectl set image deployment/myapp myapp=myapp:${{ github.sha }}"

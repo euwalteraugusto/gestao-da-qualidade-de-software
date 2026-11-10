@@ -1,0 +1,6 @@
+﻿OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-09-javadoc.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-09-pr-validation.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-10-ci.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-10-pipeline-integrado.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-10-quality-gate.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-10-ci-cd-jenkins\k8s\deployment.yaml (chaves: [apiVersion, kind, metadata, spec])
