@@ -1,0 +1,2 @@
+ANTES : java.lang.ArithmeticException: / by zero
+DEPOIS: java.lang.ArithmeticException: Divisor não pode ser zero

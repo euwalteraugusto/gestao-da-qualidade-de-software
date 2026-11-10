@@ -1,0 +1,71 @@
+diff --git a/aulas/aula-09-git-flow-code-review/src/main/java/br/gqs/aula09/hotfix/CabecalhoHttp.java b/aulas/aula-09-git-flow-code-review/src/main/java/br/gqs/aula09/hotfix/CabecalhoHttp.java
+index 9581da5..41a31be 100644
+--- a/aulas/aula-09-git-flow-code-review/src/main/java/br/gqs/aula09/hotfix/CabecalhoHttp.java
++++ b/aulas/aula-09-git-flow-code-review/src/main/java/br/gqs/aula09/hotfix/CabecalhoHttp.java
+@@ -1,25 +1,24 @@
+ package br.gqs.aula09.hotfix;
+ 
+ import java.util.Map;
++import java.util.Optional;
+ 
+ /**
+  * Utilitário de leitura de cabeçalhos HTTP (cenário do hotfix/header-null da Aula 9).
+  *
+- * <p>ATENÇÃO: esta é a versão com o defeito de produção (issue-123): quando o
+- * cabeçalho não existe, {@code obterValor} lança NullPointerException. A correção
+- * está em {@code docs/hotfix/header-null.patch} e deve ser aplicada na branch
+- * {@code hotfix/header-null}, criada a partir da {@code main}.</p>
++ * <p>Versão corrigida (hotfix da issue-123): cabeçalho ausente deixa de causar
++ * NullPointerException e passa a ser representado por {@link Optional#empty()}.</p>
+  */
+ public class CabecalhoHttp {
+ 
+     /**
+      * Devolve o valor de um cabeçalho, sem espaços nas pontas.
+      *
+-     * @param cabecalhos mapa de cabeçalhos
++     * @param cabecalhos mapa de cabeçalhos (não pode ser {@code null})
+      * @param nome nome do cabeçalho
+-     * @return valor do cabeçalho sem espaços nas pontas
++     * @return valor sem espaços nas pontas, ou vazio se o cabeçalho não existir ou for {@code null}
+      */
+-    public String obterValor(Map<String, String> cabecalhos, String nome) {
+-        return cabecalhos.get(nome).trim();
++    public Optional<String> obterValor(Map<String, String> cabecalhos, String nome) {
++        return Optional.ofNullable(cabecalhos.get(nome)).map(String::trim);
+     }
+ }
+diff --git a/aulas/aula-09-git-flow-code-review/src/test/java/br/gqs/aula09/hotfix/CabecalhoHttpTest.java b/aulas/aula-09-git-flow-code-review/src/test/java/br/gqs/aula09/hotfix/CabecalhoHttpTest.java
+index b1326ea..8b56e33 100644
+--- a/aulas/aula-09-git-flow-code-review/src/test/java/br/gqs/aula09/hotfix/CabecalhoHttpTest.java
++++ b/aulas/aula-09-git-flow-code-review/src/test/java/br/gqs/aula09/hotfix/CabecalhoHttpTest.java
+@@ -1,7 +1,9 @@
+ package br.gqs.aula09.hotfix;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
++import java.util.HashMap;
+ import java.util.Map;
+ import org.junit.jupiter.api.Test;
+ 
+@@ -12,6 +14,18 @@ class CabecalhoHttpTest {
+     @Test
+     void devolveValorSemEspacos() {
+         Map<String, String> cabecalhos = Map.of("Content-Type", " application/json ");
+-        assertEquals("application/json", cabecalho.obterValor(cabecalhos, "Content-Type"));
++        assertEquals("application/json", cabecalho.obterValor(cabecalhos, "Content-Type").orElseThrow());
++    }
++
++    @Test
++    void cabecalhoAusenteNaoLancaNullPointerException() {
++        assertTrue(cabecalho.obterValor(Map.of(), "X-Ausente").isEmpty());
++    }
++
++    @Test
++    void cabecalhoComValorNuloEhTratadoComoAusente() {
++        Map<String, String> cabecalhos = new HashMap<>();
++        cabecalhos.put("X-Nulo", null);
++        assertTrue(cabecalho.obterValor(cabecalhos, "X-Nulo").isEmpty());
+     }
+ }

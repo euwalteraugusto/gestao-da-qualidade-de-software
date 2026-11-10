@@ -1,0 +1,10 @@
+﻿
+CLASS              LINE_MISSED LINE_COVERED BRANCH_MISSED BRANCH_COVERED
+-----              ----------- ------------ ------------- --------------
+NotificacaoService 0           10           0             14            
+Calculadora        0           4            0             2             
+Calculadora        2           0            0             0             
+CabecalhoHttp      0           2            0             0             
+
+
+

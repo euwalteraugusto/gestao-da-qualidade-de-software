@@ -1,0 +1,23 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< br.gqs:aula-09-git-flow-code-review >-----------------
+[INFO] Building Aula 09 - Git Flow, GitHub Actions e Code Review 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> javadoc:3.6.3:javadoc (default-cli) > generate-sources @ aula-09-git-flow-code-review >>>
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ aula-09-git-flow-code-review ---
+[INFO] argLine set to "-javaagent:C:\\Users\\Walter\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Walter\\Desktop\\Gestão de Qualidade de Software\\gestao-da-qualidade-de-software\\aulas\\aula-09-git-flow-code-review\\target\\jacoco.exec"
+[INFO] 
+[INFO] <<< javadoc:3.6.3:javadoc (default-cli) < generate-sources @ aula-09-git-flow-code-review <<<
+[INFO] 
+[INFO] 
+[INFO] --- javadoc:3.6.3:javadoc (default-cli) @ aula-09-git-flow-code-review ---
+[INFO] No previous run data found, generating javadoc.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  44.104 s
+[INFO] Finished at: 2026-11-10T15:25:20-03:00
+[INFO] ------------------------------------------------------------------------

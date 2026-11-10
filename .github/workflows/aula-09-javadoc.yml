@@ -1,0 +1,39 @@
+# Aula 9 - Tarefa de casa: workflow que gera o Javadoc automaticamente.
+name: Aula 09 - Javadoc
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'aulas/aula-09-git-flow-code-review/**'
+      - '.github/workflows/aula-09-javadoc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: aulas/aula-09-git-flow-code-review
+
+jobs:
+  javadoc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Gerar Javadoc
+        run: mvn -B -ntp org.apache.maven.plugins:maven-javadoc-plugin:3.6.3:javadoc
+
+      - name: Publicar Javadoc
+        uses: actions/upload-artifact@v4
+        with:
+          name: aula-09-javadoc
+          path: aulas/aula-09-git-flow-code-review/target/site/apidocs

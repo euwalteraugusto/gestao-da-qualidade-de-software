@@ -1,0 +1,67 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< br.gqs:aula-09-git-flow-code-review >-----------------
+[INFO] Building Aula 09 - Git Flow, GitHub Actions e Code Review 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-09-git-flow-code-review ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\target
+[INFO] 
+[INFO] --- jacoco:0.8.12:prepare-agent (default) @ aula-09-git-flow-code-review ---
+[INFO] argLine set to "-javaagent:C:\\Users\\Walter\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.12\\org.jacoco.agent-0.8.12-runtime.jar=destfile=C:\\Users\\Walter\\Desktop\\Gest�o de Qualidade de Software\\gestao-da-qualidade-de-software\\aulas\\aula-09-git-flow-code-review\\target\\jacoco.exec"
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-09-git-flow-code-review ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-09-git-flow-code-review ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 4 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-09-git-flow-code-review ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ aula-09-git-flow-code-review ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ aula-09-git-flow-code-review ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running br.gqs.aula09.CalculadoraTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.850 s -- in br.gqs.aula09.CalculadoraTest
+[INFO] Running br.gqs.aula09.hotfix.CabecalhoHttpTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.063 s -- in br.gqs.aula09.hotfix.CabecalhoHttpTest
+[INFO] Running br.gqs.aula09.NotificacaoServiceTest
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.613 s -- in br.gqs.aula09.NotificacaoServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 30, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.12:report (report) @ aula-09-git-flow-code-review ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\target\jacoco.exec
+[INFO] Analyzed bundle 'Aula 09 - Git Flow, GitHub Actions e Code Review' with 4 classes
+[INFO] 
+[INFO] --- jar:3.4.1:jar (default-jar) @ aula-09-git-flow-code-review ---
+[INFO] Building jar: C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\target\aula-09-git-flow-code-review-1.0.0.jar
+[INFO] 
+[INFO] --- jacoco:0.8.12:check (check) @ aula-09-git-flow-code-review ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-09-git-flow-code-review\target\jacoco.exec
+[INFO] Analyzed bundle 'aula-09-git-flow-code-review' with 4 classes
+[INFO] All coverage checks have been met.
+[INFO] 
+[INFO] --- checkstyle:3.4.0:check (default-cli) @ aula-09-git-flow-code-review ---
+[INFO] Iniciando a auditoria...
+Auditoria completa.
+[INFO] You have 0 Checkstyle violations.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:37 min
+[INFO] Finished at: 2026-11-10T15:30:48-03:00
+[INFO] ------------------------------------------------------------------------
