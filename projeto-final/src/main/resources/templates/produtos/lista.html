@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lista de Produtos</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main>
+    <h1>Produtos</h1>
+
+    <div class="acoes">
+        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto">Novo produto</a>
+        <button type="button" class="botao secundario" id="recarregar">Atualizar via API (AJAX)</button>
+        <span class="spinner" id="carregando" role="status" aria-label="Carregando"></span>
+        <span id="status-ajax"></span>
+    </div>
+
+    <table>
+        <thead>
+        <tr><th>Nome</th><th class="preco">Preco</th></tr>
+        </thead>
+        <tbody id="tabela-produtos">
+        <tr th:each="produto : ${produtos}">
+            <td th:text="${produto.nome}">Produto</td>
+            <td class="preco" th:text="${'R$ ' + #numbers.formatDecimal(produto.precoFormatado, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(produtos)}">
+            <td colspan="2">Nenhum produto cadastrado.</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+<script>
+    // Tarefa pos-aula 17: recarrega a tabela consumindo a API REST, com animacao de carregamento.
+    // As celulas sao montadas com textContent (nunca innerHTML) para evitar XSS com nomes maliciosos.
+    (function () {
+        const botao = document.getElementById('recarregar');
+        const spinner = document.getElementById('carregando');
+        const status = document.getElementById('status-ajax');
+        const corpo = document.getElementById('tabela-produtos');
+        const moeda = new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'});
+
+        botao.addEventListener('click', function () {
+            spinner.classList.add('ativo');
+            botao.disabled = true;
+            status.textContent = '';
+            fetch('/api/produtos', {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
+                .then(function (resposta) {
+                    if (!resposta.ok) { throw new Error('HTTP ' + resposta.status); }
+                    return resposta.json();
+                })
+                .then(function (produtos) {
+                    corpo.replaceChildren();
+                    produtos.forEach(function (p) {
+                        const tr = document.createElement('tr');
+                        const nome = document.createElement('td');
+                        nome.textContent = p.nome;
+                        const preco = document.createElement('td');
+                        preco.className = 'preco';
+                        preco.textContent = moeda.format(p.preco || 0);
+                        tr.append(nome, preco);
+                        corpo.appendChild(tr);
+                    });
+                    status.textContent = produtos.length + ' produto(s) carregado(s) via API';
+                })
+                .catch(function (erro) { status.textContent = 'Falha ao carregar: ' + erro.message; })
+                .finally(function () { spinner.classList.remove('ativo'); botao.disabled = false; });
+        });
+    })();
+</script>
+</body>
+</html>

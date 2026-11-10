@@ -25,7 +25,7 @@ import java.util.List;
  * {@code interface} e palavra reservada do Java e nao compila como nome de pacote.
  */
 @RestController
-@RequestMapping("/produtos")
+@RequestMapping("/api/produtos")
 @RequiredArgsConstructor
 public class ProdutoController {
 
@@ -36,7 +36,7 @@ public class ProdutoController {
         return service.listarTodos();
     }
 
-    /** US-001: GET /produtos/buscar?nome=Xiaomi */
+    /** US-001: GET /api/produtos/buscar?nome=Xiaomi */
     @GetMapping("/buscar")
     public List<Produto> buscarPorNome(@RequestParam String nome) {
         return service.buscarPorNome(nome);

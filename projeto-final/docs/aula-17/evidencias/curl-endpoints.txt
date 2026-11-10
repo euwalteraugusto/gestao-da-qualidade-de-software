@@ -1,0 +1,78 @@
+﻿# Evidencias de execucao - aula 17 (2026-11-10 16:26:14)
+# App: java -jar target/projeto-final.jar --server.port=18089 
+2026-11-10T16:26:13.322-03:00  INFO 6224 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 43.768 seconds (process running for 47.343)
+
+## API movida para /api/produtos: cria produto
+$ curl -X POST http://localhost:18089/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:26:17 GMT
+
+{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
+
+## API: cria produto
+$ curl -X POST http://localhost:18089/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Fone <script>alert(1)</script>","preco":59.9}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:26:18 GMT
+
+{"id":2,"nome":"Fone <script>alert(1)</script>","preco":59.9}
+
+## Formulario web: POST valido -> 302 redirect (PRG)
+$ curl -X POST http://localhost:18089/produtos/cadastrar -d nome=Teclado+Mecanico&preco=349.90
+HTTP/1.1 302 
+Location: http://localhost:18089/produtos
+Content-Language: pt-BR
+Content-Length: 0
+Date: Tue, 10 Nov 2026 19:26:18 GMT
+
+## Pagina /produtos (HTML, trecho da tabela)
+$ curl http://localhost:18089/produtos
+HTTP/1.1 200 
+    <title>Lista de Produtos</title>
+            <td>Smartphone Xiaomi</td>
+            <td class="preco">R$ 1.999,90</td>
+            <td>Fone &lt;script&gt;alert(1)&lt;/script&gt;</td>
+            <td class="preco">R$ 59,90</td>
+            <td>Teclado Mecanico</td>
+            <td class="preco">R$ 349,90</td>
+
+## Formulario web: POST invalido -> reexibe form com erros (200)
+$ curl -X POST http://localhost:18089/produtos/cadastrar -d nome=&preco=-1
+HTTP/1.1 200 
+        <p class="erro">Informe o nome do produto</p>
+        <p class="erro">O preco deve ser maior que zero</p>
+
+## Pedido com frete em escala 2 (ajuste)
+$ curl -X POST http://localhost:18089/api/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"REGULAR","itens":[{"produtoId":2,"quantidade":1}]}'
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:26:22 GMT
+
+{"tipoCliente":"REGULAR","subtotal":59.90,"desconto":0.00,"frete":15.00,"total":74.90}
+
+## CEP real no ViaCEP (01001-000)
+$ curl http://localhost:18089/cep?cep=01001-000
+HTTP/1.1 200 
+        <p><strong>CEP:</strong> <span>01001-000</span></p>
+        <p><strong>Logradouro:</strong> <span>Praça da Sé</span></p>
+        <p><strong>Bairro:</strong> <span>Sé</span></p>
+        <p><strong>Cidade/UF:</strong> <span>São Paulo/SP</span></p>
+
+## CEP com formato invalido -> pagina de erro 400
+$ curl http://localhost:18089/cep?cep=../admin
+HTTP/1.1 400 
+        <p>CEP invalido: informe 8 digitos (ex.: 01001-000)</p>
+        <p>Codigo: <span>400</span></p>
+    <p><a class="botao secundario" href="/produtos">Voltar para produtos</a></p>
+
+## CEP inexistente (99999-999) -> pagina de erro 404
+$ curl http://localhost:18089/cep?cep=99999999
+HTTP/1.1 404 
+        <p>CEP nao encontrado: 99999999</p>
+        <p>Codigo: <span>404</span></p>
+    <p><a class="botao secundario" href="/produtos">Voltar para produtos</a></p>
+

@@ -1,0 +1,22 @@
+/* Estilo minimo da interface web do Projeto Final */
+:root { --cor: #1d4ed8; --borda: #d1d5db; --erro: #b91c1c; --fundo: #f8fafc; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--fundo); color: #111827; }
+header { background: var(--cor); color: #fff; padding: 12px 24px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+header a { color: #fff; text-decoration: none; font-weight: 600; }
+header .usuario { margin-left: auto; font-size: 14px; }
+main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--borda); }
+td.preco, th.preco { text-align: right; font-variant-numeric: tabular-nums; }
+.botao { display: inline-block; background: var(--cor); color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
+.botao.secundario { background: #fff; color: var(--cor); border: 1px solid var(--cor); }
+.acoes { display: flex; gap: 8px; margin: 16px 0; align-items: center; flex-wrap: wrap; }
+form.cartao, .cartao { background: #fff; padding: 16px; border: 1px solid var(--borda); border-radius: 8px; }
+label { display: block; margin-top: 12px; font-weight: 600; }
+input { width: 100%; max-width: 360px; padding: 8px; border: 1px solid var(--borda); border-radius: 6px; font-size: 15px; }
+.erro { color: var(--erro); margin: 4px 0 0; font-size: 14px; }
+.alerta { background: #fef2f2; border: 1px solid #fecaca; color: var(--erro); padding: 12px; border-radius: 8px; }
+.spinner { width: 18px; height: 18px; border: 3px solid #bfdbfe; border-top-color: var(--cor); border-radius: 50%; animation: girar .8s linear infinite; display: none; }
+.spinner.ativo { display: inline-block; }
+@keyframes girar { to { transform: rotate(360deg); } }

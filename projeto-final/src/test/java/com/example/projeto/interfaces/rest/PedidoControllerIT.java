@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class PedidoControllerIT {
 
-    private static final String URL = "/pedidos/total";
+    private static final String URL = "/api/pedidos/total";
 
     @Autowired
     MockMvc mockMvc;
