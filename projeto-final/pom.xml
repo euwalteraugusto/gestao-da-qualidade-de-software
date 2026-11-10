@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 

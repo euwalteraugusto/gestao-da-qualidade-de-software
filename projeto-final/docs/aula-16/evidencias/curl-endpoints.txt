@@ -1,0 +1,68 @@
+﻿# Evidencias de execucao - aula 16 (2026-11-10 16:10:46)
+# App: java -jar target/projeto-final.jar --server.port=18089 
+2026-11-10T16:10:46.580-03:00  INFO 4956 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 107.259 seconds (process running for 115.401)
+
+## Cria produto Fone (40.00)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Fone Bluetooth","preco":40.00}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:52 GMT
+
+{"id":1,"nome":"Fone Bluetooth","preco":40.00}
+
+## Cria produto Cabo (15.00)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Cabo USB-C","preco":15.00}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:52 GMT
+
+{"id":2,"nome":"Cabo USB-C","preco":15.00}
+
+## Cria produto Notebook (4500.00)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Notebook","preco":4500.00}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:53 GMT
+
+{"id":3,"nome":"Notebook","preco":4500.00}
+
+## REGULAR: 2 cabos = 30.00, sem desconto, frete 15.00
+$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"REGULAR","itens":[{"produtoId":2,"quantidade":2}]}'
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:54 GMT
+
+{"tipoCliente":"REGULAR","subtotal":30.00,"desconto":0.00,"frete":15.0,"total":45.00}
+
+## VIP: notebook = 4500.00, 10% off, frete gratis
+$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"VIP","itens":[{"produtoId":3,"quantidade":1}]}'
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:54 GMT
+
+{"tipoCliente":"VIP","subtotal":4500.00,"desconto":450.00,"frete":0,"total":4050.00}
+
+## PREMIUM: 110.00 -> 88.00 + frete 15.00
+$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"PREMIUM","itens":[{"produtoId":1,"quantidade":2},{"produtoId":2,"quantidade":2}]}'
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:54 GMT
+
+{"tipoCliente":"PREMIUM","subtotal":110.00,"desconto":22.00,"frete":15.0,"total":103.00}
+
+## Tipo de cliente invalido (400)
+$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"OURO","itens":[{"produtoId":1,"quantidade":1}]}'
+HTTP/1.1 400 
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:10:55 GMT
+Connection: close
+
+{"type":"about:blank","title":"Requisicao invalida","status":400,"detail":"Corpo da requisicao invalido ou com valor nao permitido (ex.: tipoCliente deve ser REGULAR, VIP ou PREMIUM)","instance":"/pedidos/total"}
+

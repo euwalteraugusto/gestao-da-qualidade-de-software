@@ -1,0 +1,27 @@
+﻿# Complexidade ciclomatica por metodo (JaCoCo, target/site/jacoco/jacoco.xml) - aula 16
+# contador COMPLEXITY = missed + covered
+PedidoRequest$Item.<init>: 1
+PedidoController.calcularTotal: 1
+PedidoController.lambda$calcularTotal$0: 1
+PedidoRequest.<init>: 1
+CalculadoraFreteComLog.<init>: 1
+CalculadoraFreteComLog.calcular: 1
+CalculadoraFreteComLog.<clinit>: 1
+FreteFixo.<init>: 1
+FreteFixo.calcular: 2
+DescontoPercentual.<init>: 1
+DescontoPercentual.tipoCliente: 1
+DescontoPercentual.aplicarDesconto: 1
+DescontoVIP.<init>: 1
+PoliticaDescontoFactory.<init>: 5
+PoliticaDescontoFactory.obter: 2
+DescontoPremium.<init>: 1
+SemDesconto.<init>: 1
+PedidoService.<init>: 1
+PedidoService.calcularTotal: 1
+ItemPedido.<init>: 3
+ItemPedido.subtotal: 1
+TipoCliente.<clinit>: 1
+ResumoPedido.<init>: 1
+Pedido.<init>: 3
+Pedido.subtotal: 1

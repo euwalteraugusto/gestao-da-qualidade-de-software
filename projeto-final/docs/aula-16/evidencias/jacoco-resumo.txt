@@ -1,0 +1,28 @@
+﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 16
+Instrucoes: 100,0% (604/604)
+Linhas:     100,0% (130/130)
+Branches:   100,0% (24/24)
+
+Por classe (linhas cobertas/total):
+  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
+  com.example.projeto.domain.service.ProdutoService: 13/13
+  com.example.projeto.config.FreteConfig: 2/2
+  com.example.projeto.interfaces.rest.PedidoRequest.Item: 1/1
+  com.example.projeto.interfaces.rest.ApiExceptionHandler: 18/18
+  com.example.projeto.interfaces.rest.PedidoController: 5/5
+  com.example.projeto.interfaces.rest.PedidoRequest: 1/1
+  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
+  com.example.projeto.interfaces.rest.ProdutoController: 7/7
+  com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog: 9/9
+  com.example.projeto.domain.pedido.frete.FreteFixo: 5/5
+  com.example.projeto.domain.pedido.desconto.DescontoPercentual: 6/6
+  com.example.projeto.domain.pedido.desconto.DescontoVIP: 2/2
+  com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory: 12/12
+  com.example.projeto.domain.pedido.desconto.DescontoPremium: 2/2
+  com.example.projeto.domain.pedido.desconto.SemDesconto: 2/2
+  com.example.projeto.domain.pedido.PedidoService: 10/10
+  com.example.projeto.domain.pedido.ItemPedido: 8/8
+  com.example.projeto.domain.pedido.TipoCliente: 4/4
+  com.example.projeto.domain.pedido.ResumoPedido: 1/1
+  com.example.projeto.domain.pedido.Pedido: 8/8
+  com.example.projeto.domain.model.Produto: 10/10

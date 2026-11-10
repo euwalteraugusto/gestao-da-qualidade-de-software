@@ -3,6 +3,7 @@ package com.example.projeto.interfaces.rest;
 import com.example.projeto.domain.service.ProdutoNaoEncontradoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +33,14 @@ public class ApiExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dados invalidos");
         pd.setTitle("Erro de validacao");
         pd.setProperty("campos", campos);
+        return pd;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail corpoInvalido(HttpMessageNotReadableException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Corpo da requisicao invalido ou com valor nao permitido (ex.: tipoCliente deve ser REGULAR, VIP ou PREMIUM)");
+        pd.setTitle("Requisicao invalida");
         return pd;
     }
 
