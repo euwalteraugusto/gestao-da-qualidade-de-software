@@ -1,24 +1,50 @@
 package br.gqs.aula09;
 
+import java.util.regex.Pattern;
+
 /**
- * VERSÃO 1 (com erros intencionais) - commit inicial da branch feature/notificacoes.
- * Serve apenas para o PR falhar no CI (compila, mas os testes falham) e receber
- * comentários de code review. Guardado como .txt para não ser compilado aqui.
+ * Serviço de notificações por e-mail (desafio colaborativo da Aula 9).
+ *
+ * <p>Versão já corrigida após o code review: valida o endereço com regex e
+ * rejeita assunto/corpo vazios antes de "enviar". O envio real é simulado,
+ * pois o objetivo da aula é o fluxo de PR + revisão, não o protocolo SMTP.</p>
  */
 public class NotificacaoService {
 
+    /** Formato pragmático: usuario@dominio.tld (sem espaços, ao menos um ponto no domínio). */
+    private static final Pattern EMAIL_VALIDO =
+            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$");
+
+    /**
+     * Verifica se o texto tem formato de e-mail válido.
+     *
+     * @param email endereço a validar (pode ser {@code null})
+     * @return {@code true} se o formato for válido
+     */
     public boolean emailValido(String email) {
-        // BUG 1: NullPointerException se email for null
-        // BUG 2: "@" sozinho não é validação de formato (aceita "@", "a@", "@b", "a b@c")
-        return email.contains("@");
+        return email != null && EMAIL_VALIDO.matcher(email.trim()).matches();
     }
 
+    /**
+     * Envia (simula) um e-mail.
+     *
+     * @param destinatario endereço do destinatário
+     * @param assunto assunto da mensagem
+     * @param corpo texto da mensagem
+     * @return confirmação de envio
+     * @throws IllegalArgumentException se o e-mail for inválido ou assunto/corpo estiverem vazios
+     */
     public String enviarEmail(String destinatario, String assunto, String corpo) {
-        // BUG 3: não valida assunto/corpo
-        // BUG 4: retorna texto genérico em vez de falhar rápido com exceção
-        if (emailValido(destinatario)) {
-            return "enviado";
+        if (!emailValido(destinatario)) {
+            throw new IllegalArgumentException("E-mail inválido: " + destinatario);
         }
-        return "falhou";
+        if (vazio(assunto) || vazio(corpo)) {
+            throw new IllegalArgumentException("Assunto e corpo são obrigatórios");
+        }
+        return "E-mail enviado para " + destinatario.trim() + " com assunto '" + assunto + "'";
+    }
+
+    private boolean vazio(String texto) {
+        return texto == null || texto.isBlank();
     }
 }
