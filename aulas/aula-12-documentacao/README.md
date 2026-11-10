@@ -88,3 +88,15 @@ com o código e é validado por teste automatizado.
 - Template do Confluence (`docs/confluence-template.txt`) é só o texto no markup wiki do Confluence; **não foi colado em uma instância Confluence** (não há acesso).
 - Nenhum deploy/CI para esta aula foi pedido; não há workflow para a Aula 12 (o Javadoc é gerado localmente).
 
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![javadoc-financeira.jpg](evidencias/javadoc-financeira.jpg)
+
+![print-testes-aula12.png](evidencias/print-testes-aula12.png)
+
+![swagger-ui.jpg](evidencias/swagger-ui.jpg)
+

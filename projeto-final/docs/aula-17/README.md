@@ -78,3 +78,20 @@ Resultado: **58 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`); cobertura *
 (179/179), 94,7% de branches**. A consulta real ao ViaCEP (`01001-000` -> Praca da Se, Sao Paulo/SP)
 foi feita contra a API publica durante a execucao local. A evidencia mostra tambem que um nome com
 `<script>` e exibido escapado (`&lt;script&gt;`) pelo Thymeleaf.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![pagina-cep.png](evidencias/pagina-cep.png)
+
+![pagina-form-erros.png](evidencias/pagina-form-erros.png)
+
+![pagina-produtos.png](evidencias/pagina-produtos.png)
+
+![print-github-pr9.png](evidencias/print-github-pr9.png)
+
+![print-testes-aula17.png](evidencias/print-testes-aula17.png)
+

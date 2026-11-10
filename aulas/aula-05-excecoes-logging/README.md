@@ -110,3 +110,12 @@ O extra (Kibana/ELK) não foi executado (exige Elasticsearch/Kibana em Docker, i
 - Checked em excesso polui assinaturas e leva a `catch` vazios; unchecked em excesso esconde falhas
   recuperáveis. Frameworks modernos (Spring etc.) tendem a preferir unchecked e tratar em um ponto
   central. Em qualquer caso: preservar a causa (`new X(msg, causa)`) e não engolir a exceção.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-testes-aula05.png](evidencias/print-testes-aula05.png)
+

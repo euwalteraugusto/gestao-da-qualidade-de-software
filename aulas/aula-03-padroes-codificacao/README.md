@@ -111,3 +111,12 @@ Depende do problema:
 
 - **SonarQube local (docker-compose): NÃO executado.** A máquina não tem Docker. Deixei pronto o `sonarqube/docker-compose.yml` (SonarQube 10.6 Community + PostgreSQL) e o comando `mvn sonar:sonar` documentado no cabeçalho do arquivo; nunca foi subido nem testado. As senhas do compose são valores locais de exemplo, e o token do Sonar deve ser criado por quem for rodar (não há segredos no repositório).
 - Relatório HTML do Checkstyle/PMD em imagem: não capturado (ver seção 5).
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-testes-aula03.png](evidencias/print-testes-aula03.png)
+

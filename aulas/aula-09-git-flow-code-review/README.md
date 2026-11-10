@@ -78,12 +78,12 @@ mvn clean verify checkstyle:check      # testes + JaCoCo + regra de 100% + Check
 
 | Item | Link / arquivo |
 |------|----------------|
-| PR `feature/notificacoes` -> `develop` | _a preencher_ |
-| Print do check vermelho (v1) | _a preencher_ |
+| PR `feature/notificacoes` -> `develop` | [PR #1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/1), print em [evidencias/print-pr1-ci-vermelho.png](evidencias/print-pr1-ci-vermelho.png) |
+| [evidencias/print-pr1-ci-vermelho.png](evidencias/print-pr1-ci-vermelho.png) |
 | Print do check verde (v2) | _a preencher_ |
 | Print dos comentários de review | _a preencher_ |
-| PR do hotfix | _a preencher_ |
-| Print do grafo de branches (`git log --graph`) | _a preencher_ |
+| [PR #2](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/2), print em [evidencias/print-pr2-hotfix.png](evidencias/print-pr2-hotfix.png) |
+| [evidencias/git-log-graph.txt](evidencias/git-log-graph.txt) |
 | Print da regra de branch protection | _a preencher_ |
 
 ## Resultado da execução no GitHub
@@ -98,3 +98,22 @@ mvn clean verify checkstyle:check      # testes + JaCoCo + regra de 100% + Check
 | Grafo de commits | [evidencias/git-log-graph.txt](evidencias/git-log-graph.txt) |
 
 Limitações: o checkpoint de CI do segundo push do PR #1 não chegou a ser reportado pelo GitHub; a evidência do CI verde está no hotfix (PR #2). O GitHub não permite aprovar o próprio PR, então a aprovação foi substituída por comentários resolvidos (atividade feita a sós; não houve Dev 2/Dev 3 reais). Prints em PNG do CI não foram capturados; os links acima são as evidências.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-notificacaoservice-fonte.jpg](evidencias/jacoco-notificacaoservice-fonte.jpg)
+
+![jacoco-pacote-aula09.jpg](evidencias/jacoco-pacote-aula09.jpg)
+
+![print-actions.png](evidencias/print-actions.png)
+
+![print-pr1-ci-vermelho.png](evidencias/print-pr1-ci-vermelho.png)
+
+![print-pr2-hotfix.png](evidencias/print-pr2-hotfix.png)
+
+![print-testes-aula09.png](evidencias/print-testes-aula09.png)
+

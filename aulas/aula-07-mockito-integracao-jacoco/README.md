@@ -130,3 +130,20 @@ Para ver o `check` falhar de propósito (depois de um `verify`): `mvn jacoco:che
 - **Redis com Testcontainers**: implementado em `RedisIT` (escrito, **não executado** localmente por
   falta de Docker; roda no CI).
 - **Cobertura > 80%**: atingida e imposta pelo build (`jacoco:check`): 69,3% -> **95,6%**.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-antes.png](evidencias/jacoco-antes.png)
+
+![jacoco-depois-pacote-produto.png](evidencias/jacoco-depois-pacote-produto.png)
+
+![jacoco-depois.png](evidencias/jacoco-depois.png)
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula07.png](evidencias/print-testes-aula07.png)
+

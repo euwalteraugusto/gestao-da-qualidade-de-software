@@ -86,3 +86,12 @@ mvn -B clean test
 - Na prática, deste projeto: `somar` e `dividir` com vários pares viraram parametrizados;
   `divisão por zero` com verificação de mensagem e `somarExato` com estouro específico ficaram
   individuais (ou parametrizados só pelos dados de entrada que compartilham o mesmo `assertThrows`).
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-testes-aula06.png](evidencias/print-testes-aula06.png)
+
