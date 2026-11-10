@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EXEMPLO DE CONFIGURACAO DO SENTRY (Aula 5, Atividade 3 - opcional).
+  NAO EXECUTADO: exige conta no sentry.io, o que esta fora do escopo desta entrega.
+
+  Para ativar:
+   1) adicione ao pom.xml a dependencia
+        io.sentry:sentry-log4j2  (versao atual; o slide cita 6.25.0, que e antiga)
+   2) copie o trecho <Sentry .../> abaixo para o log4j2.xml e referencie-o no <Root>
+   3) informe o DSN SOMENTE por variavel de ambiente (SENTRY_DSN) - nunca versione o DSN.
+  Com DSN vazio o SDK fica desativado e nenhum evento e enviado.
+-->
+<Configuration status="WARN" packages="org.apache.logging.log4j.core,io.sentry.log4j2">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- minimumEventLevel: apenas ERROR+ vira "evento" no Sentry; INFO+ vira "breadcrumb" -->
+        <Sentry name="Sentry"
+                dsn="${env:SENTRY_DSN:-}"
+                minimumBreadcrumbLevel="INFO"
+                minimumEventLevel="ERROR"/>
+    </Appenders>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Sentry"/>
+        </Root>
+    </Loggers>
+</Configuration>

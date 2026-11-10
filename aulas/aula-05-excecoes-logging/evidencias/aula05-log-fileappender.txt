@@ -1,0 +1,18 @@
+2026-11-10 15:23:16.356 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 200.00 de Ana para Bruno
+2026-11-10 15:23:16.403 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Saque de 200.00 realizado na conta de Ana. Saldo atual: 300.00
+2026-11-10 15:23:16.403 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Depósito de 200.00 realizado na conta de Bruno. Saldo atual: 300.00
+2026-11-10 15:23:16.403 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Transferência concluída
+2026-11-10 15:23:16.403 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 900.00 de Ana para Bruno
+2026-11-10 15:23:16.419 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Falha na transferência: Saldo insuficiente. Disponível: R$ 300,00
+2026-11-10 15:23:16.419 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 1500.00 de Ana para Bruno
+2026-11-10 15:23:16.419 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Falha na transferência: Limite de saque excedido. Máximo por saque: R$ 1.000,00; solicitado: R$ 1.500,00
+2026-11-10 15:23:16.543 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.usuario.CadastroUsuario - Usuário cadastrado: Carla (30 anos)
+2026-11-10 15:23:16.559 [br.edu.iqs.aula05.Aplicacao.main()] WARN  br.edu.iqs.aula05.Aplicacao - Cadastro rejeitado: Idade inválida (16): usuário menor de idade (mínimo 18 anos)
+2026-11-10 15:23:16.676 [br.edu.iqs.aula05.Aplicacao.main()] DEBUG br.edu.iqs.aula05.usuario.CadastroUsuario - 1 usuário(s) gravado(s) em target/usuarios-demo.txt
+2026-11-10 15:23:16.676 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Erro capturado pelo Sentry (apenas log local nesta configuracao)
+java.lang.RuntimeException: Erro crítico!
+	at br.edu.iqs.aula05.Aplicacao.main(Aplicacao.java:50) ~[classes/:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.doMain(ExecJavaMojo.java:385) ~[?:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.doExec(ExecJavaMojo.java:374) ~[?:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.lambda$execute$0(ExecJavaMojo.java:296) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]

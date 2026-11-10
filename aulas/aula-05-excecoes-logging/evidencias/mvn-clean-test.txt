@@ -1,0 +1,63 @@
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< br.edu.iqs:aula-05-excecoes-logging >-----------------
+[INFO] Building Aula 05 - Tratamento de Excecoes e Logging 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-05-excecoes-logging ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-05-excecoes-logging\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-05-excecoes-logging ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-05-excecoes-logging ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 9 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-05-excecoes-logging ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-05-excecoes-logging\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ aula-05-excecoes-logging ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ aula-05-excecoes-logging ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Running br.edu.iqs.aula05.banco.ContaServiceTest
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 200.00 de Ana para Bruno
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Saque de 200.00 realizado na conta de Ana. Saldo atual: 300.00
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Depósito de 200.00 realizado na conta de Bruno. Saldo atual: 300.00
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Transferência concluída
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 900.00 de Ana para Bruno
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Saque de 200.00 realizado na conta de Ana. Saldo atual: 300.00
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Depósito de 50.50 realizado na conta de Ana. Saldo atual: 550.50
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Saque de 1000.00 realizado na conta de Rico. Saldo atual: 4000.00
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.050 s -- in br.edu.iqs.aula05.banco.ContaServiceTest
+[INFO] Running br.edu.iqs.aula05.LoggingTest
+15:22:35 [main] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 500.00 de Ana para Bruno
+15:22:35 [main] INFO  teste.arquivo - Mensagem de teste marcador-57e9dde4-68c0-40f0-92c1-a66e1bac1900
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.233 s -- in br.edu.iqs.aula05.LoggingTest
+[INFO] Running br.edu.iqs.aula05.usuario.CadastroUsuarioTest
+15:22:36 [main] INFO  br.edu.iqs.aula05.usuario.CadastroUsuario - Usuário cadastrado: Carla (30 anos)
+15:22:36 [main] INFO  br.edu.iqs.aula05.usuario.CadastroUsuario - Usuário cadastrado: João (45 anos)
+15:22:36 [main] DEBUG br.edu.iqs.aula05.usuario.CadastroUsuario - 2 usuário(s) gravado(s) em C:\Users\Walter\AppData\Local\Temp\junit15069847806405678908\usuarios.txt
+15:22:36 [main] INFO  br.edu.iqs.aula05.usuario.CadastroUsuario - Usuário cadastrado: Carla (18 anos)
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.524 s -- in br.edu.iqs.aula05.usuario.CadastroUsuarioTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  15.374 s
+[INFO] Finished at: 2026-11-10T15:22:36-03:00
+[INFO] ------------------------------------------------------------------------

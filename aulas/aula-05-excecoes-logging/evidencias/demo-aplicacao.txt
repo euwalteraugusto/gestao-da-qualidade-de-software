@@ -1,0 +1,73 @@
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Scanning for projects...
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.2.0/exec-maven-plugin-3.2.0.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.2.0/exec-maven-plugin-3.2.0.pom (14 kB at 6.5 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/mojo-parent/80/mojo-parent-80.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/mojo-parent/80/mojo-parent-80.pom (36 kB at 111 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.2.0/exec-maven-plugin-3.2.0.jar
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.2.0/exec-maven-plugin-3.2.0.jar (84 kB at 239 kB/s)
+[INFO] 
+[INFO] ----------------< br.edu.iqs:aula-05-excecoes-logging >-----------------
+[INFO] Building Aula 05 - Tratamento de Excecoes e Logging 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-05-excecoes-logging ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-05-excecoes-logging\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-05-excecoes-logging ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-05-excecoes-logging ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 9 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- exec:3.2.0:java (default-cli) @ aula-05-excecoes-logging ---
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.4.1/maven-resolver-util-1.4.1.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.4.1/maven-resolver-util-1.4.1.pom (2.8 kB at 20 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver/1.4.1/maven-resolver-1.4.1.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver/1.4.1/maven-resolver-1.4.1.pom (18 kB at 68 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/33/maven-parent-33.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/33/maven-parent-33.pom (44 kB at 235 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.4.1/maven-resolver-api-1.4.1.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.4.1/maven-resolver-api-1.4.1.pom (2.6 kB at 29 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.4.0/commons-exec-1.4.0.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.4.0/commons-exec-1.4.0.pom (9.5 kB at 61 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.pom (2.8 kB at 22 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.pom (2.6 kB at 25 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.4.1/maven-resolver-util-1.4.1.jar
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-util/1.4.1/maven-resolver-util-1.4.1.jar (168 kB at 741 kB/s)
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.4.1/maven-resolver-api-1.4.1.jar
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.4.0/commons-exec-1.4.0.jar
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/resolver/maven-resolver-api/1.4.1/maven-resolver-api-1.4.1.jar (149 kB at 379 kB/s)
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar (52 kB at 122 kB/s)
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.4.0/commons-exec-1.4.0.jar (66 kB at 131 kB/s)
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar (72 kB at 131 kB/s)
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 200.00 de Ana para Bruno
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Saque de 200.00 realizado na conta de Ana. Saldo atual: 300.00
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Depósito de 200.00 realizado na conta de Bruno. Saldo atual: 300.00
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Transferência concluída
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 900.00 de Ana para Bruno
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Falha na transferência: Saldo insuficiente. Disponível: R$ 300,00
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.banco.ContaService - Iniciando transferência de 1500.00 de Ana para Bruno
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Falha na transferência: Limite de saque excedido. Máximo por saque: R$ 1.000,00; solicitado: R$ 1.500,00
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] INFO  br.edu.iqs.aula05.usuario.CadastroUsuario - Usuário cadastrado: Carla (30 anos)
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] WARN  br.edu.iqs.aula05.Aplicacao - Cadastro rejeitado: Idade inválida (16): usuário menor de idade (mínimo 18 anos)
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] DEBUG br.edu.iqs.aula05.usuario.CadastroUsuario - 1 usuário(s) gravado(s) em target/usuarios-demo.txt
+15:23:16 [br.edu.iqs.aula05.Aplicacao.main()] ERROR br.edu.iqs.aula05.Aplicacao - Erro capturado pelo Sentry (apenas log local nesta configuracao)
+java.lang.RuntimeException: Erro crítico!
+	at br.edu.iqs.aula05.Aplicacao.main(Aplicacao.java:50) ~[classes/:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.doMain(ExecJavaMojo.java:385) ~[?:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.doExec(ExecJavaMojo.java:374) ~[?:?]
+	at org.codehaus.mojo.exec.ExecJavaMojo.lambda$execute$0(ExecJavaMojo.java:296) ~[?:?]
+	at java.base/java.lang.Thread.run(Thread.java:840) [?:?]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  23.860 s
+[INFO] Finished at: 2026-11-10T15:23:16-03:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuracao do Log4j2 (Aula 5).
+  - Console: igual ao slide.
+  - Arquivo (FileAppender): exercicio da aula. O diretorio vem da propriedade de sistema
+    log.dir (padrao: ./logs). Nos testes o Maven define log.dir=target/logs.
+  - Sentry: NAO esta ativo aqui. Veja sentry/log4j2-sentry-exemplo.xml e o README.
+-->
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <File name="Arquivo" fileName="${sys:log.dir:-logs}/aula05.log" append="true">
+            <PatternLayout charset="UTF-8"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <!-- DEBUG para fins didaticos; em producao o normal e INFO -->
+        <Root level="DEBUG">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Arquivo"/>
+        </Root>
+    </Loggers>
+</Configuration>
