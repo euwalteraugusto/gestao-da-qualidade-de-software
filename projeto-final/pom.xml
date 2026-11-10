@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 
@@ -55,9 +55,31 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Bean Validation (US-002) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Testcontainers + PostgreSQL real nos testes de integracao (rodam no CI, que tem Docker) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -111,6 +133,33 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                    <!-- Quality gate local (DoD): build falha se a cobertura de linhas ficar abaixo de 80% -->
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

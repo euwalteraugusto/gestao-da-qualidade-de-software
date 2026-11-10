@@ -1,0 +1,70 @@
+﻿# Evidencias de execucao - aula 15 (2026-11-10 16:00:42)
+# App: java -jar target/projeto-final.jar --server.port=18089 
+2026-11-10T16:00:41.453-03:00  INFO 2012 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 80.391 seconds (process running for 85.329)
+
+## Cria produto valido
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:46 GMT
+
+{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
+
+## US-002: sem nome (400)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"preco":10.00}'
+HTTP/1.1 400 
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:47 GMT
+Connection: close
+
+{"type":"about:blank","title":"Erro de validacao","status":400,"detail":"Dados invalidos","instance":"/produtos","campos":{"nome":"nome e obrigatorio"}}
+
+## US-002: preco negativo (400)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Cabo","preco":-1}'
+HTTP/1.1 400 
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:48 GMT
+Connection: close
+
+{"type":"about:blank","title":"Erro de validacao","status":400,"detail":"Dados invalidos","instance":"/produtos","campos":{"preco":"preco deve ser maior que zero"}}
+
+## US-002: id no corpo e ignorado (sem mass assignment)
+$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"id":999,"nome":"Cabo USB","preco":25.00}'
+HTTP/1.1 201 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:49 GMT
+
+{"id":2,"nome":"Cabo USB","preco":25.00}
+
+## Produto inexistente: ProblemDetail 404
+$ curl http://localhost:18089/produtos/12345
+HTTP/1.1 404 
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:50 GMT
+
+{"type":"about:blank","title":"Recurso nao encontrado","status":404,"detail":"Produto nao encontrado: id=12345","instance":"/produtos/12345"}
+
+## Busca sem parametro: ProblemDetail 400
+$ curl http://localhost:18089/produtos/buscar
+HTTP/1.1 400 
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:50 GMT
+Connection: close
+
+{"type":"about:blank","title":"Requisicao invalida","status":400,"detail":"Parametro obrigatorio ausente: nome","instance":"/produtos/buscar"}
+
+## Lista final
+$ curl http://localhost:18089/produtos
+HTTP/1.1 200 
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:00:52 GMT
+
+[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90},{"id":2,"nome":"Cabo USB","preco":25.00}]
+
