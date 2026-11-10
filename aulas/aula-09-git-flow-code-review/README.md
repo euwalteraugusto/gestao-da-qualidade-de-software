@@ -85,3 +85,16 @@ mvn clean verify checkstyle:check      # testes + JaCoCo + regra de 100% + Check
 | PR do hotfix | _a preencher_ |
 | Print do grafo de branches (`git log --graph`) | _a preencher_ |
 | Print da regra de branch protection | _a preencher_ |
+
+## Resultado da execução no GitHub
+
+| Item | Evidência |
+|---|---|
+| PR da feature, CI **vermelho** com a v1 com erro | [PR #1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/1) (job `build` falhou, 22s) |
+| Comentários de code review | [PR #1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/1) |
+| Correção após review e merge em `develop` | [PR #1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/1) |
+| Release `v1.0.0` (Git Flow: develop → release → main) | tag [v1.0.0](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/releases/tag/v1.0.0) |
+| Hotfix `hotfix/header-null` a partir de `main`, CI **verde** | [PR #2](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/2), tag [v1.0.1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/releases/tag/v1.0.1) |
+| Grafo de commits | [evidencias/git-log-graph.txt](evidencias/git-log-graph.txt) |
+
+Limitações: o checkpoint de CI do segundo push do PR #1 não chegou a ser reportado pelo GitHub; a evidência do CI verde está no hotfix (PR #2). O GitHub não permite aprovar o próprio PR, então a aprovação foi substituída por comentários resolvidos (atividade feita a sós; não houve Dev 2/Dev 3 reais). Prints em PNG do CI não foram capturados; os links acima são as evidências.

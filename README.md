@@ -36,3 +36,10 @@ Os testes com Testcontainers exigem Docker; sem Docker eles são ignorados local
 ## Transparência
 
 Cada README de aula registra o que **não** foi executado (contas externas como SonarQube, Sentry e Heroku, Jenkins/Kubernetes, atividades em grupo) e as correções feitas em trechos dos slides (versões antigas, bugs). Atividades em dupla/grupo foram simuladas por um único aluno e estão marcadas como tal.
+
+## Evidências no GitHub
+
+- CI: aba [Actions](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/actions) (aulas 2, 7, 10, 11 e projeto final executaram com sucesso).
+- Git Flow (aula 9): [PR #1](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/1), [PR #2](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/2), tags `v1.0.0`, `v1.0.1`; projeto final com tag `v0.1` (aula 13).
+- Projeto final: issues [US-001 a US-004](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/issues) e PRs de demonstração das aulas 15 ([#7](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/7), label `sprint-1`), 16 ([#8](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/8)) e 17 ([#9](https://github.com/euwalteraugusto/gestao-da-qualidade-de-software/pull/9)). Esses PRs mostram o diff de cada aula contra a anterior; o histórico já foi integrado em `main`.
+- Não executados: deploy Heroku/AWS, SonarQube/SonarCloud com projeto real, Sentry, Jenkins/Kubernetes, quadro GitHub Projects (exige permissão extra do token) e as atividades em grupo.
