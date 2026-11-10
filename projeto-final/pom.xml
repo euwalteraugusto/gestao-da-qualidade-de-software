@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 
@@ -55,6 +55,11 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Frontend server-side (aula 17) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
         <!-- Bean Validation (US-002) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

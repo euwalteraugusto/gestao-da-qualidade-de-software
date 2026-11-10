@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * US-003: calcula subtotal, desconto por tipo de cliente, frete e total de um pedido.
  */
 @RestController
-@RequestMapping("/pedidos")
+@RequestMapping("/api/pedidos")
 @RequiredArgsConstructor
 public class PedidoController {
 

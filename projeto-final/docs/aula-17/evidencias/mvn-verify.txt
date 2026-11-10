@@ -1,0 +1,30 @@
+﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 16:25:25)
+# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
+# Exit code: 0
+
+[INFO] Building projeto-final 0.5.0
+[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
+[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.603 s -- in com.example.projeto.domain.model.ProdutoTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.792 s -- in com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactoryTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 15.11 s -- in com.example.projeto.domain.pedido.frete.CalculadoraFreteTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.424 s -- in com.example.projeto.domain.pedido.PedidoServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 45.40 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.421 s -- in com.example.projeto.domain.service.ProdutoServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.433 s -- in com.example.projeto.integration.CepServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.48 s -- in com.example.projeto.interfaces.rest.PedidoControllerIT
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.981 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.515 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
+2026-11-10T16:25:00.827-03:00 ERROR 5296 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
+See https://java.testcontainers.org/on_failure.html for more details.
+[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0.031 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.81 s -- in com.example.projeto.web.CepWebControllerIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.939 s -- in com.example.projeto.web.ProdutoWebControllerIT
+[WARNING] Tests run: 58, Failures: 0, Errors: 0, Skipped: 1
+[INFO] Building jar: projeto-final\target\projeto-final.jar
+[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
+[INFO] Loading execution data file projeto-final\target\jacoco.exec
+[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
+[INFO] Loading execution data file projeto-final\target\jacoco.exec
+[INFO] All coverage checks have been met.
+[INFO] BUILD SUCCESS

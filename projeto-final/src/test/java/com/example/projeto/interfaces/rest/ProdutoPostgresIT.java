@@ -59,7 +59,7 @@ class ProdutoPostgresIT {
         assertThat(repository.findById(salvo.getId())).get()
                 .extracting(Produto::getPreco).isEqualTo(new BigDecimal("1999.90"));
 
-        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
+        mockMvc.perform(get("/api/produtos/buscar?nome=xiaomi"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
     }

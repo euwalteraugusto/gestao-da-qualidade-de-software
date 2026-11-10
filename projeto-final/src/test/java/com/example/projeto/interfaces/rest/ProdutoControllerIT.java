@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class ProdutoControllerIT {
 
-    private static final String URL = "/produtos";
+    private static final String URL = "/api/produtos";
 
     @Autowired
     MockMvc mockMvc;

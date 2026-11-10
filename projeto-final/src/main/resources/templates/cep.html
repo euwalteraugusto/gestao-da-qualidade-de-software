@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consulta de CEP</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
+<main>
+    <h1>Consulta de CEP (ViaCEP)</h1>
+    <form class="cartao" th:action="@{/cep}" method="get">
+        <label for="cep">CEP</label>
+        <input id="cep" name="cep" th:value="${cep}" placeholder="01001-000" maxlength="9">
+        <div class="acoes"><button class="botao" type="submit">Consultar</button></div>
+    </form>
+
+    <div class="cartao" th:if="${endereco != null}" id="resultado">
+        <p><strong>CEP:</strong> <span th:text="${endereco.cep}"></span></p>
+        <p><strong>Logradouro:</strong> <span th:text="${endereco.logradouro}"></span></p>
+        <p><strong>Bairro:</strong> <span th:text="${endereco.bairro}"></span></p>
+        <p><strong>Cidade/UF:</strong> <span th:text="${endereco.localidade + '/' + endereco.uf}"></span></p>
+    </div>
+</main>
+</body>
+</html>

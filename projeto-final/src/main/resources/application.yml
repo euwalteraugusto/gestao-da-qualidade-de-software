@@ -17,6 +17,9 @@ app:
   frete:
     valor-minimo-frete-gratis: 100.00
     valor-fixo: 15.00
+  viacep:
+    url: https://viacep.com.br/ws
+    timeout: 3s
 
 springdoc:
   swagger-ui:
