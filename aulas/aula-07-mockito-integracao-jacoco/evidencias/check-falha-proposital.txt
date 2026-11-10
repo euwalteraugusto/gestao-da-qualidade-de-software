@@ -1,0 +1,25 @@
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------< br.edu.iqs:aula-07-mockito-integracao-jacoco >------------
+[INFO] Building Aula 07 - Mockito, Testcontainers e JaCoCo 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:check (check) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target\jacoco.exec
+[INFO] Analyzed bundle 'aula-07-mockito-integracao-jacoco' with 11 classes
+[WARNING] Rule violated for bundle aula-07-mockito-integracao-jacoco: lines covered ratio is 0.95, but expected minimum is 0.99
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.457 s
+[INFO] Finished at: 2026-11-10T15:53:27-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.jacoco:jacoco-maven-plugin:0.8.13:check (check) on project aula-07-mockito-integracao-jacoco: Coverage checks have not been met. See log for details. -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

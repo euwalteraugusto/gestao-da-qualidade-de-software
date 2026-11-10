@@ -1,0 +1,61 @@
+name: Aula 07 - Testes com Docker (Testcontainers) e JaCoCo
+
+on:
+  push:
+    paths:
+      - 'aulas/aula-07-*/**'
+      - '.github/workflows/aula-07-ci.yml'
+  pull_request:
+    paths:
+      - 'aulas/aula-07-*/**'
+      - '.github/workflows/aula-07-ci.yml'
+  workflow_dispatch:
+
+# O repositório tem várias aulas (um projeto Maven por pasta).
+# Este workflow só roda quando a Aula 07 muda e executa dentro da pasta dela.
+defaults:
+  run:
+    working-directory: aulas/aula-07-mockito-integracao-jacoco
+
+jobs:
+  verify:
+    # O runner ubuntu-latest já traz Docker: aqui os testes *IT com Testcontainers
+    # (PostgreSQL 15 e Redis 7) rodam DE VERDADE. Na máquina local sem Docker eles ficam "Skipped"
+    # (@Testcontainers(disabledWithoutDocker = true)).
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          cache-dependency-path: aulas/aula-07-mockito-integracao-jacoco/pom.xml
+
+      - name: Versões do Docker (diagnóstico)
+        run: docker version
+
+      # verify = testes unitários (surefire) + integração (failsafe) + relatório JaCoCo
+      # + verificação da meta de cobertura de linhas (80%)
+      - name: Build, testes unitários, testes de integração e cobertura
+        run: mvn -B verify
+
+      - name: Publicar relatório de cobertura JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-aula-07
+          path: aulas/aula-07-mockito-integracao-jacoco/target/site/jacoco/
+
+      - name: Publicar relatórios de teste (surefire e failsafe)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-teste-aula-07
+          path: |
+            aulas/aula-07-mockito-integracao-jacoco/target/surefire-reports/
+            aulas/aula-07-mockito-integracao-jacoco/target/failsafe-reports/

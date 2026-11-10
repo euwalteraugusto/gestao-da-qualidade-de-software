@@ -1,0 +1,95 @@
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------< br.edu.iqs:aula-07-mockito-integracao-jacoco >------------
+[INFO] Building Aula 07 - Mockito, Testcontainers e JaCoCo 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (prepare-agent) @ aula-07-mockito-integracao-jacoco ---
+[INFO] argLine set to "-javaagent:C:\\Users\\Walter\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.13\\org.jacoco.agent-0.8.13-runtime.jar=destfile=C:\\Users\\Walter\\Desktop\\Gestão de Qualidade de Software\\gestao-da-qualidade-de-software\\aulas\\aula-07-mockito-integracao-jacoco\\target\\jacoco.exec"
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-07-mockito-integracao-jacoco ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 14 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-07-mockito-integracao-jacoco ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 8 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+[INFO] Running br.edu.iqs.aula07.produto.EstoqueHttpClientTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 19.06 s -- in br.edu.iqs.aula07.produto.EstoqueHttpClientTest
+[INFO] Running br.edu.iqs.aula07.produto.ProdutoServiceTest
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 40.87 s -- in br.edu.iqs.aula07.produto.ProdutoServiceTest
+[INFO] Running br.edu.iqs.aula07.usuario.UsuarioServiceTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.457 s -- in br.edu.iqs.aula07.usuario.UsuarioServiceTest
+[INFO] Running br.edu.iqs.aula07.usuario.UsuarioTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.262 s -- in br.edu.iqs.aula07.usuario.UsuarioTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 29, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.13:report (report-unit) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target\jacoco.exec
+[INFO] Analyzed bundle 'Aula 07 - Mockito, Testcontainers e JaCoCo' with 11 classes
+[INFO] 
+[INFO] --- jar:3.4.1:jar (default-jar) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Building jar: C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target\aula-07-mockito-integracao-jacoco-1.0.0.jar
+[INFO] 
+[INFO] --- failsafe:3.2.5:integration-test (default) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+[INFO] Running br.edu.iqs.aula07.integracao.RedisIT
+[WARNING] Tests run: 3, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 0.031 s -- in br.edu.iqs.aula07.integracao.RedisIT
+[INFO] Running br.edu.iqs.aula07.integracao.UsuarioRepositoryH2IT
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.96 s -- in br.edu.iqs.aula07.integracao.UsuarioRepositoryH2IT
+[INFO] Running br.edu.iqs.aula07.integracao.UsuarioRepositoryIT
+[WARNING] Tests run: 7, Failures: 0, Errors: 0, Skipped: 7, Time elapsed: 0 s -- in br.edu.iqs.aula07.integracao.UsuarioRepositoryIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[WARNING] Tests run: 17, Failures: 0, Errors: 0, Skipped: 10
+[INFO] 
+[INFO] 
+[INFO] --- failsafe:3.2.5:verify (default) @ aula-07-mockito-integracao-jacoco ---
+[INFO] 
+[INFO] --- jacoco:0.8.13:report (report-full) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target\jacoco.exec
+[INFO] Analyzed bundle 'Aula 07 - Mockito, Testcontainers e JaCoCo' with 11 classes
+[INFO] 
+[INFO] --- jacoco:0.8.13:check (check) @ aula-07-mockito-integracao-jacoco ---
+[INFO] Loading execution data file C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-07-mockito-integracao-jacoco\target\jacoco.exec
+[INFO] Analyzed bundle 'aula-07-mockito-integracao-jacoco' with 11 classes
+[INFO] All coverage checks have been met.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  04:14 min
+[INFO] Finished at: 2026-11-10T15:46:00-03:00
+[INFO] ------------------------------------------------------------------------

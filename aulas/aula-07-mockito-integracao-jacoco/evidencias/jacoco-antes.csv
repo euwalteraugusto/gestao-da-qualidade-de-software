@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,EstoqueHttpClient,94,0,4,0,25,0,5,0,3,0
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,ProdutoNaoEncontradoException,0,5,0,0,0,2,0,1,0,1
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,Produto,0,12,0,0,0,1,0,1,0,1
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,ProdutoService,0,52,0,4,0,11,0,5,0,3
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,EstoqueInsuficienteException,4,4,0,0,2,2,1,1,1,1
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.produto,EstoqueIndisponivelException,5,4,0,0,2,2,1,1,1,1
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.usuario,UsuarioJdbcRepository,22,193,1,7,6,53,1,12,0,9
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.usuario,PersistenciaException,0,5,0,0,0,2,0,1,0,1
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.usuario,UsuarioService,0,49,0,6,0,13,0,7,0,4
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.usuario,Usuario,50,16,8,0,7,7,7,4,3,4
+"Aula 07 - Mockito, Testcontainers e JaCoCo",br.edu.iqs.aula07.usuario,UsuarioNaoEncontradoException,0,5,0,0,0,2,0,1,0,1
