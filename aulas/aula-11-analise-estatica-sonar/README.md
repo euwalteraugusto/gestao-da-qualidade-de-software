@@ -119,3 +119,14 @@ Mudanças de comportamento **intencionais e documentadas**: formato desconhecido
 - Dívida técnica e nota A-E aqui são **estimativas** a partir de PMD/Checkstyle com as premissas declaradas.
 - O workflow `aula-11-sonar.yml` precisa dos secrets `SONAR_TOKEN` e `SONAR_HOST_URL` (e da variável `SONAR_ORGANIZATION` no SonarCloud); sem eles o job do Sonar é pulado com aviso. O job `analise-local` (PMD/Checkstyle/testes) roda sempre.
 - Para o orquestrador: nenhuma ação obrigatória; opcionalmente criar os secrets e rodar o Sonar para substituir as estimativas por números oficiais.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula11.png](evidencias/print-testes-aula11.png)
+

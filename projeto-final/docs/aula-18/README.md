@@ -74,3 +74,18 @@ Resultado: **79 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`); cobertura *
 (322/322), 91,9% de branches**. Os testes da API usam um **JWT real** (`support/MockMvcComJwt`), entao
 passam pelo filtro e pelo `@PreAuthorize` de verdade; o fluxo completo esta em `AuthControllerIT` (11 cenarios).
 Nas evidencias os tokens aparecem encurtados (sao de desenvolvimento e expiram em 15 min).
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![pagina-login.png](evidencias/pagina-login.png)
+
+![print-github-sonar.png](evidencias/print-github-sonar.png)
+
+![print-testes-aula18.png](evidencias/print-testes-aula18.png)
+
+![swagger-ui.png](evidencias/swagger-ui.png)
+

@@ -86,3 +86,14 @@ Observação honesta: o item opcional foi apenas pesquisado/resumido nesta aula;
 ## 8. Itens não executados
 
 Nenhum item obrigatório ficou de fora. O relatório JaCoCo em HTML foi capturado em imagem (resolução pequena, por causa do painel do navegador embutido); os dados completos estão no CSV.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-relatorio.jpg](evidencias/jacoco-relatorio.jpg)
+
+![print-testes-aula01.png](evidencias/print-testes-aula01.png)
+

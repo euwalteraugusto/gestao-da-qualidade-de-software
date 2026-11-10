@@ -105,3 +105,16 @@ quando o secret não existe.
 - **SonarQube/SonarCloud**: scan não executado (sem servidor/conta); ver aula 11 para a substituição por PMD/Checkstyle.
 - **Workflows**: não executados no GitHub Actions por mim; os comandos Maven equivalentes foram executados localmente. A sintaxe YAML dos workflows e do `k8s/deployment.yaml` foi validada localmente com SnakeYAML (`evidencias/yaml-valido.txt`; só sintaxe, não o esquema do GitHub Actions).
 - Para o orquestrador: criar os secrets acima, o environment `staging` e, se desejado, exigir os checks em branch protection.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-index.jpg](evidencias/jacoco-index.jpg)
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula10.png](evidencias/print-testes-aula10.png)
+

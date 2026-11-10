@@ -112,3 +112,16 @@ Docker/CI); cobertura JaCoCo **100% de linhas (343/343), 100% de instrucoes, 91,
 `app.security.admin.passwordHash` em branco); com segredos: sobe na porta de `PORT`, health anonimo so
 mostra `{"status":"UP"}` e detalhes so com token ADMIN; Swagger desligado (404).
 Caminhos locais da maquina foram mascarados nas evidencias.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-relatorio.png](evidencias/jacoco-relatorio.png)
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula19.png](evidencias/print-testes-aula19.png)
+

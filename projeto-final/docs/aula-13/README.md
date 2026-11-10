@@ -75,3 +75,16 @@ curl http://localhost:8080/produtos
 
 Resultado: **5 testes, 0 falhas; cobertura 100% de linhas** (16/16) - a entidade `Produto` so tem
 codigo gerado pelo Lombok, marcado com `@Generated` e ignorado pelo JaCoCo.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-relatorio.png](evidencias/jacoco-relatorio.png)
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula13.png](evidencias/print-testes-aula13.png)
+

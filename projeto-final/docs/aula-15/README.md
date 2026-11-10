@@ -92,3 +92,14 @@ Patch exato: [`mudancas.patch`](mudancas.patch).
 
 Resultado: **25 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT` - sem Docker local);
 cobertura **100% de linhas (49/49) e branches (4/4)**; `jacoco:check` -> "All coverage checks have been met".
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-github-pr7.png](evidencias/print-github-pr7.png)
+
+![print-testes-aula15.png](evidencias/print-testes-aula15.png)
+

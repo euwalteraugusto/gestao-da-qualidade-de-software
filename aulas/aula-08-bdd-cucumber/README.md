@@ -106,3 +106,14 @@ mvn -B clean test
 `carrinho.feature` usa um domínio de exemplo (carrinho de compras) com **5 cenários** (mais um esquema
 de cenário com 3 exemplos) e `Contexto`; é uma base para adaptar ao tema do projeto final (basta trocar a classe
 sob teste e as frases). Não foi vinculada ao projeto final porque ele é desenvolvido em outra pasta.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![cucumber-relatorio.png](evidencias/cucumber-relatorio.png)
+
+![print-testes-aula08.png](evidencias/print-testes-aula08.png)
+

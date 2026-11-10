@@ -79,3 +79,14 @@ Não tenho um projeto pessoal disponível neste ambiente para refatorar, então 
 
 - Refatoração de projeto pessoal (seção 7): substituída pelo exemplo `GeradorDocumento`.
 - Não há banco de dados real: `DatabaseConnection` e o repositório são simulados em memória; o PDF é simulado como texto.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![jacoco-relatorio.jpg](evidencias/jacoco-relatorio.jpg)
+
+![print-testes-aula04.png](evidencias/print-testes-aula04.png)
+

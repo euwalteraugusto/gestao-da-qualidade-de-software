@@ -115,3 +115,14 @@ Patch exato: [`mudancas.patch`](mudancas.patch).
 Resultado: **44 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`, sem Docker local); cobertura
 **100% de linhas (130/130) e de branches (24/24)**. Observacao: nas respostas o `frete` aparece como
 `15.0`/`0` (escala vinda do YAML) - ajustado para `15.00`/`0.00` na aula 17.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-github-pr8.png](evidencias/print-github-pr8.png)
+
+![print-testes-aula16.png](evidencias/print-testes-aula16.png)
+

@@ -57,3 +57,14 @@ Resultado: **7 testes, 0 falhas**; cobertura de linhas 83,3% (20/24). Ainda sem 
 automatica de cobertura minima - o `jacoco:check` (>= 80%) entra na aula 15. Observacao: a busca sem o
 parametro `nome` devolvia o erro padrao do Spring (`400` sem detalhe util); padronizado com
 ProblemDetail na aula 15.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-github-issues.png](evidencias/print-github-issues.png)
+
+![print-testes-aula14.png](evidencias/print-testes-aula14.png)
+

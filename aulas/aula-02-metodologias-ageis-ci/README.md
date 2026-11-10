@@ -84,3 +84,14 @@ Para CD, o mesmo workflow ganharia um segundo job (`deploy`) com `needs: build`,
 - Estratégias: *continuous delivery* (deploy com aprovação manual) versus *continuous deployment* (todo commit aprovado vai para produção).
 
 Esta parte foi apenas pesquisada; **nenhum deploy foi configurado ou executado**.
+
+## Prints
+
+- `print-testes-*`: captura renderizada a partir da saida real do comando, salva em `evidencias/*.txt`.
+- `print-github-*` (e `print-pr*`, `print-actions`): captura real da pagina publica do GitHub.
+- Demais imagens (JaCoCo, Swagger, paginas): capturas reais geradas durante a execucao.
+
+![print-github-actions.png](evidencias/print-github-actions.png)
+
+![print-testes-aula02.png](evidencias/print-testes-aula02.png)
+
