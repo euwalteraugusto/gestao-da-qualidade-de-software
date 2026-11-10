@@ -1,0 +1,206 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "UsuÃ¡rios",
+      "description": "Cadastro e consulta de usuÃ¡rios"
+    }
+  ],
+  "paths": {
+    "/usuarios": {
+      "post": {
+        "tags": [
+          "UsuÃ¡rios"
+        ],
+        "summary": "Criar usuÃ¡rio",
+        "description": "Cadastra um novo usuÃ¡rio e devolve o registro com ID.",
+        "operationId": "criarUsuario",
+        "requestBody": {
+          "description": "Dados do usuÃ¡rio a criar",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoUsuarioRequest"
+              },
+              "examples": {
+                "Exemplo vÃ¡lido": {
+                  "description": "Exemplo vÃ¡lido",
+                  "value": {
+                    "nome": "Ana Souza",
+                    "email": "ana@exemplo.com"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "UsuÃ¡rio criado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usuario"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados invÃ¡lidos (nome vazio ou e-mail mal formado)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuarios/{id}": {
+      "get": {
+        "tags": [
+          "UsuÃ¡rios"
+        ],
+        "summary": "Obter usuÃ¡rio por ID",
+        "operationId": "getUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID do usuÃ¡rio",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UsuÃ¡rio encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usuario"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "UsuÃ¡rio nÃ£o encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "NovoUsuarioRequest": {
+        "type": "object",
+        "description": "Dados para criar um usuÃ¡rio",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "description": "Nome completo",
+            "example": "Ana Souza",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "E-mail vÃ¡lido",
+            "example": "ana@exemplo.com",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "nome"
+        ]
+      },
+      "ProblemDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instance": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "properties": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          }
+        }
+      },
+      "Usuario": {
+        "type": "object",
+        "description": "UsuÃ¡rio cadastrado",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Identificador gerado pelo servidor",
+            "example": 1
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome completo",
+            "example": "Ana Souza"
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail de contato",
+            "example": "ana@exemplo.com"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< br.gqs:aula-12-documentacao >---------------------
+[INFO] Building Aula 12 - Documenta��o de Software (Javadoc, OpenAPI e Markdown) 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> javadoc:3.11.2:javadoc (default-cli) > generate-sources @ aula-12-documentacao >>>
+[INFO] 
+[INFO] <<< javadoc:3.11.2:javadoc (default-cli) < generate-sources @ aula-12-documentacao <<<
+[INFO] 
+[INFO] 
+[INFO] --- javadoc:3.11.2:javadoc (default-cli) @ aula-12-documentacao ---
+[INFO] No previous run data found, generating javadoc.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:42 min
+[INFO] Finished at: 2026-11-10T16:11:36-03:00
+[INFO] ------------------------------------------------------------------------

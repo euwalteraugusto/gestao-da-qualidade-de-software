@@ -1,0 +1,25 @@
+﻿
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-11-10T16:20:56.238-03:00  INFO 5788 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.Aula12Application      : Starting Aula12Application v1.0.0 using Java 17.0.21 with PID 5788 (C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao\target\aula-12-documentacao-1.0.0.jar started by Walter in C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao)
+2026-11-10T16:20:56.252-03:00  INFO 5788 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.Aula12Application      : No active profile set, falling back to 1 default profile: "default"
+2026-11-10T16:21:21.723-03:00  INFO 5788 --- [aula-12-documentacao] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-11-10T16:21:21.978-03:00  INFO 5788 --- [aula-12-documentacao] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-11-10T16:21:21.978-03:00  INFO 5788 --- [aula-12-documentacao] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-11-10T16:21:22.910-03:00  INFO 5788 --- [aula-12-documentacao] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-11-10T16:21:22.926-03:00  INFO 5788 --- [aula-12-documentacao] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 26082 ms
+2026-11-10T16:21:58.382-03:00  INFO 5788 --- [aula-12-documentacao] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-11-10T16:21:58.580-03:00  INFO 5788 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.Aula12Application      : Started Aula12Application in 69.946 seconds (process running for 81.604)
+2026-11-10T16:21:58.611-03:00  WARN 5788 --- [aula-12-documentacao] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-11-10T16:21:58.620-03:00  WARN 5788 --- [aula-12-documentacao] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-11-10T16:21:58.921-03:00  INFO 5788 --- [aula-12-documentacao] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-11-10T16:21:58.921-03:00  INFO 5788 --- [aula-12-documentacao] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-11-10T16:21:58.921-03:00  INFO 5788 --- [aula-12-documentacao] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2026-11-10T16:22:01.889-03:00  INFO 5788 --- [aula-12-documentacao] [nio-8080-exec-1] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 2613 ms

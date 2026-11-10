@@ -1,0 +1,81 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< br.gqs:aula-12-documentacao >---------------------
+[INFO] Building Aula 12 - Documenta��o de Software (Javadoc, OpenAPI e Markdown) 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.4.1:clean (default-clean) @ aula-12-documentacao ---
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-12-documentacao ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ aula-12-documentacao ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 10 source files with javac [debug parameters release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-12-documentacao ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ aula-12-documentacao ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug parameters release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ aula-12-documentacao ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running br.gqs.aula12.api.UsuarioApiTest
+16:06:36.598 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [br.gqs.aula12.api.UsuarioApiTest]: UsuarioApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:06:43.268 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration br.gqs.aula12.api.Aula12Application for test class br.gqs.aula12.api.UsuarioApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-11-10T16:06:57.442-03:00  INFO 9820 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.UsuarioApiTest         : Starting UsuarioApiTest using Java 17.0.21 with PID 9820 (started by Walter in C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao)
+2026-11-10T16:06:57.468-03:00  INFO 9820 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.UsuarioApiTest         : No active profile set, falling back to 1 default profile: "default"
+2026-11-10T16:07:24.234-03:00  INFO 9820 --- [aula-12-documentacao] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-11-10T16:07:24.234-03:00  INFO 9820 --- [aula-12-documentacao] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-11-10T16:07:24.249-03:00  INFO 9820 --- [aula-12-documentacao] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-11-10T16:07:24.717-03:00  INFO 9820 --- [aula-12-documentacao] [           main] br.gqs.aula12.api.UsuarioApiTest         : Started UsuarioApiTest in 36.916 seconds (process running for 61.89)
+2026-11-10T16:07:24.748-03:00  WARN 9820 --- [aula-12-documentacao] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-11-10T16:07:24.780-03:00  WARN 9820 --- [aula-12-documentacao] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+mvn : OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath 
+has been appended
+No linha:3 caractere:1
++ mvn -B -ntp clean verify 2>&1 | Out-File -Encoding utf8 evidencias\mv ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (OpenJDK 64-Bit ...s been appended:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+2026-11-10T16:07:36.768-03:00  INFO 9820 --- [aula-12-documentacao] [           main] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 2192 ms
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 64.20 s -- in br.gqs.aula12.api.UsuarioApiTest
+[INFO] Running br.gqs.aula12.FinanceiraTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.178 s -- in br.gqs.aula12.FinanceiraTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ aula-12-documentacao ---
+[INFO] Building jar: C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao\target\aula-12-documentacao-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot:3.5.16:repackage (repackage) @ aula-12-documentacao ---
+[INFO] Replacing main artifact C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao\target\aula-12-documentacao-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-12-documentacao\target\aula-12-documentacao-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  05:37 min
+[INFO] Finished at: 2026-11-10T16:08:03-03:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,21 @@
+h2. Visão Geral
+*Data de Criação*: {{data}}
+*Responsável*: {{owner}}
+
+h3. Fluxo Principal
+{code:java}
+public Usuario criar(NovoUsuarioRequest pedido) {
+    Usuario usuario = new Usuario(sequencia.incrementAndGet(), pedido.nome(), pedido.email());
+    usuarios.put(usuario.id(), usuario);
+    return usuario;
+}
+{code}
+
+h3. Decision Records
+||Data||Decisão||Razão||
+|2026-11-10|Usar springdoc-openapi 2.x|Compatível com Spring Boot 3 (jakarta)|
+|2026-11-10|Armazenamento em memória|Foco da aula é documentar|
+
+h3. Links
+* Swagger UI: http://localhost:8080/swagger-ui.html
+* Javadoc: target/reports/apidocs/index.html (após mvn javadoc:javadoc)

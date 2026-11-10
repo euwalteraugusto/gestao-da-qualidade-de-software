@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.16</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>br.gqs</groupId>
+  <artifactId>aula-12-documentacao</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>Aula 12 - Documentação de Software (Javadoc, OpenAPI e Markdown)</name>
+  <description>Mini API de usuários documentada com Javadoc, springdoc-openapi (Swagger UI) e Markdown.</description>
+
+  <properties>
+    <java.version>17</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- O slide usa springdoc-openapi-ui 1.7.0 (Spring Boot 2 / javax); para Spring Boot 3 é o starter 2.x -->
+    <springdoc.version>2.8.17</springdoc.version>
+    <javadoc.plugin.version>3.11.2</javadoc.plugin.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <!-- mvn javadoc:javadoc -> target/reports/apidocs (ou target/site/apidocs em "mvn site").
+           Critério do desafio: gerar HTML sem warnings => doclint all + failOnWarnings. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${javadoc.plugin.version}</version>
+        <configuration>
+          <doclint>all</doclint>
+          <failOnWarnings>true</failOnWarnings>
+          <failOnError>true</failOnError>
+          <quiet>true</quiet>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <charset>UTF-8</charset>
+          <locale>pt_BR</locale>
+          <windowtitle>Aula 12 - API</windowtitle>
+          <doctitle>Aula 12 - Documentação de Software</doctitle>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- mvn site : site de documentação (tarefa de casa) -->
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>3.9.0</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report>
+              <report>dependencies</report>
+              <report>summary</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${javadoc.plugin.version}</version>
+        <configuration>
+          <doclint>all</doclint>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <charset>UTF-8</charset>
+          <locale>pt_BR</locale>
+        </configuration>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>3.5.2</version>
+      </plugin>
+    </plugins>
+  </reporting>
+</project>
