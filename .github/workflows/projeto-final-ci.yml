@@ -1,0 +1,41 @@
+name: Projeto Final - CI
+
+on:
+  push:
+    paths:
+      - 'projeto-final/**'
+      - '.github/workflows/projeto-final-ci.yml'
+  pull_request:
+    paths:
+      - 'projeto-final/**'
+      - '.github/workflows/projeto-final-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projeto-final
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build e testes (mvn verify + JaCoCo)
+        run: mvn -B clean verify
+
+      - name: Publicar relatorio JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: projeto-final/target/site/jacoco/
+          if-no-files-found: ignore

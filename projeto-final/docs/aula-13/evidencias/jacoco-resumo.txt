@@ -1,0 +1,7 @@
+﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 13
+Instrucoes: 100,0% (67/67)
+Linhas:     100,0% (16/16)
+Branches:   100,0% (2/2)
+
+Por classe (linhas cobertas/total):
+  com.example.projeto.interfaces.rest.ProdutoController: 16/16
