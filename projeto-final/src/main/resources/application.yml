@@ -13,6 +13,11 @@ spring:
     console:
       enabled: true
 
+app:
+  frete:
+    valor-minimo-frete-gratis: 100.00
+    valor-fixo: 15.00
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

@@ -1,0 +1,4 @@
+﻿# Linhas de log geradas pelo Decorator CalculadoraFreteComLog durante as chamadas acima
+2026-11-10T16:10:54.083-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-4] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=30.00 frete=15.0 calculadora=FreteFixo (167 us)
+2026-11-10T16:10:54.490-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-6] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=4050.00 frete=0 calculadora=FreteFixo (58 us)
+2026-11-10T16:10:54.715-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-5] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=88.00 frete=15.0 calculadora=FreteFixo (31 us)
