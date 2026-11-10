@@ -1,0 +1,38 @@
+*   3753fda (HEAD -> develop, origin/develop) merge: hotfix header-null em develop
+|\  
+| *   8eff3db (tag: v1.0.1, origin/main, main) Merge pull request #2 from euwalteraugusto/hotfix/header-null
+| |\  
+| | * 88db0d5 (origin/hotfix/header-null, hotfix/header-null) fix(http): trata cabecalho nulo (hotfix)
+| |/  
+| *   cafb278 (tag: v1.0.0) release: v1.0.0
+| |\  
+| |/  
+|/|   
+* |   6b0526a Merge pull request #1 from euwalteraugusto/feature/notificacoes
+|\ \  
+| |/  
+|/|   
+| * 9b4ba95 (origin/feature/notificacoes, feature/notificacoes) fix(notificacao): valida e-mail por regex e rejeita assunto/corpo vazios (review)
+| * 907ddfc feat(notificacao): envia e-mail com validacao basica
+|/  
+* f57cff7 Projeto final: patches de cada aula em docs/
+* 2d673bb Projeto final - Aula 19: Actuator, health customizado e deploy
+* 56c19e7 Projeto final - Aula 18: autenticacao JWT, roles e refresh token
+* 38fd8b3 Projeto final - Aula 17: integracao com frontend (Thymeleaf, AJAX, ViaCEP)
+* 48b41f7 Projeto final - Aula 16: refatoracao com Strategy, Factory e Decorator
+* 9b4886c Projeto final - Aula 15: camada de servico, Testcontainers, quality gate de cobertura e CI
+* b319156 Projeto final - Aula 14: busca por nome, user stories e Definition of Done
+* 1f19c00 (tag: v0.1) Projeto final - Aula 13: CRUD de Produto, teste de integracao e JaCoCo (MVP)
+* 0bc4503 Aula 12: documentacao
+* b32a9c8 Aula 11: analise estatica sonar
+* 7baf813 Aula 10: ci cd jenkins
+* 23b63c7 Aula 9: git flow code review
+* 378f8a2 Aula 8: bdd cucumber
+* 9f6ec1e Aula 7: mockito integracao jacoco
+* 489e439 Aula 6: junit5
+* 1e9a622 Aula 5: excecoes logging
+* bb4ea11 Aula 4: solid design patterns
+* 61987d4 Aula 3: padroes codificacao
+* 288fd34 Aula 2: metodologias ageis ci
+* 25bbace Aula 1: introducao qualidade
+* 9ef6639 Estrutura inicial do repositorio e indice das aulas
