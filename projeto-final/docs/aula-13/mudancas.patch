@@ -1,0 +1,833 @@
+diff --git a/.github/workflows/projeto-final-ci.yml b/.github/workflows/projeto-final-ci.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..803cf454ecc19e57d12a125e8de643c82f693b8f
+--- /dev/null
++++ b/.github/workflows/projeto-final-ci.yml
+@@ -0,0 +1,41 @@
++name: Projeto Final - CI
++
++on:
++  push:
++    paths:
++      - 'projeto-final/**'
++      - '.github/workflows/projeto-final-ci.yml'
++  pull_request:
++    paths:
++      - 'projeto-final/**'
++      - '.github/workflows/projeto-final-ci.yml'
++
++permissions:
++  contents: read
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    defaults:
++      run:
++        working-directory: projeto-final
++    steps:
++      - uses: actions/checkout@v4
++
++      - name: Configurar JDK 17
++        uses: actions/setup-java@v4
++        with:
++          java-version: '17'
++          distribution: 'temurin'
++          cache: maven
++
++      - name: Build e testes (mvn verify + JaCoCo)
++        run: mvn -B clean verify
++
++      - name: Publicar relatorio JaCoCo
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: jacoco-report
++          path: projeto-final/target/site/jacoco/
++          if-no-files-found: ignore
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..361c1c9d9e845591cc7eaf769965bca9d281edb5
+--- /dev/null
++++ b/projeto-final/README.md
+@@ -0,0 +1,22 @@
++# Projeto Final - API de Produtos (IQS, aulas 13 a 19)
++
++Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP de CRUD de
++`Produto` ate autenticacao JWT, monitoramento e deploy. Toda a documentacao por aula fica em
++[`docs/`](docs/).
++
++| Aula | Tema | Documentacao |
++|------|------|--------------|
++| 13 | MVP: CRUD de Produto, testes, JaCoCo, CI basico (tag `v0.1`) | [docs/aula-13](docs/aula-13/README.md) |
++
++## Como executar
++
++Pre-requisitos: JDK 17 e Maven 3.9+.
++
++```bash
++cd projeto-final
++mvn clean verify          # compila, roda testes e gera o relatorio JaCoCo
++mvn spring-boot:run       # sobe a API em http://localhost:8080
++```
++
++- Swagger UI: http://localhost:8080/swagger-ui.html
++- Relatorio de cobertura: `target/site/jacoco/index.html`
+diff --git a/projeto-final/docs/aula-13/README.md b/projeto-final/docs/aula-13/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c56c9dd2e86c37f44f65de87fad734069739a60c
+--- /dev/null
++++ b/projeto-final/docs/aula-13/README.md
+@@ -0,0 +1,77 @@
++# Aula 13 - Definicao do Projeto Final (MVP) - tag `v0.1`
++
++## Objetivo
++
++Definir a arquitetura, implementar um MVP funcional (Java 17 + Spring Boot 3) e configurar
++as metricas iniciais de qualidade.
++
++## Decisoes de arquitetura
++
++| Decisao | Escolha | Motivo |
++|---------|---------|--------|
++| Estilo | **Monolito** em camadas | Simples de desenvolver; um aluno, um servico (microsservicos trariam complexidade operacional sem ganho no escopo) |
++| Backend | Spring Boot 3.3.5 + Spring Data JPA | Stack da aula |
++| Banco | H2 em memoria (dev/testes) | Recomendacao da aula; PostgreSQL via Testcontainers no CI (aula 15) |
++| Testes | JUnit 5 + Mockito + MockMvc | Stack da aula |
++| Qualidade | JaCoCo (cobertura) + SonarQube (aula 14/15) | Stack da aula |
++| Documentacao | Swagger (springdoc-openapi 2.6.0) + Markdown | Stack da aula |
++
++Pacotes (`com.example.projeto`): `domain.model`, `domain.repository`, `interfaces.rest`.
++
++## Criterios de MVP (checklist de entrega)
++
++- [x] CRUD funcional de 1 entidade (`Produto`): `GET/POST /produtos`, `GET/PUT/DELETE /produtos/{id}`
++- [x] 1 teste de integracao (`ProdutoControllerIT`, 4 cenarios com MockMvc + H2) e 1 unitario (`ProdutoControllerTest`, Mockito)
++- [x] Relatorio JaCoCo gerado (`target/site/jacoco/index.html`)
++- [x] Pipeline CI basico (`.github/workflows/projeto-final-ci.yml`)
++- [ ] Push com tag `v0.1` - **a cargo do orquestrador** (`git tag -a v0.1 -m "MVP inicial"`)
++
++## Arquivos adicionados nesta aula
++
++```
++.github/workflows/projeto-final-ci.yml
++projeto-final/pom.xml
++projeto-final/lombok.config
++projeto-final/README.md
++projeto-final/src/main/java/com/example/projeto/ProjetoApplication.java
++projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
++projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
++projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
++projeto-final/src/main/resources/application.yml
++projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
++projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
++projeto-final/docs/aula-13/README.md
++projeto-final/docs/aula-13/evidencias/*
++```
++
++O patch exato desta aula esta em [`mudancas.patch`](mudancas.patch) (diff a partir do repositorio vazio).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| Pacote `com.example.projeto.interface.rest` | `interface` e palavra reservada do Java: o pacote nao compila | Pacote renomeado para `interfaces.rest` |
++| Plugin JaCoCo sem `<executions>` | Sem o goal `prepare-agent` o agente nao instrumenta os testes e `jacoco:report` nao gera nada (falta `jacoco.exec`) | Adicionadas as execucoes `prepare-agent` e `report` (fase `verify`); versao 0.8.12 |
++| Entidade com `@Data` | `equals/hashCode` sobre todos os campos (inclusive `id` gerado) e problematico em entidades JPA | `@Getter @Setter @ToString @NoArgsConstructor` |
++| `ProdutoControllerIT` sem isolamento | `deveListarProdutosVazios` depende da ordem dos testes | `@Transactional` na classe (rollback por teste, dica da aula 14) |
++| Testes `*IT` | O Surefire por padrao so executa `*Test`; o IT do slide nunca rodaria no `mvn verify` | `includes` do Surefire com `**/*IT.java` |
++| `actions/checkout@v3` | Versao antiga | Actions fixadas em `@v4` |
++
++## Como reproduzir
++
++```bash
++cd projeto-final
++mvn -B clean verify
++java -jar target/projeto-final.jar
++curl http://localhost:8080/produtos
++```
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt) - saida do `mvn clean verify`
++- [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt) - cobertura por classe
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - CRUD executado com `curl` contra a app rodando
++- [`evidencias/jacoco-relatorio.png`](evidencias/jacoco-relatorio.png) - captura do relatorio HTML do JaCoCo
++
++Resultado: **5 testes, 0 falhas; cobertura 100% de linhas** (16/16) - a entidade `Produto` so tem
++codigo gerado pelo Lombok, marcado com `@Generated` e ignorado pelo JaCoCo.
+diff --git a/projeto-final/docs/aula-13/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-13/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a5895b73ebbcebc6843f143b96bfd407a4ad886
+--- /dev/null
++++ b/projeto-final/docs/aula-13/evidencias/curl-endpoints.txt
+@@ -0,0 +1,78 @@
++﻿# Evidencias de execucao - aula 13 (2026-11-10 15:34:24)
++# App: java -jar target/projeto-final.jar --server.port=8089 
++2026-11-10T15:34:22.624-03:00  INFO 6556 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 90.739 seconds (process running for 97.634)
++
++## Lista inicial (vazia)
++$ curl http://localhost:8089/produtos
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:31 GMT
++
++[]
++
++## Cria produto
++$ curl -X POST http://localhost:8089/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:35 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
++
++## Cria segundo produto
++$ curl -X POST http://localhost:8089/produtos -H 'Content-Type: application/json' -d '{"nome":"Notebook Dell","preco":4500.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:35 GMT
++
++{"id":2,"nome":"Notebook Dell","preco":4500.00}
++
++## Lista com 2 produtos
++$ curl http://localhost:8089/produtos
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:35 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90},{"id":2,"nome":"Notebook Dell","preco":4500.00}]
++
++## Busca por id
++$ curl http://localhost:8089/produtos/1
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:36 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
++
++## Atualiza produto 2
++$ curl -X PUT http://localhost:8089/produtos/2 -H 'Content-Type: application/json' -d '{"nome":"Notebook Dell Inspiron","preco":4200.00}'
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:34:36 GMT
++
++{"id":2,"nome":"Notebook Dell Inspiron","preco":4200.00}
++
++## Remove produto 2
++$ curl -X DELETE http://localhost:8089/produtos/2
++HTTP/1.1 204 
++Date: Tue, 10 Nov 2026 18:34:42 GMT
++
++## Produto inexistente (404)
++$ curl http://localhost:8089/produtos/2
++HTTP/1.1 404 
++Content-Length: 0
++Date: Tue, 10 Nov 2026 18:34:43 GMT
++
++## OpenAPI (resumo: primeiros bytes)
++$ curl -r 0-300 http://localhost:8089/v3/api-docs
++HTTP/1.1 200 
++Content-Type: application/json
++Content-Length: 1720
++Date: Tue, 10 Nov 2026 18:34:50 GMT
++
++{"openapi":"3.0.1","info":{"title":"OpenAPI definition","version":"v0"},"servers":[{"url":"http://localhost:8089","description":"Generated server url"}],"paths":{"/produtos/{id}":{"get":{"tags":["produto-controller"],"operationId":"buscarPorId","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Produto"}}}}}},"put":{"tags":["produto-controller"],"operationId":"atualizar","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Produto"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Produto"}}}}}},"delete":{"tags":["produto-controller"],"operationId":"remover","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"OK"}}}},"/produtos":{"get":{"tags":["produto-controller"],"operationId":"listar","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Produto"}}}}}}},"post":{"tags":["produto-controller"],"operationId":"criar","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Produto"}}},"required":true},"responses":{"201":{"description":"Created","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Produto"}}}}}}}},"components":{"schemas":{"Produto":{"type":"object","properties":{"id":{"type":"integer","format":"int64"},"nome":{"type":"string"},"preco":{"type":"number"}}}}}}
++
+diff --git a/projeto-final/docs/aula-13/evidencias/jacoco-relatorio.png b/projeto-final/docs/aula-13/evidencias/jacoco-relatorio.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d881fe90ef0891515ceb2c74715f786dbb038bb
+GIT binary patch
+literal 7820
+zcmeHMXH=8f)((mSgGg}{kv5K?Bi#m4qgXH?AcCQWD!of5R2wP^4hSd^B1(}KN=WDg
+zMPLBwLLh;JVt|l@K<I>o@8!;2>szzdopt}+U-KvDJ!ik?ywBNZKl|*x^Zbs9fzVGU
+zegc6&LXcb6?}9)FfJdHH{(V5h=n`)PfkZ%%>sKwpv*{DQ^!t`Dz9sE$uh;vGT_L%u
+z^FQV07I+A@^FvaNZ;L+fk5lJ;<@4+D!9N~djfgjV<ME53zW&9N@8!5c9`AYe5BNqo
+zsf(R6^O7AL&1+mDiy4V$UZGs|2-}@un1t0fnFcKm>2UOr7m4q*H*(;!;}^oXWX-T%
+zDP-TA1OSKL;Ih~7{sP($pn3>81Oi>*-=_u)o#bx;ejoou(2*rmyOE=P9uSOPvUCW7
+zF<3LYSRN24j`96`CQZx(5a^4<0R#L~;oHTryYbtK9~?L;<YNbc84<D#TWd8F5oE>k
+zrUheJ?tN^s7VqSW0ot-@1#BpYdq5<z9F_J1K<KEj#@XT>G9NCmQ+aniDa(F6w?TEB
+z(_gmX%Fb_<@1L7P?~otaGB@W7cR79F<@~lUvQ0m%Rl^6mGY=-fvwGad!rjDOrC-?!
+z0pQBk2zXdvH<=S08h(0L0|$dSsk7adaXxaVj$!U5fTH~Lv@_jt+yxqGryI=1I>5J_
+zon+!-f26qU?%n`z6m4*BtLJP*kysvucA4cmxZePblbw2@E3}nLvU#Bim*Q?RzWTI*
+z6}v**N{QNffY2%Eoy$17E2&sJd&8ABI3+e8H0N$$uwoiD)hnyBJt`a%usG1s+cfhE
+z4`vf;W}PmYriV>%ssR1R!Geg0jR_Xl2;JHmTTemRHiyp^&`deAMk+lS<Ex8o(i=wF
+zVV=!O!BZ{%;lr4SaRlu6ZC$O{<x1=IQ8Ugbx-%&BoLhs`BbbVvl6BI2I@F4!qE}x_
+ztkU;nVj4=IMNLw`ccSlRGZl6<`syR5quY$Z$U^cCS&7XuX2!@lknZXS{s`4PG43+u
+z>{G`XXk(>4DgW*&R=SeByRlC8+UB2Jh}DaZ45Up?zTdoZHljeO)GzC(iklxHuRg+)
+zlCFTs0F+cATf73}blGy37I!0<?^=!gH<wk(OX)@{tMFO1hUqb~a_<3H<80j<O(TKO
+zK<#KJxF#m6CS&MBH~-Q=Wstb@6nJNm{BwrG%DOo&Z1x*#k!^xd@U@aWt&ycx0?!EN
+z0mc1d&#qTAL1@*zWiEVs*J>L3qbcHG?{1IzG9T#ywLy<{D<`JJHm%)r$i<zJxnF~6
+zW-{U_R@#x|HrEIKT`XB<dn&eWw`r67bA9iW&i&rG7)gMs^v4BTs73ZpnQZ;qvf_u8
+z)vVntvfq|a-h!Ofa8a(fVxAH`H%t?D`m>gXcC6Fei^5GSOr5jxCR*Mh_{y;umpY7t
+z!k*cmVXVNKsI5q!?JjS2T06s~vCWqatIxLDG?cy>CyS5;W{;G(^mV$KB2{<0Gwec_
+zaqc6&m!Ua!rYdPMzy_m3oSI7vSdve+P*rIwuzcIYog+y-No(DZrf%v*ff4%r{IVpz
+zkz+y4#eIrm)_e->qAYy0ZnX^ZmW3T2#ro%<tRND{0W3ya$C(r5b;Z%mB{svdT;;<H
+z(76sn2djp}G%_0zb!<M!U~C|YYY@9WFgAl@H*Btv1=$Tt%#PjFryEgAiPkQhS!x)u
+zhS3zUc5{e9xCBsrz11DO;>eD&#6&vmn`o}6mE#P=WSEBWw-~I9IW+BxAA9t%n^&hh
+z=T?j9IWNE~R;(RE+eXu8@i^Kk)1AXhUB>P8!4X=|BWjoV{FzO2NhRfVDw3r%{{^g_
+z62M;&!{&=mg6L$-$c2OpK)0HvCU_BO=_st|WYpwkz|P{D)Pg$C0b`=IyeELJ2(Kg1
+z`L`>&3IdMd7hWDf0sk98k~`5|Jxkf|+uTZNM&n}=5v5cY9#)w#b#$?QqbQ6QP(dvA
+z97x!r>yx(Go-;Kk)_@vwUV4F!fk2LPJ}w|qUHDmHU|&ACqdc{n`9p+q9Llb)n$V?R
+zHR4~7^|6oi2&^#|Xc~srR#()L3lPwR@*Cd3{wnj5K$d9h?(60l{K*=n+b<&!3$Lpp
+zA`gfSg>+%9VVEq`c#faCD)6euLC&GO+v0vi{Oz-a^1r%y7q!%8u3yG^P%;5X!GlxU
+zEr`3;-L(`}Zp>Dl=gO*s+=5wrJUHxoa|gk>1fLDyQ@g&vA8?k1Ia8lbgBwYdha$du
+z<;{(XD)wI+l1UUa`q&IC_0q2leZ}&EJwC8E{@kVfeP@4<xqA?>YfwRjKW=|x!w-7^
+z4TNC@BH?L|iMT$%2et%w3$;+eyXen9m4aP1a%=^GSAvUD9rL5iu#h1;bK@X$%$qx9
+z?fUA0dzb5I2tcKdOlhylPyW+y8P1sW1nix_IKo;VAe=Fj=0T<9#2n!Z=R;laJWybM
+z;=PH)5MUJVOAh1qkFT1yG#Po=jNbjy)njWYX&+Cmw!AF^h>!b?$n2`02d6@Efn|<Q
+zyf=CepmwzM8DN4M`o#fAR39^tN+4&?Do+sxK}sCJaj2o*eG&k!QQp&^f!_bb?jFw=
+z3y;U{awO=r39>PpU!Nb5xHtsyC`>q%yVm|eUZeNq=o`iI#`BNNBzXRY3%Rx+J!|)^
+zI|s7@<`7|S(w9Q;5O$F7JIUCo+h*}H26@H7PbEC?+7O0ym{3E`GnqkK-*?nB<R?K!
+zG_8z5mqyE@Rnq7i!Gkp~q7>eK$f4ehaEQB(Fo+XYtXd<`X{o;G%PvW*q<eN%+$4nG
+zrjg^IJAwV|XUZkJ9H*yXvhKWGK6=pvd2sD@V7_Iu`Nt5ULvV8BJz@}Rye_8p0R(@v
+zecGbp?8ipcD_R*>(5)}#4Ci`$)w)Ej8#Pp!hocfkAlMf&=TWO&$wUubg^DNGVwTN=
+zne3m`+lUuw8W3QAbyd!R4Yd{3`rFWVR~=P8<;ZIzG>p!025t4Jxo;K;&1$y!1fqAh
+zQWNisu#$4bs+br4cKPs^mQ#Ztf<1~&3nSrg6nt&Z6cx+#oHS62?kVUYQcupTzn)4f
+zFLTE(D4laY5L&ZVRlgFzJn_`4bDiK;LPBSHrPw<qytmm}_+qvY@nE}Gm?PDvRouK(
+z?2eiydabR0cuZjozDh4kxAd0sTc#A1_F(Y#S;po08lg7f=T9np_q(Tn-WKzSy^;5(
+zpLP3)H>S4f>8ZhL+G+R@#87xRG;Yd3EwBe=-~<uwyvaD}axW&r#A<O~jZp@r-BTQ6
+zVm`{-DnyL#pzt5R9R93Dt9#&tMWrXC^zv+~ZTTb8g@y#FP1@`B4EM)~-n?Nj8;U~K
+zR(Lun;;GB?-^&YDZ6<a~a2Bws)>!tIk0FCE&|eEu^w`<8Sc6dG8&Pc_Os(!*Y8_~m
+z*?5h?xDN$=kA%_st0C3tbQ|KrEDWk@S&NlI)R|v;YN03DK*>$$<+<F}nS^f>8hcT}
+zT5+K^YEC%BbQ6^Y(E{56LrLl-MbL;5W!K4~A*P|I7G&V(C&<!<g+hlKyS}OU`-Sj7
+zo~1FxZ&ceitm2c>l`>c5s3LNP^d@Q=*{AzjryNf$Eo=UD*|XAcQugA@2&=FG6ZV&)
+zjpjgOjDp*w=n(VuoJ?-2#m4z*ht~;Z$kj02i$|oBDs=DPqL@Nax1`?2U&GkHFe#T-
+zwl4c|UFu=Vf*_7Mao>@mL1f*z$WZF%aQU@0DG9OkcWreK>I0Jrq}r;)q~U~)XywvE
+zXyUlG97hI~`D=bCCp~1nA@z`wW;7)=#QfJawWWajk$<GhLz}%n4*S_RKpu}s{<e%c
+zQY<fgL@z)hyqIcMV1Bh5#RrWUOiw_yBY9~R_~AeVc451>Cnjt4WyIU4p1!UpE(~4o
+zaDnfOicODK@snMb5|TOU3}*_8xO)@%#|f>@&RIxB@vxQkWQz-;IU?1p{n_g4{I6Z*
+zI+9X)TYVd=H3a^$4Au#yvi=#&kz9GW#d+Id$st9$$bErV0ahD+=bb5dGV9LytiCzS
+zfA%d(+4Qvm^oV3)`uODpM{`sotLxCsOAPsbz!_G^pMJ+H2pSdcPCR)5G#dRX<4Wve
+z5V9K(ssCt~^#A5)@rvj8ddnEvT@|;(I+RJ3s~)=cv_H~iAVqRcq=mF3?FhX4mka!{
+z=)NWG@>mnVfq{r+eSN<mwq`P<*xWkG#2gT#@3PonOe1{t`%EEe1v!?J+0(3vbVxUL
+z`^xGl^Rl<$GV}VPeRDRF`?}wf_Tx5Nx<cI0XL?#Q$S{(<N;$07&fezyNNJ2#XJjc|
+z&X#y>q=+hjie+XMw~9#mH>F93ThfCm8Bz~>2m`5V>_StJ-ui?=c{qis!|*ii^hZWd
+z(lVl$>xzEiZLGx_+zwtM8gu5G$-B_69}1E<`$Nh|iO8+#m&$jxTkE$ooMUQ2o!GC;
+z=H-ZvS@1sy7j-{l#;B$u>cq&i(wB*%+ORG81V?l+vfy*Usz3{nI_NCsgby4gYwols
+z>&{TOQl=*ilA@|xp>V3JYR_o3Yh))j#iT0GmUQj?MAu;-DW4gshanFP-AjP!b1HV+
+z?2d_!-LOhURc4O1CAxEZAA#Q4nlk((F}HDg7|XCEsi)n6H_)1k6-&qA)PaTB?k8=!
+z*zdT_`Ds6PYBBUZ<y}FIX;Jlp37<--y3KZTai43xxE<@^OJm6m)#L%NAReOb*A2gQ
+zg-~(C_rMK%Q6C_B-JGZIcZiLmhpDqi@Xg$`-I#g8mx-N$!EH=#wR{nD#>2O<Xu?YZ
+z2~9^<l@kcq4C@Ay!ebr^;AP0L0;Af19UT3uZq5Uom|>rM+fXuC*QG-ld@E;O_uiSY
+z5c3U@d3Viy1@3+?u7QFNw=f&Intid0=D79p8r8*Fs>bd{dUEX46Y%m^yMA)?{4Og*
+zZ?i4IOT$6J;)P<c;ic!Up#*%(Pq)q7z?@K<iQ=ItTFvZ|7&LNqe&FSVW%hp0E%`p5
+zJe+56imsZc@bmU1=5H^0K0!3ToCH<L@LV><BBNLCsWvY^w=QQ@l65%Tc7I%;rohOQ
+zZw+qEJYmd6sr;#Ov9wqzEa*iO^UfA${nGuO=}W_BmqWrocMbr7*x^fiwEzK(%ntXF
+z1l)bRE-5&LgQlUKD*1vNUj^~Um6GNAlM!Hr-pI6M&N1d}vKuXhr8`(U)r~sBh`vsf
+zQZyO2EKK*21)0|QMT84r7Pm)W5^U!WY9CYSLV;nIefeATs2kFg9c2EjGoQWSS#)U|
+zg8VV!B~F1jksC4+f7+}1B-;zPul&6?Vt#Ek`mKKEckS~Y`KdsVov+8UxwBPzSpb@@
+zOZDS=Kp3ti9F(i_ERrBrjCMMTSMp17Cg}(Uvq_eIIb~k)1qLOi3N-EC2=*3bg!J3s
+zX2imH5ivM&+JQr|ynr>O@`)WgWr7jRc(LDn#w0Q?)hD-X;iUHvm)EoAURljh!UOPj
+z?lq9oY8{Gd6w4Yc-@yyJ{HW=Z)}7g`q)do&f4HjdJ|dzgGy*Cr$+I*m`m0I$7&^lt
+zCgNaEuo!`Q@|s6erAH^AI!FIi37*~+Mz>&??QB%<h<57Gvx712wX|99w^fS!kkWuF
+zQQqdAOi5qOV#J(&H=Xg?>!@n_u^+(rO$~hz$<jNqnKQx%M2e|@)=By=3yd^vY#tQ>
+z;y@Qv^KAX0n-n}_%zf79zC7Y_XyhLvHvURL)FHKRR8l4W?_#Z1CaBL1z3?R_$b)j@
+zT~wlwLg=gsEU?lkFxAU!*zyI5lozb<Nms>~uVmfo<>>d+P%$yzAYtpQo^>P)oa@`T
+zwmxf7Av<>t@DMwkzVvyKxWriB>M#dRmM@f(C|B74#g{6333DgylLuu-Ft5gfD{TB;
+z-m8IVLvB9wT|DWHUgn~Qn!?a!8H4d?>B>Ks^5PqGJY}~}=%c95U|VN=<PEUiS;xXM
+zdQ1IAyCyH~$D3X#Rc+t+{jKLF%iDd<2C8KsZ70_ble1Tm{^$L=eTs_`!o)J^2Et=!
+z{@(@U^3?tuERK(bibMTd)osTrjTBY==1Jb@%Ti-EiH+uGoO-ai30KlK68CIf^ky7U
+z6IVfw8b_ZUE+BDRK3bLzsjR;)%cmuMfqw;HT){pCWp9mW!+VHx>7(4bq@7BPHIaO6
+z6s|@3x7d#D>Nx7p{bHX5^Ynr_n^*4y5JcjltCB<~4^YLQL1KV}LG0T8r3W8=FP*~g
+zOT6&=A1ywQ?pl@_pEj0mFffxV_WibgOyyvA;2GT$m8nXFPyJM1rD2N`N?)aZ6R{nR
+z)Q<jb<D;w=Z;L(>WEVMn&*8DLqJ@9U&Aio?H0cJKelaxXcGW%ED{`o@Rx8AH_v6lc
+zF5ah+pgobGAroo4xR}nloTkZ}MG^X4IZ$aYfd&1Cj1}Aqq#IZGZ~m*G_P@_!HFN`*
+zx?%SLE>w8$nL2@j-ipcrAhk3H3G5}{|FJ{}<U(=JrKO~l{Id0;wP-429oN>c!!Hz7
+zH6UZyXvEjK(W0|9P(Rf|i(wN=o>I|bewe0WiB{fI`Mt8ETG`#(3mNeS8h)3=kS>J<
+z9@ceD*{&z(W+q)J3-*y2=&IstURIR7N~5EG{*}8gb-R~>0?YzSC@Ejlyu&6QG+4yI
+z&4yDFy+`yqNF_oR#&OE=Y83OhH=?s|%DniH@Tf!Qexw4GGhiDBrM|=9jSrrcb8^?C
+zhflW_ICZWYAq=GG#&%`*%~pV*{My)vl|@zLlND!(^NyZJZGaYyd;fqV@bUe{P6eBH
+z;F-P(71-?b@-nPN(GB?8$VUeslW$Xs8qA-+8_~j)bE)q_mEHe!bn5irFW(J~70W+g
+zrER#OrO!dPVI*U6D17tq-oA4O!#&~7I-hPozZgK7{w07Bw<OYL6l9(QDB(E1mb$Te
+z!+K>-bl6>EIwKq1?6$I{1DMU*yHxLNK2KZ}`ekXGY7|f-sHY7Hr5+bI(!2H6vMxFq
+zkoBb2+H`j*Gx~!YtlXAGF6vsqHA>(rh#c<cg4lzQKZ_&ey}Zx^-Rqr(R?cdV=sW&r
+zo|x(g9QS`M3;%7s_#XkllE0SF|53?5D*1;|fBzTLKm7QIAOG;<zwu)S3|PtTE@AQe
+gQ{ds?UIMuvr2HC58~shd3K#)FZkSw0={r9BKddkJH~;_u
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/aula-13/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-13/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..90c9add3d542674c47298a4ac17d259b2e6d10e5
+--- /dev/null
++++ b/projeto-final/docs/aula-13/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,7 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 13
++Instrucoes: 100,0% (67/67)
++Linhas:     100,0% (16/16)
++Branches:   100,0% (2/2)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.interfaces.rest.ProdutoController: 16/16
+diff --git a/projeto-final/docs/aula-13/evidencias/mvn-verify.txt b/projeto-final/docs/aula-13/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..fd0484fe4f853a0e71788867f02b8b6b624cd21a
+--- /dev/null
++++ b/projeto-final/docs/aula-13/evidencias/mvn-verify.txt
+@@ -0,0 +1,14 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 15:32:20)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.1.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 112.4 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.080 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/lombok.config b/projeto-final/lombok.config
+new file mode 100644
+index 0000000000000000000000000000000000000000..df0e2531e0a19d0a37975bbf6d5412acce2a4d1a
+--- /dev/null
++++ b/projeto-final/lombok.config
+@@ -0,0 +1,3 @@
++config.stopBubbling = true
++# Marca codigo gerado pelo Lombok com @Generated para o JaCoCo ignorar na cobertura
++lombok.addLombokGeneratedAnnotation = true
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..ceeec257cbad3b7cb29b2ba07771ae6a56f029ad
+--- /dev/null
++++ b/projeto-final/pom.xml
+@@ -0,0 +1,115 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <parent>
++        <groupId>org.springframework.boot</groupId>
++        <artifactId>spring-boot-starter-parent</artifactId>
++        <version>3.3.5</version>
++        <relativePath/>
++    </parent>
++
++    <groupId>com.example</groupId>
++    <artifactId>projeto-final</artifactId>
++    <version>0.1.0</version>
++    <name>projeto-final</name>
++    <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
++
++    <properties>
++        <java.version>17</java.version>
++        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
++        <jacoco.version>0.8.12</jacoco.version>
++        <springdoc.version>2.6.0</springdoc.version>
++    </properties>
++
++    <dependencies>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-web</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-data-jpa</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>com.h2database</groupId>
++            <artifactId>h2</artifactId>
++            <scope>runtime</scope>
++        </dependency>
++        <dependency>
++            <groupId>org.projectlombok</groupId>
++            <artifactId>lombok</artifactId>
++            <optional>true</optional>
++        </dependency>
++        <!-- Documentacao Swagger / OpenAPI (stack da aula 13) -->
++        <dependency>
++            <groupId>org.springdoc</groupId>
++            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
++            <version>${springdoc.version}</version>
++        </dependency>
++
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-test</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <finalName>projeto-final</finalName>
++        <plugins>
++            <plugin>
++                <groupId>org.springframework.boot</groupId>
++                <artifactId>spring-boot-maven-plugin</artifactId>
++                <configuration>
++                    <excludes>
++                        <exclude>
++                            <groupId>org.projectlombok</groupId>
++                            <artifactId>lombok</artifactId>
++                        </exclude>
++                    </excludes>
++                </configuration>
++            </plugin>
++            <!-- Testes *IT tambem rodam no 'mvn verify' (surefire por padrao so pega *Test) -->
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-surefire-plugin</artifactId>
++                <configuration>
++                    <includes>
++                        <include>**/*Test.java</include>
++                        <include>**/*IT.java</include>
++                    </includes>
++                </configuration>
++            </plugin>
++            <!-- JaCoCo: o slide declara so o plugin, sem executions; sem prepare-agent nao ha relatorio -->
++            <plugin>
++                <groupId>org.jacoco</groupId>
++                <artifactId>jacoco-maven-plugin</artifactId>
++                <version>${jacoco.version}</version>
++                <configuration>
++                    <excludes>
++                        <exclude>com/example/projeto/ProjetoApplication.class</exclude>
++                    </excludes>
++                </configuration>
++                <executions>
++                    <execution>
++                        <id>prepare-agent</id>
++                        <goals>
++                            <goal>prepare-agent</goal>
++                        </goals>
++                    </execution>
++                    <execution>
++                        <id>report</id>
++                        <phase>verify</phase>
++                        <goals>
++                            <goal>report</goal>
++                        </goals>
++                    </execution>
++                </executions>
++            </plugin>
++        </plugins>
++    </build>
++</project>
+diff --git a/projeto-final/src/main/java/com/example/projeto/ProjetoApplication.java b/projeto-final/src/main/java/com/example/projeto/ProjetoApplication.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..554e36f1fa0254d3011e0f60f4747ff17d1718f3
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/ProjetoApplication.java
+@@ -0,0 +1,15 @@
++package com.example.projeto;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++/**
++ * Ponto de entrada da aplicacao do Projeto Final (API de Produtos).
++ */
++@SpringBootApplication
++public class ProjetoApplication {
++
++    public static void main(String[] args) {
++        SpringApplication.run(ProjetoApplication.class, args);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..227a31104ff5fbd63a43008539cc672226df1ceb
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+@@ -0,0 +1,38 @@
++package com.example.projeto.domain.model;
++
++import jakarta.persistence.Column;
++import jakarta.persistence.Entity;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
++import jakarta.persistence.Id;
++import lombok.Getter;
++import lombok.NoArgsConstructor;
++import lombok.Setter;
++import lombok.ToString;
++
++import java.math.BigDecimal;
++
++/**
++ * Entidade JPA Produto (modelo de dominio do MVP).
++ * <p>
++ * Usa {@code @Getter/@Setter} em vez de {@code @Data}: em entidades JPA o
++ * equals/hashCode gerado pelo {@code @Data} sobre todos os campos (inclusive o id
++ * gerado) causa problemas em colecoes e proxies do Hibernate.
++ */
++@Entity
++@Getter
++@Setter
++@ToString
++@NoArgsConstructor
++public class Produto {
++
++    @Id
++    @GeneratedValue(strategy = GenerationType.IDENTITY)
++    private Long id;
++
++    @Column(nullable = false)
++    private String nome;
++
++    @Column(precision = 10, scale = 2)
++    private BigDecimal preco;
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java b/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..765aeda80fae970ced247411a3d9201ba8650d0e
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
+@@ -0,0 +1,10 @@
++package com.example.projeto.domain.repository;
++
++import com.example.projeto.domain.model.Produto;
++import org.springframework.data.jpa.repository.JpaRepository;
++
++/**
++ * Repositorio Spring Data JPA de {@link Produto}.
++ */
++public interface ProdutoRepository extends JpaRepository<Produto, Long> {
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc973990f53e86fa1f97eb70bec2fe7fd1092eae
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+@@ -0,0 +1,71 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import lombok.RequiredArgsConstructor;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.DeleteMapping;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.PutMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.bind.annotation.RestController;
++
++import java.util.List;
++
++/**
++ * API REST de produtos (CRUD do MVP).
++ * <p>
++ * Pacote {@code interfaces.rest}: o slide usa {@code interface.rest}, mas
++ * {@code interface} e palavra reservada do Java e nao compila como nome de pacote.
++ */
++@RestController
++@RequestMapping("/produtos")
++@RequiredArgsConstructor
++public class ProdutoController {
++
++    private final ProdutoRepository repository;
++
++    @GetMapping
++    public List<Produto> listar() {
++        return repository.findAll();
++    }
++
++    @GetMapping("/{id}")
++    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
++        return repository.findById(id)
++                .map(ResponseEntity::ok)
++                .orElse(ResponseEntity.notFound().build());
++    }
++
++    @PostMapping
++    @ResponseStatus(HttpStatus.CREATED)
++    public Produto criar(@RequestBody Produto produto) {
++        produto.setId(null);
++        return repository.save(produto);
++    }
++
++    @PutMapping("/{id}")
++    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto dados) {
++        return repository.findById(id)
++                .map(existente -> {
++                    existente.setNome(dados.getNome());
++                    existente.setPreco(dados.getPreco());
++                    return ResponseEntity.ok(repository.save(existente));
++                })
++                .orElse(ResponseEntity.notFound().build());
++    }
++
++    @DeleteMapping("/{id}")
++    public ResponseEntity<Void> remover(@PathVariable Long id) {
++        if (!repository.existsById(id)) {
++            return ResponseEntity.notFound().build();
++        }
++        repository.deleteById(id);
++        return ResponseEntity.noContent().build();
++    }
++}
+diff --git a/projeto-final/src/main/resources/application.yml b/projeto-final/src/main/resources/application.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..fe9684d61b27feac52930463a93f8cf004c90364
+--- /dev/null
++++ b/projeto-final/src/main/resources/application.yml
+@@ -0,0 +1,18 @@
++spring:
++  application:
++    name: projeto-final
++  datasource:
++    url: jdbc:h2:mem:produtos;DB_CLOSE_DELAY=-1
++    username: sa
++    password: ""
++  jpa:
++    hibernate:
++      ddl-auto: update
++    open-in-view: false
++  h2:
++    console:
++      enabled: true
++
++springdoc:
++  swagger-ui:
++    path: /swagger-ui.html
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..429ac0e0c3a3d72ed7b424e5fe2da02e411eb27f
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+@@ -0,0 +1,91 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.math.BigDecimal;
++
++import static org.hamcrest.Matchers.hasSize;
++import static org.hamcrest.Matchers.is;
++import static org.hamcrest.Matchers.notNullValue;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * Teste de integracao do CRUD de produtos (contexto Spring completo + H2).
++ * {@code @Transactional} faz rollback ao fim de cada teste (isolamento - FIRST).
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++@Transactional
++class ProdutoControllerIT {
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Autowired
++    ProdutoRepository repository;
++
++    private Produto salvar(String nome, String preco) {
++        Produto p = new Produto();
++        p.setNome(nome);
++        p.setPreco(new BigDecimal(preco));
++        return repository.save(p);
++    }
++
++    @Test
++    void deveListarProdutosVazios() throws Exception {
++        mockMvc.perform(get("/produtos"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$", hasSize(0)));
++    }
++
++    @Test
++    void deveCriarProduto() throws Exception {
++        mockMvc.perform(post("/produtos")
++                        .contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"nome\":\"Notebook\",\"preco\":3500.00}"))
++                .andExpect(status().isCreated())
++                .andExpect(jsonPath("$.id", notNullValue()))
++                .andExpect(jsonPath("$.nome", is("Notebook")));
++    }
++
++    @Test
++    void deveBuscarAtualizarERemoverProduto() throws Exception {
++        Produto p = salvar("Mouse", "50.00");
++
++        mockMvc.perform(get("/produtos/{id}", p.getId()))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.nome", is("Mouse")));
++
++        mockMvc.perform(put("/produtos/{id}", p.getId())
++                        .contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"nome\":\"Mouse Gamer\",\"preco\":80.00}"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.nome", is("Mouse Gamer")));
++
++        mockMvc.perform(delete("/produtos/{id}", p.getId()))
++                .andExpect(status().isNoContent());
++    }
++
++    @Test
++    void deveRetornar404ParaProdutoInexistente() throws Exception {
++        mockMvc.perform(get("/produtos/{id}", 9999)).andExpect(status().isNotFound());
++        mockMvc.perform(put("/produtos/{id}", 9999)
++                        .contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"nome\":\"X\",\"preco\":1.00}"))
++                .andExpect(status().isNotFound());
++        mockMvc.perform(delete("/produtos/{id}", 9999)).andExpect(status().isNotFound());
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7828262761c01f6f5b31baf20f6d954372aa877e
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
+@@ -0,0 +1,29 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.InjectMocks;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.mockito.Mockito.verify;
++
++/**
++ * Teste unitario do controller com Mockito (sem contexto Spring).
++ */
++@ExtendWith(MockitoExtension.class)
++class ProdutoControllerTest {
++
++    @Mock
++    ProdutoRepository repository;
++
++    @InjectMocks
++    ProdutoController controller;
++
++    @Test
++    void deveChamarRepositoryAoListar() {
++        controller.listar();
++        verify(repository).findAll();
++    }
++}

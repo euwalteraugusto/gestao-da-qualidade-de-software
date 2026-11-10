@@ -1,0 +1,1540 @@
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index d797308fbaabf94475bc497eb32dda7ae46ce08b..3e33c79ddbe3e001f49f8e7d611522e18cfa6fbb 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -10,6 +10,7 @@ Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP d
+ | 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md) |
+ | 15 | Sprint 1: CI/CD, camada de servico, validacao (US-002), Testcontainers, JaCoCo >= 80% | [docs/aula-15](docs/aula-15/README.md) |
+ | 16 | Refatoracao: Strategy + Factory + Decorator no calculo de pedidos (US-003) | [docs/aula-16](docs/aula-16/README.md), [decisions.md](docs/decisions.md) |
++| 17 | Frontend Thymeleaf + AJAX, API externa ViaCEP, tratamento de erros (API em `/api/**`) | [docs/aula-17](docs/aula-17/README.md) |
+ 
+ ## Como executar
+ 
+diff --git a/projeto-final/docs/aula-17/README.md b/projeto-final/docs/aula-17/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6655c4a406c96689878bad1837ae235ddec83dad
+--- /dev/null
++++ b/projeto-final/docs/aula-17/README.md
+@@ -0,0 +1,80 @@
++# Aula 17 - Integracao Frontend-Backend (Thymeleaf + API externa)
++
++## Objetivo
++
++Integrar um frontend server-side (Thymeleaf) ao backend, consumir uma API REST externa com cliente
++HTTP Java e tratar erros no frontend.
++
++## Abordagem escolhida: **hibrida**
++
++| Camada | Caminho | Tecnologia |
++|--------|---------|------------|
++| Paginas server-side | `/produtos`, `/produtos/novo`, `/cep` | Thymeleaf + `@Controller` |
++| API REST (JSON) | `/api/produtos`, `/api/pedidos` | `@RestController` |
++| AJAX na pagina | botao "Atualizar via API" chama `fetch('/api/produtos')` | JavaScript |
++
++Para as paginas e a API conviverem, a API REST foi movida de `/produtos` para **`/api/produtos`**
++(e `/pedidos` para `/api/pedidos`), exatamente o caminho usado pelo exemplo AJAX do slide e pela
++aula 18 (`GET /api/produtos` com JWT). Os testes de integracao foram atualizados.
++
++Fluxo (diagrama `Aula_17_IQS.png`): Browser -> `ProdutoWebController` -> `ProdutoService` ->
++`ProdutoRepository` -> `List<Produto>` -> Model -> HTML.
++
++## Entregas (checklist)
++
++- [x] **Pagina Thymeleaf funcional**: listagem (`produtos/lista.html`) e formulario de cadastro com
++  validacao (`produtos/form.html`, `ProdutoForm` + `@Valid` + `BindingResult`, padrao PRG)
++- [x] **Integracao com API externa**: `CepService` (ViaCEP) com `RestTemplate` + pagina `/cep`
++- [x] **Tratamento de erros basico**: `WebExceptionHandler` (`RestClientException` -> 502, CEP inexistente -> 404,
++  CEP invalido -> 400) + template `error.html` (tambem usado pelo Spring Boot para erros genericos)
++- [x] **Tarefa pos-aula**: animacao de carregamento durante a chamada AJAX (`spinner` em `lista.html`)
++- [ ] **Tarefa pos-aula**: dropdown de categorias consumindo outra API - **nao implementado**
++  (o dominio `Produto` nao tem categoria; ficou registrado como sugestao de User Story futura)
++- [ ] PR com label `frontend-integration` - **a cargo do dono do repositorio**
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++M projeto-final/pom.xml                                    (0.5.0 + spring-boot-starter-thymeleaf)
++M projeto-final/README.md
++M projeto-final/src/main/resources/application.yml         (app.viacep.*)
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java (/api/produtos)
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java  (/api/pedidos)
++M projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java     (frete com escala 2: 15.00 / 0.00)
++A projeto-final/src/main/java/com/example/projeto/integration/{CepService,Endereco,CepNaoEncontradoException}.java
++A projeto-final/src/main/java/com/example/projeto/web/{ProdutoWebController,ProdutoForm,CepWebController,HomeController,WebExceptionHandler}.java
++A projeto-final/src/main/resources/templates/{produtos/lista.html,produtos/form.html,cep.html,error.html,fragments/cabecalho.html}
++A projeto-final/src/main/resources/static/css/app.css
++M projeto-final/src/test/java/com/example/projeto/interfaces/rest/{ProdutoControllerIT,PedidoControllerIT,ProdutoPostgresIT}.java (novas URLs)
++A projeto-final/src/test/java/com/example/projeto/integration/CepServiceTest.java
++A projeto-final/src/test/java/com/example/projeto/web/{ProdutoWebControllerIT,CepWebControllerIT}.java
++A projeto-final/docs/aula-17/README.md
++A projeto-final/docs/aula-17/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| `web/ProdutoController` com `@Controller` | Ja existe `interfaces.rest.ProdutoController`: dois beans `produtoController` -> `ConflictingBeanDefinitionException`; e ambos mapeados em `/produtos` -> mapeamento ambiguo | Classe `ProdutoWebController`; API movida para `/api/produtos` |
++| `cadastrar(@Valid ProdutoForm form, ...)` + template `th:object="${form}"` | O atributo do modelo se chamaria `produtoForm`; ao reexibir o formulario com erros o Thymeleaf nao encontra `form` (erro 500) | `@ModelAttribute("form")` e `GET /produtos/novo` populando `form` |
++| `CepService` com `private final RestTemplate restTemplate;` sem construtor/bean | Nao ha bean `RestTemplate` no Spring Boot -> a app nao sobe | `RestTemplate` criado via `RestTemplateBuilder` (timeouts de 3s configuraveis) |
++| `"https://viacep.com.br/ws/" + cep + "/json/"` | Concatenacao de entrada do usuario na URL (injecao de caminho, ex.: `../`) | CEP validado (8 digitos) e passado como variavel de URI `/{cep}/json/`; URL base em propriedade |
++| ViaCEP responde `200 {"erro": true}` para CEP inexistente | O slide trataria como endereco valido vazio | `CepNaoEncontradoException` -> pagina de erro 404 |
++| `WebExceptionHandler` devolve `"error"` | Status HTTP 200 numa pagina de erro; o advice global tambem capturaria erros da API REST | `@ResponseStatus(BAD_GATEWAY)` e `@ControllerAdvice(basePackages = "...web")` |
++| `#numbers.formatCurrency(produto.preco)` | Depende do locale do servidor (no Linux do Heroku sairia `$`/`¤`) e falha com preco nulo | `'R$ ' + #numbers.formatDecimal(produto.precoFormatado, 1, 'POINT', 2, 'COMMA')` (usa o getter null-safe da aula 15) |
++| AJAX "atualiza tabela dinamicamente" | Montar HTML com `innerHTML` a partir do JSON abriria XSS | Celulas criadas com `textContent`; `catch`/`finally` para erro e spinner |
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt), [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt)
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - paginas, formulario (PRG), `/api/produtos`, CEP real no ViaCEP e CEP invalido
++- [`evidencias/pagina-produtos.png`](evidencias/pagina-produtos.png), [`evidencias/pagina-form-erros.png`](evidencias/pagina-form-erros.png),
++  [`evidencias/pagina-cep.png`](evidencias/pagina-cep.png) - capturas das paginas (Edge headless)
++
++Resultado: **58 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`); cobertura **100% de linhas
++(179/179), 94,7% de branches**. A consulta real ao ViaCEP (`01001-000` -> Praca da Se, Sao Paulo/SP)
++foi feita contra a API publica durante a execucao local. A evidencia mostra tambem que um nome com
++`<script>` e exibido escapado (`&lt;script&gt;`) pelo Thymeleaf.
+diff --git a/projeto-final/docs/aula-17/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-17/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..cca34e16c76d6961944c50bc9fb679b25f0fc041
+--- /dev/null
++++ b/projeto-final/docs/aula-17/evidencias/curl-endpoints.txt
+@@ -0,0 +1,78 @@
++﻿# Evidencias de execucao - aula 17 (2026-11-10 16:26:14)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T16:26:13.322-03:00  INFO 6224 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 43.768 seconds (process running for 47.343)
++
++## API movida para /api/produtos: cria produto
++$ curl -X POST http://localhost:18089/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:26:17 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
++
++## API: cria produto
++$ curl -X POST http://localhost:18089/api/produtos -H 'Content-Type: application/json' -d '{"nome":"Fone <script>alert(1)</script>","preco":59.9}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:26:18 GMT
++
++{"id":2,"nome":"Fone <script>alert(1)</script>","preco":59.9}
++
++## Formulario web: POST valido -> 302 redirect (PRG)
++$ curl -X POST http://localhost:18089/produtos/cadastrar -d nome=Teclado+Mecanico&preco=349.90
++HTTP/1.1 302 
++Location: http://localhost:18089/produtos
++Content-Language: pt-BR
++Content-Length: 0
++Date: Tue, 10 Nov 2026 19:26:18 GMT
++
++## Pagina /produtos (HTML, trecho da tabela)
++$ curl http://localhost:18089/produtos
++HTTP/1.1 200 
++    <title>Lista de Produtos</title>
++            <td>Smartphone Xiaomi</td>
++            <td class="preco">R$ 1.999,90</td>
++            <td>Fone &lt;script&gt;alert(1)&lt;/script&gt;</td>
++            <td class="preco">R$ 59,90</td>
++            <td>Teclado Mecanico</td>
++            <td class="preco">R$ 349,90</td>
++
++## Formulario web: POST invalido -> reexibe form com erros (200)
++$ curl -X POST http://localhost:18089/produtos/cadastrar -d nome=&preco=-1
++HTTP/1.1 200 
++        <p class="erro">Informe o nome do produto</p>
++        <p class="erro">O preco deve ser maior que zero</p>
++
++## Pedido com frete em escala 2 (ajuste)
++$ curl -X POST http://localhost:18089/api/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"REGULAR","itens":[{"produtoId":2,"quantidade":1}]}'
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:26:22 GMT
++
++{"tipoCliente":"REGULAR","subtotal":59.90,"desconto":0.00,"frete":15.00,"total":74.90}
++
++## CEP real no ViaCEP (01001-000)
++$ curl http://localhost:18089/cep?cep=01001-000
++HTTP/1.1 200 
++        <p><strong>CEP:</strong> <span>01001-000</span></p>
++        <p><strong>Logradouro:</strong> <span>Praça da Sé</span></p>
++        <p><strong>Bairro:</strong> <span>Sé</span></p>
++        <p><strong>Cidade/UF:</strong> <span>São Paulo/SP</span></p>
++
++## CEP com formato invalido -> pagina de erro 400
++$ curl http://localhost:18089/cep?cep=../admin
++HTTP/1.1 400 
++        <p>CEP invalido: informe 8 digitos (ex.: 01001-000)</p>
++        <p>Codigo: <span>400</span></p>
++    <p><a class="botao secundario" href="/produtos">Voltar para produtos</a></p>
++
++## CEP inexistente (99999-999) -> pagina de erro 404
++$ curl http://localhost:18089/cep?cep=99999999
++HTTP/1.1 404 
++        <p>CEP nao encontrado: 99999999</p>
++        <p>Codigo: <span>404</span></p>
++    <p><a class="botao secundario" href="/produtos">Voltar para produtos</a></p>
++
+diff --git a/projeto-final/docs/aula-17/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-17/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2568457e60a7aa7855168c4e3a49dc26cfb8715b
+--- /dev/null
++++ b/projeto-final/docs/aula-17/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,36 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 17
++Instrucoes: 100,0% (838/838)
++Linhas:     100,0% (179/179)
++Branches:   94,7% (36/38)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
++  com.example.projeto.domain.service.ProdutoService: 13/13
++  com.example.projeto.config.FreteConfig: 2/2
++  com.example.projeto.interfaces.rest.PedidoRequest.Item: 1/1
++  com.example.projeto.interfaces.rest.ApiExceptionHandler: 18/18
++  com.example.projeto.interfaces.rest.PedidoController: 5/5
++  com.example.projeto.interfaces.rest.PedidoRequest: 1/1
++  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
++  com.example.projeto.interfaces.rest.ProdutoController: 7/7
++  com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog: 9/9
++  com.example.projeto.domain.pedido.frete.FreteFixo: 6/6
++  com.example.projeto.integration.Endereco: 1/1
++  com.example.projeto.integration.CepService: 17/17
++  com.example.projeto.integration.CepNaoEncontradoException: 2/2
++  com.example.projeto.web.ProdutoForm: 2/2
++  com.example.projeto.web.WebExceptionHandler: 12/12
++  com.example.projeto.web.CepWebController: 4/4
++  com.example.projeto.web.HomeController: 2/2
++  com.example.projeto.web.ProdutoWebController: 8/8
++  com.example.projeto.domain.pedido.desconto.DescontoPercentual: 6/6
++  com.example.projeto.domain.pedido.desconto.DescontoVIP: 2/2
++  com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory: 12/12
++  com.example.projeto.domain.pedido.desconto.DescontoPremium: 2/2
++  com.example.projeto.domain.pedido.desconto.SemDesconto: 2/2
++  com.example.projeto.domain.pedido.PedidoService: 10/10
++  com.example.projeto.domain.pedido.ItemPedido: 8/8
++  com.example.projeto.domain.pedido.TipoCliente: 4/4
++  com.example.projeto.domain.pedido.ResumoPedido: 1/1
++  com.example.projeto.domain.pedido.Pedido: 8/8
++  com.example.projeto.domain.model.Produto: 10/10
+diff --git a/projeto-final/docs/aula-17/evidencias/mvn-verify.txt b/projeto-final/docs/aula-17/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..59745c2610c255c5e70c49b8d8122fc4d5b5078a
+--- /dev/null
++++ b/projeto-final/docs/aula-17/evidencias/mvn-verify.txt
+@@ -0,0 +1,30 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 16:25:25)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.5.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.603 s -- in com.example.projeto.domain.model.ProdutoTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.792 s -- in com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactoryTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 15.11 s -- in com.example.projeto.domain.pedido.frete.CalculadoraFreteTest
++[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.424 s -- in com.example.projeto.domain.pedido.PedidoServiceTest
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 45.40 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.421 s -- in com.example.projeto.domain.service.ProdutoServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.433 s -- in com.example.projeto.integration.CepServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.48 s -- in com.example.projeto.interfaces.rest.PedidoControllerIT
++[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.981 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.515 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++2026-11-10T16:25:00.827-03:00 ERROR 5296 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
++See https://java.testcontainers.org/on_failure.html for more details.
++[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0.031 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
++[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.81 s -- in com.example.projeto.web.CepWebControllerIT
++[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.939 s -- in com.example.projeto.web.ProdutoWebControllerIT
++[WARNING] Tests run: 58, Failures: 0, Errors: 0, Skipped: 1
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] All coverage checks have been met.
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/docs/aula-17/evidencias/pagina-cep.png b/projeto-final/docs/aula-17/evidencias/pagina-cep.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..46bea682a72ba1eb6d59cb26d577e76b3292ef1f
+GIT binary patch
+literal 8217
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/aula-17/evidencias/pagina-form-erros.png b/projeto-final/docs/aula-17/evidencias/pagina-form-erros.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..4bd236576ee63bca41086464b470222774f768d4
+GIT binary patch
+literal 7875
+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
+O0MOS(>g1lXzW;B|kB!{`
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/aula-17/evidencias/pagina-produtos.png b/projeto-final/docs/aula-17/evidencias/pagina-produtos.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..d0d7fe6930de9213687409e58a1974c05f5d3c37
+GIT binary patch
+literal 7670
+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
+D+oBDj
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index 0dbcfcf294547b32b9b7aec57f7133becf6b8ca0..bdbc6e63795f8910b9915625f150e9fb1718934b 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.4.0</version>
++    <version>0.5.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+@@ -55,6 +55,11 @@
+             <version>${springdoc.version}</version>
+         </dependency>
+ 
++        <!-- Frontend server-side (aula 17) -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-thymeleaf</artifactId>
++        </dependency>
+         <!-- Bean Validation (US-002) -->
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java
+index a2d563d84a004d9375d1391465117505a466dbba..8b018225cf6617e7451a69762de5deb169df2183 100644
+--- a/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java
+@@ -1,6 +1,7 @@
+ package com.example.projeto.domain.pedido.frete;
+ 
+ import java.math.BigDecimal;
++import java.math.RoundingMode;
+ import java.util.Objects;
+ 
+ /**
+@@ -9,16 +10,19 @@ import java.util.Objects;
+  */
+ public class FreteFixo implements CalculadoraFrete {
+ 
++    private static final BigDecimal FRETE_GRATIS = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
++
+     private final BigDecimal valorMinimoFreteGratis;
+     private final BigDecimal valorFrete;
+ 
+     public FreteFixo(BigDecimal valorMinimoFreteGratis, BigDecimal valorFrete) {
+         this.valorMinimoFreteGratis = Objects.requireNonNull(valorMinimoFreteGratis);
+-        this.valorFrete = Objects.requireNonNull(valorFrete);
++        // Escala monetaria fixa: o YAML le "15.00" como 15.0 (ajuste da aula 17)
++        this.valorFrete = Objects.requireNonNull(valorFrete).setScale(2, RoundingMode.HALF_UP);
+     }
+ 
+     @Override
+     public BigDecimal calcular(BigDecimal total) {
+-        return total.compareTo(valorMinimoFreteGratis) < 0 ? valorFrete : BigDecimal.ZERO;
++        return total.compareTo(valorMinimoFreteGratis) < 0 ? valorFrete : FRETE_GRATIS;
+     }
+ }
+diff --git a/projeto-final/src/main/java/com/example/projeto/integration/CepNaoEncontradoException.java b/projeto-final/src/main/java/com/example/projeto/integration/CepNaoEncontradoException.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3940a7e9cc1570dff1ccffbf0df353cbc49da07d
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/integration/CepNaoEncontradoException.java
+@@ -0,0 +1,11 @@
++package com.example.projeto.integration;
++
++/**
++ * CEP com formato valido, mas inexistente na base do ViaCEP.
++ */
++public class CepNaoEncontradoException extends RuntimeException {
++
++    public CepNaoEncontradoException(String cep) {
++        super("CEP nao encontrado: " + cep);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/integration/CepService.java b/projeto-final/src/main/java/com/example/projeto/integration/CepService.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fde060b27d9695087852999b97e9528e5dbeec93
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/integration/CepService.java
+@@ -0,0 +1,54 @@
++package com.example.projeto.integration;
++
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.boot.web.client.RestTemplateBuilder;
++import org.springframework.stereotype.Service;
++import org.springframework.web.client.RestTemplate;
++
++import java.time.Duration;
++import java.util.regex.Pattern;
++
++/**
++ * Consome a API externa ViaCEP com {@link RestTemplate}.
++ * <p>
++ * Diferencas em relacao ao slide: o {@code RestTemplate} e criado pelo
++ * {@link RestTemplateBuilder} (com timeouts - uma API lenta nao pode prender as threads
++ * do servidor) e o CEP e validado e passado como variavel de URI, em vez de
++ * concatenado na URL (evita injecao de caminho como {@code "../"}).
++ */
++@Service
++public class CepService {
++
++    private static final Pattern CEP_VALIDO = Pattern.compile("\\d{8}");
++
++    private final RestTemplate restTemplate;
++    private final String urlTemplate;
++
++    public CepService(RestTemplateBuilder builder,
++                      @Value("${app.viacep.url:https://viacep.com.br/ws}") String baseUrl,
++                      @Value("${app.viacep.timeout:3s}") Duration timeout) {
++        this.urlTemplate = baseUrl + "/{cep}/json/";
++        this.restTemplate = builder
++                .setConnectTimeout(timeout)
++                .setReadTimeout(timeout)
++                .build();
++    }
++
++    public Endereco buscarPorCep(String cep) {
++        String normalizado = normalizar(cep);
++        Endereco endereco = restTemplate.getForObject(urlTemplate, Endereco.class, normalizado);
++        if (endereco == null || Boolean.TRUE.equals(endereco.erro())) {
++            throw new CepNaoEncontradoException(normalizado);
++        }
++        return endereco;
++    }
++
++    /** Remove mascara (01001-000 -> 01001000) e exige 8 digitos. */
++    static String normalizar(String cep) {
++        String digitos = cep == null ? "" : cep.replace("-", "").trim();
++        if (!CEP_VALIDO.matcher(digitos).matches()) {
++            throw new IllegalArgumentException("CEP invalido: informe 8 digitos (ex.: 01001-000)");
++        }
++        return digitos;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/integration/Endereco.java b/projeto-final/src/main/java/com/example/projeto/integration/Endereco.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..493864d0073236119430122bc3cf38764be115f8
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/integration/Endereco.java
+@@ -0,0 +1,17 @@
++package com.example.projeto.integration;
++
++import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
++
++/**
++ * Endereco retornado pela API publica ViaCEP (https://viacep.com.br).
++ * {@code erro = true} indica CEP com formato valido mas inexistente.
++ */
++@JsonIgnoreProperties(ignoreUnknown = true)
++public record Endereco(String cep,
++                       String logradouro,
++                       String complemento,
++                       String bairro,
++                       String localidade,
++                       String uf,
++                       Boolean erro) {
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java
+index c725b07cf27efbe3ee6897ddf7d6abc9e01822b5..2d52802a81504e1513f38e559350dd1052880048 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java
+@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
+  * US-003: calcula subtotal, desconto por tipo de cliente, frete e total de um pedido.
+  */
+ @RestController
+-@RequestMapping("/pedidos")
++@RequestMapping("/api/pedidos")
+ @RequiredArgsConstructor
+ public class PedidoController {
+ 
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+index b9b28b777b64b3dd0cb2e12f1f8efbfc0e83f948..5be002d764d779b27e02b3752c253f6ae7ddf189 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+@@ -25,7 +25,7 @@ import java.util.List;
+  * {@code interface} e palavra reservada do Java e nao compila como nome de pacote.
+  */
+ @RestController
+-@RequestMapping("/produtos")
++@RequestMapping("/api/produtos")
+ @RequiredArgsConstructor
+ public class ProdutoController {
+ 
+@@ -36,7 +36,7 @@ public class ProdutoController {
+         return service.listarTodos();
+     }
+ 
+-    /** US-001: GET /produtos/buscar?nome=Xiaomi */
++    /** US-001: GET /api/produtos/buscar?nome=Xiaomi */
+     @GetMapping("/buscar")
+     public List<Produto> buscarPorNome(@RequestParam String nome) {
+         return service.buscarPorNome(nome);
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/CepWebController.java b/projeto-final/src/main/java/com/example/projeto/web/CepWebController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3d1870f6d1f762d9c67dc6c66ffbeb37690c008c
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/web/CepWebController.java
+@@ -0,0 +1,27 @@
++package com.example.projeto.web;
++
++import com.example.projeto.integration.CepService;
++import lombok.RequiredArgsConstructor;
++import org.springframework.stereotype.Controller;
++import org.springframework.ui.Model;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.RequestParam;
++
++/**
++ * Pagina de consulta de CEP (integracao com API externa ViaCEP).
++ */
++@Controller
++@RequiredArgsConstructor
++public class CepWebController {
++
++    private final CepService cepService;
++
++    @GetMapping("/cep")
++    public String consultar(@RequestParam(required = false) String cep, Model model) {
++        if (cep != null && !cep.isBlank()) {
++            model.addAttribute("cep", cep);
++            model.addAttribute("endereco", cepService.buscarPorCep(cep));
++        }
++        return "cep";
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/HomeController.java b/projeto-final/src/main/java/com/example/projeto/web/HomeController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ef2649ae1d6fb9c44e88564043f649ea0a4d50c
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/web/HomeController.java
+@@ -0,0 +1,16 @@
++package com.example.projeto.web;
++
++import org.springframework.stereotype.Controller;
++import org.springframework.web.bind.annotation.GetMapping;
++
++/**
++ * Pagina inicial: redireciona para a listagem de produtos.
++ */
++@Controller
++public class HomeController {
++
++    @GetMapping("/")
++    public String home() {
++        return "redirect:/produtos";
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/ProdutoForm.java b/projeto-final/src/main/java/com/example/projeto/web/ProdutoForm.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6488de45c4d65b56f3858ca06d9f7a358339e7f0
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/web/ProdutoForm.java
+@@ -0,0 +1,32 @@
++package com.example.projeto.web;
++
++import com.example.projeto.domain.model.Produto;
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotNull;
++import jakarta.validation.constraints.Positive;
++import jakarta.validation.constraints.Size;
++import lombok.Getter;
++import lombok.Setter;
++
++import java.math.BigDecimal;
++
++/**
++ * Objeto de formulario (form backing bean) do cadastro de produto na interface web.
++ * Classe mutavel (getters/setters) porque o Thymeleaf faz o binding campo a campo.
++ */
++@Getter
++@Setter
++public class ProdutoForm {
++
++    @NotBlank(message = "Informe o nome do produto")
++    @Size(max = 120, message = "O nome deve ter no maximo 120 caracteres")
++    private String nome;
++
++    @NotNull(message = "Informe o preco")
++    @Positive(message = "O preco deve ser maior que zero")
++    private BigDecimal preco;
++
++    public Produto toEntity() {
++        return new Produto(nome.trim(), preco);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java b/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c3e20e1839ab6d8045470e6b472751ea300c95e8
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java
+@@ -0,0 +1,52 @@
++package com.example.projeto.web;
++
++import com.example.projeto.domain.service.ProdutoService;
++import jakarta.validation.Valid;
++import lombok.RequiredArgsConstructor;
++import org.springframework.stereotype.Controller;
++import org.springframework.ui.Model;
++import org.springframework.validation.BindingResult;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.ModelAttribute;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestMapping;
++
++/**
++ * Interface web server-side (Thymeleaf) de produtos.
++ * <p>
++ * Nome {@code ProdutoWebController} (o slide usa {@code ProdutoController}): ja existe
++ * um bean {@code produtoController} na API REST e dois beans com o mesmo nome
++ * impedem a aplicacao de subir ({@code ConflictingBeanDefinitionException}).
++ */
++@Controller
++@RequestMapping("/produtos")
++@RequiredArgsConstructor
++public class ProdutoWebController {
++
++    static final String VIEW_LISTA = "produtos/lista";
++    static final String VIEW_FORM = "produtos/form";
++
++    private final ProdutoService service;
++
++    @GetMapping
++    public String listar(Model model) {
++        model.addAttribute("produtos", service.listarTodos());
++        return VIEW_LISTA;
++    }
++
++    @GetMapping("/novo")
++    public String novo(Model model) {
++        model.addAttribute("form", new ProdutoForm());
++        return VIEW_FORM;
++    }
++
++    /** PRG (Post/Redirect/Get): apos salvar redireciona, evitando reenvio com F5. */
++    @PostMapping("/cadastrar")
++    public String cadastrar(@Valid @ModelAttribute("form") ProdutoForm form, BindingResult result) {
++        if (result.hasErrors()) {
++            return VIEW_FORM;
++        }
++        service.cadastrar(form.toEntity());
++        return "redirect:/produtos";
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/WebExceptionHandler.java b/projeto-final/src/main/java/com/example/projeto/web/WebExceptionHandler.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fdb7a0a6edc3366f25ffef2580bdf10b7bff12b3
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/web/WebExceptionHandler.java
+@@ -0,0 +1,50 @@
++package com.example.projeto.web;
++
++import com.example.projeto.integration.CepNaoEncontradoException;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.http.HttpStatus;
++import org.springframework.ui.Model;
++import org.springframework.web.bind.annotation.ControllerAdvice;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.ResponseStatus;
++import org.springframework.web.client.RestClientException;
++
++/**
++ * Tratamento de erros das paginas web (Thymeleaf). Restrito ao pacote {@code web}
++ * para nao interferir na API REST, que responde JSON (ProblemDetail).
++ * <p>
++ * Diferenca em relacao ao slide: alem de mostrar a pagina de erro, define o status
++ * HTTP correto (o slide devolvia a pagina "error" com status 200).
++ */
++@ControllerAdvice(basePackages = "com.example.projeto.web")
++public class WebExceptionHandler {
++
++    private static final Logger log = LoggerFactory.getLogger(WebExceptionHandler.class);
++    private static final String VIEW_ERRO = "error";
++
++    @ExceptionHandler(RestClientException.class)
++    @ResponseStatus(HttpStatus.BAD_GATEWAY)
++    public String handleApiError(RestClientException ex, Model model) {
++        log.warn("Falha ao consultar API externa: {}", ex.getMessage());
++        model.addAttribute("error", "Falha ao consultar API externa");
++        model.addAttribute("status", HttpStatus.BAD_GATEWAY.value());
++        return VIEW_ERRO;
++    }
++
++    @ExceptionHandler(CepNaoEncontradoException.class)
++    @ResponseStatus(HttpStatus.NOT_FOUND)
++    public String handleCepNaoEncontrado(CepNaoEncontradoException ex, Model model) {
++        model.addAttribute("error", ex.getMessage());
++        model.addAttribute("status", HttpStatus.NOT_FOUND.value());
++        return VIEW_ERRO;
++    }
++
++    @ExceptionHandler(IllegalArgumentException.class)
++    @ResponseStatus(HttpStatus.BAD_REQUEST)
++    public String handleEntradaInvalida(IllegalArgumentException ex, Model model) {
++        model.addAttribute("error", ex.getMessage());
++        model.addAttribute("status", HttpStatus.BAD_REQUEST.value());
++        return VIEW_ERRO;
++    }
++}
+diff --git a/projeto-final/src/main/resources/application.yml b/projeto-final/src/main/resources/application.yml
+index 2aaa5ca9b175d6845409ddfb385cf99d7666151c..9c1aafd5f40424219f17c30f527c1a6f64ec7e7f 100644
+--- a/projeto-final/src/main/resources/application.yml
++++ b/projeto-final/src/main/resources/application.yml
+@@ -17,6 +17,9 @@ app:
+   frete:
+     valor-minimo-frete-gratis: 100.00
+     valor-fixo: 15.00
++  viacep:
++    url: https://viacep.com.br/ws
++    timeout: 3s
+ 
+ springdoc:
+   swagger-ui:
+diff --git a/projeto-final/src/main/resources/static/css/app.css b/projeto-final/src/main/resources/static/css/app.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..034af1ab7b57fb019df243e8a9ce3f5fa0519156
+--- /dev/null
++++ b/projeto-final/src/main/resources/static/css/app.css
+@@ -0,0 +1,22 @@
++/* Estilo minimo da interface web do Projeto Final */
++:root { --cor: #1d4ed8; --borda: #d1d5db; --erro: #b91c1c; --fundo: #f8fafc; }
++* { box-sizing: border-box; }
++body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--fundo); color: #111827; }
++header { background: var(--cor); color: #fff; padding: 12px 24px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
++header a { color: #fff; text-decoration: none; font-weight: 600; }
++header .usuario { margin-left: auto; font-size: 14px; }
++main { max-width: 900px; margin: 24px auto; padding: 0 16px; }
++table { width: 100%; border-collapse: collapse; background: #fff; }
++th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--borda); }
++td.preco, th.preco { text-align: right; font-variant-numeric: tabular-nums; }
++.botao { display: inline-block; background: var(--cor); color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
++.botao.secundario { background: #fff; color: var(--cor); border: 1px solid var(--cor); }
++.acoes { display: flex; gap: 8px; margin: 16px 0; align-items: center; flex-wrap: wrap; }
++form.cartao, .cartao { background: #fff; padding: 16px; border: 1px solid var(--borda); border-radius: 8px; }
++label { display: block; margin-top: 12px; font-weight: 600; }
++input { width: 100%; max-width: 360px; padding: 8px; border: 1px solid var(--borda); border-radius: 6px; font-size: 15px; }
++.erro { color: var(--erro); margin: 4px 0 0; font-size: 14px; }
++.alerta { background: #fef2f2; border: 1px solid #fecaca; color: var(--erro); padding: 12px; border-radius: 8px; }
++.spinner { width: 18px; height: 18px; border: 3px solid #bfdbfe; border-top-color: var(--cor); border-radius: 50%; animation: girar .8s linear infinite; display: none; }
++.spinner.ativo { display: inline-block; }
++@keyframes girar { to { transform: rotate(360deg); } }
+diff --git a/projeto-final/src/main/resources/templates/cep.html b/projeto-final/src/main/resources/templates/cep.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..20be2407bb63d1eb7253fe8cd904f34f9a038a18
+--- /dev/null
++++ b/projeto-final/src/main/resources/templates/cep.html
+@@ -0,0 +1,27 @@
++<!DOCTYPE html>
++<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <title>Consulta de CEP</title>
++    <link rel="stylesheet" th:href="@{/css/app.css}">
++</head>
++<body>
++<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
++<main>
++    <h1>Consulta de CEP (ViaCEP)</h1>
++    <form class="cartao" th:action="@{/cep}" method="get">
++        <label for="cep">CEP</label>
++        <input id="cep" name="cep" th:value="${cep}" placeholder="01001-000" maxlength="9">
++        <div class="acoes"><button class="botao" type="submit">Consultar</button></div>
++    </form>
++
++    <div class="cartao" th:if="${endereco != null}" id="resultado">
++        <p><strong>CEP:</strong> <span th:text="${endereco.cep}"></span></p>
++        <p><strong>Logradouro:</strong> <span th:text="${endereco.logradouro}"></span></p>
++        <p><strong>Bairro:</strong> <span th:text="${endereco.bairro}"></span></p>
++        <p><strong>Cidade/UF:</strong> <span th:text="${endereco.localidade + '/' + endereco.uf}"></span></p>
++    </div>
++</main>
++</body>
++</html>
+diff --git a/projeto-final/src/main/resources/templates/error.html b/projeto-final/src/main/resources/templates/error.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..9bd74b44853489bf3fa33a8dc2bf4f379220ee4b
+--- /dev/null
++++ b/projeto-final/src/main/resources/templates/error.html
+@@ -0,0 +1,20 @@
++<!DOCTYPE html>
++<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <title>Erro</title>
++    <link rel="stylesheet" th:href="@{/css/app.css}">
++</head>
++<body>
++<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
++<main>
++    <h1>Ops! Algo deu errado</h1>
++    <div class="alerta" id="mensagem-erro">
++        <p th:text="${error != null ? error : 'Erro inesperado'}">Erro</p>
++        <p th:if="${status != null}">Codigo: <span th:text="${status}"></span></p>
++    </div>
++    <p><a class="botao secundario" th:href="@{/produtos}">Voltar para produtos</a></p>
++</main>
++</body>
++</html>
+diff --git a/projeto-final/src/main/resources/templates/fragments/cabecalho.html b/projeto-final/src/main/resources/templates/fragments/cabecalho.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e171b3d4bf9ce54dfdab0d054ce45686dea3028
+--- /dev/null
++++ b/projeto-final/src/main/resources/templates/fragments/cabecalho.html
+@@ -0,0 +1,10 @@
++<!DOCTYPE html>
++<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<body>
++<header th:fragment="cabecalho">
++    <a th:href="@{/produtos}">Produtos</a>
++    <a th:href="@{/cep}">Consulta CEP</a>
++    <a th:href="@{/swagger-ui.html}">API (Swagger)</a>
++</header>
++</body>
++</html>
+diff --git a/projeto-final/src/main/resources/templates/produtos/form.html b/projeto-final/src/main/resources/templates/produtos/form.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..27414279fac9724df636fcee394c9b7d86be62c9
+--- /dev/null
++++ b/projeto-final/src/main/resources/templates/produtos/form.html
+@@ -0,0 +1,29 @@
++<!DOCTYPE html>
++<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <title>Novo Produto</title>
++    <link rel="stylesheet" th:href="@{/css/app.css}">
++</head>
++<body>
++<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
++<main>
++    <h1>Novo produto</h1>
++    <form class="cartao" th:action="@{/produtos/cadastrar}" th:object="${form}" method="post" novalidate>
++        <label for="nome">Nome</label>
++        <input id="nome" th:field="*{nome}" type="text" maxlength="120">
++        <p class="erro" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></p>
++
++        <label for="preco">Preco (R$)</label>
++        <input id="preco" th:field="*{preco}" type="number" step="0.01" min="0.01">
++        <p class="erro" th:if="${#fields.hasErrors('preco')}" th:errors="*{preco}"></p>
++
++        <div class="acoes">
++            <button class="botao" type="submit">Salvar</button>
++            <a class="botao secundario" th:href="@{/produtos}">Cancelar</a>
++        </div>
++    </form>
++</main>
++</body>
++</html>
+diff --git a/projeto-final/src/main/resources/templates/produtos/lista.html b/projeto-final/src/main/resources/templates/produtos/lista.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..314891dc131b05d478c7d491ac9ff2decb340475
+--- /dev/null
++++ b/projeto-final/src/main/resources/templates/produtos/lista.html
+@@ -0,0 +1,76 @@
++<!DOCTYPE html>
++<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1">
++    <title>Lista de Produtos</title>
++    <link rel="stylesheet" th:href="@{/css/app.css}">
++</head>
++<body>
++<header th:replace="~{fragments/cabecalho :: cabecalho}"></header>
++<main>
++    <h1>Produtos</h1>
++
++    <div class="acoes">
++        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto">Novo produto</a>
++        <button type="button" class="botao secundario" id="recarregar">Atualizar via API (AJAX)</button>
++        <span class="spinner" id="carregando" role="status" aria-label="Carregando"></span>
++        <span id="status-ajax"></span>
++    </div>
++
++    <table>
++        <thead>
++        <tr><th>Nome</th><th class="preco">Preco</th></tr>
++        </thead>
++        <tbody id="tabela-produtos">
++        <tr th:each="produto : ${produtos}">
++            <td th:text="${produto.nome}">Produto</td>
++            <td class="preco" th:text="${'R$ ' + #numbers.formatDecimal(produto.precoFormatado, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
++        </tr>
++        <tr th:if="${#lists.isEmpty(produtos)}">
++            <td colspan="2">Nenhum produto cadastrado.</td>
++        </tr>
++        </tbody>
++    </table>
++</main>
++
++<script>
++    // Tarefa pos-aula 17: recarrega a tabela consumindo a API REST, com animacao de carregamento.
++    // As celulas sao montadas com textContent (nunca innerHTML) para evitar XSS com nomes maliciosos.
++    (function () {
++        const botao = document.getElementById('recarregar');
++        const spinner = document.getElementById('carregando');
++        const status = document.getElementById('status-ajax');
++        const corpo = document.getElementById('tabela-produtos');
++        const moeda = new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'});
++
++        botao.addEventListener('click', function () {
++            spinner.classList.add('ativo');
++            botao.disabled = true;
++            status.textContent = '';
++            fetch('/api/produtos', {headers: {'Accept': 'application/json'}, credentials: 'same-origin'})
++                .then(function (resposta) {
++                    if (!resposta.ok) { throw new Error('HTTP ' + resposta.status); }
++                    return resposta.json();
++                })
++                .then(function (produtos) {
++                    corpo.replaceChildren();
++                    produtos.forEach(function (p) {
++                        const tr = document.createElement('tr');
++                        const nome = document.createElement('td');
++                        nome.textContent = p.nome;
++                        const preco = document.createElement('td');
++                        preco.className = 'preco';
++                        preco.textContent = moeda.format(p.preco || 0);
++                        tr.append(nome, preco);
++                        corpo.appendChild(tr);
++                    });
++                    status.textContent = produtos.length + ' produto(s) carregado(s) via API';
++                })
++                .catch(function (erro) { status.textContent = 'Falha ao carregar: ' + erro.message; })
++                .finally(function () { spinner.classList.remove('ativo'); botao.disabled = false; });
++        });
++    })();
++</script>
++</body>
++</html>
+diff --git a/projeto-final/src/test/java/com/example/projeto/integration/CepServiceTest.java b/projeto-final/src/test/java/com/example/projeto/integration/CepServiceTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6f1ecba7a56071b086c166a2d36a88d0e9d11cd2
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/integration/CepServiceTest.java
+@@ -0,0 +1,74 @@
++package com.example.projeto.integration;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.test.context.TestPropertySource;
++import org.springframework.test.web.client.MockRestServiceServer;
++import org.springframework.web.client.HttpServerErrorException;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
++import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
++import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
++
++/**
++ * Testa a integracao com o ViaCEP sem acessar a internet: o
++ * {@link MockRestServiceServer} simula as respostas HTTP.
++ */
++@RestClientTest(CepService.class)
++@TestPropertySource(properties = "app.viacep.url=https://viacep.test/ws")
++class CepServiceTest {
++
++    @Autowired
++    CepService cepService;
++
++    @Autowired
++    MockRestServiceServer server;
++
++    @Test
++    void deveBuscarEnderecoPorCepComMascara() {
++        server.expect(requestTo("https://viacep.test/ws/01001000/json/"))
++                .andRespond(withSuccess("""
++                        {"cep":"01001-000","logradouro":"Praca da Se","bairro":"Se",
++                         "localidade":"Sao Paulo","uf":"SP","ibge":"3550308"}
++                        """, MediaType.APPLICATION_JSON));
++
++        Endereco endereco = cepService.buscarPorCep("01001-000");
++
++        assertThat(endereco.localidade()).isEqualTo("Sao Paulo");
++        assertThat(endereco.uf()).isEqualTo("SP");
++        server.verify();
++    }
++
++    @Test
++    void deveLancarCepNaoEncontradoQuandoViaCepRetornaErro() {
++        server.expect(requestTo("https://viacep.test/ws/99999999/json/"))
++                .andRespond(withSuccess("{\"erro\": true}", MediaType.APPLICATION_JSON));
++
++        assertThatThrownBy(() -> cepService.buscarPorCep("99999999"))
++                .isInstanceOf(CepNaoEncontradoException.class)
++                .hasMessageContaining("99999999");
++    }
++
++    @Test
++    void devePropagarFalhaDaApiExterna() {
++        server.expect(requestTo("https://viacep.test/ws/01001000/json/"))
++                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
++
++        assertThatThrownBy(() -> cepService.buscarPorCep("01001000"))
++                .isInstanceOf(HttpServerErrorException.class);
++    }
++
++    @Test
++    void deveRejeitarCepInvalidoSemChamarApi() {
++        assertThatThrownBy(() -> cepService.buscarPorCep("../admin"))
++                .isInstanceOf(IllegalArgumentException.class);
++        assertThatThrownBy(() -> cepService.buscarPorCep(null))
++                .isInstanceOf(IllegalArgumentException.class);
++        server.verify();
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+index 5c14e20695c61e7d64e48da43ef3d40c4a26ad7c..c388a3449be870956ba4256e808158fd8655d690 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
+ @Transactional
+ class PedidoControllerIT {
+ 
+-    private static final String URL = "/pedidos/total";
++    private static final String URL = "/api/pedidos/total";
+ 
+     @Autowired
+     MockMvc mockMvc;
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+index 174cf2ba6d08bb0ce76e6c26e453e46360ed3798..d7e0f935b67984bc610e01e5f6720abcf91de0a2 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
+ @Transactional
+ class ProdutoControllerIT {
+ 
+-    private static final String URL = "/produtos";
++    private static final String URL = "/api/produtos";
+ 
+     @Autowired
+     MockMvc mockMvc;
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+index 30091eb4115ad4998575dfbbc8d7381ce9843e98..3db230cb6722625d31424391df4b826d77424190 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+@@ -59,7 +59,7 @@ class ProdutoPostgresIT {
+         assertThat(repository.findById(salvo.getId())).get()
+                 .extracting(Produto::getPreco).isEqualTo(new BigDecimal("1999.90"));
+ 
+-        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
++        mockMvc.perform(get("/api/produtos/buscar?nome=xiaomi"))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
+     }
+diff --git a/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java b/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..daaa313d9e1664e2baf4fc3a285d2a3b7e57be5d
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java
+@@ -0,0 +1,82 @@
++package com.example.projeto.web;
++
++import com.example.projeto.integration.CepNaoEncontradoException;
++import com.example.projeto.integration.CepService;
++import com.example.projeto.integration.Endereco;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.client.ResourceAccessException;
++
++import static org.hamcrest.Matchers.containsString;
++import static org.mockito.Mockito.when;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
++
++/**
++ * Pagina de CEP e tratamento de erros da API externa ({@link WebExceptionHandler}).
++ * O {@link CepService} e substituido por um mock: o teste nao depende da internet.
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++class CepWebControllerIT {
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @MockBean
++    CepService cepService;
++
++    @Test
++    void deveExibirFormularioSemConsultar() throws Exception {
++        mockMvc.perform(get("/cep"))
++                .andExpect(status().isOk())
++                .andExpect(view().name("cep"))
++                .andExpect(model().attributeDoesNotExist("endereco"));
++    }
++
++    @Test
++    void deveExibirEnderecoEncontrado() throws Exception {
++        when(cepService.buscarPorCep("01001-000")).thenReturn(
++                new Endereco("01001-000", "Praca da Se", null, "Se", "Sao Paulo", "SP", null));
++
++        mockMvc.perform(get("/cep").param("cep", "01001-000"))
++                .andExpect(status().isOk())
++                .andExpect(content().string(containsString("Praca da Se")))
++                .andExpect(content().string(containsString("Sao Paulo/SP")));
++    }
++
++    @Test
++    void deveExibirPaginaDeErroQuandoApiExternaFalha() throws Exception {
++        when(cepService.buscarPorCep("01001000")).thenThrow(new ResourceAccessException("timeout"));
++
++        mockMvc.perform(get("/cep").param("cep", "01001000"))
++                .andExpect(status().isBadGateway())
++                .andExpect(view().name("error"))
++                .andExpect(content().string(containsString("Falha ao consultar API externa")));
++    }
++
++    @Test
++    void deveExibirErro404ParaCepInexistente() throws Exception {
++        when(cepService.buscarPorCep("99999999")).thenThrow(new CepNaoEncontradoException("99999999"));
++
++        mockMvc.perform(get("/cep").param("cep", "99999999"))
++                .andExpect(status().isNotFound())
++                .andExpect(content().string(containsString("CEP nao encontrado")));
++    }
++
++    @Test
++    void deveExibirErro400ParaCepInvalido() throws Exception {
++        when(cepService.buscarPorCep("abc")).thenThrow(new IllegalArgumentException("CEP invalido"));
++
++        mockMvc.perform(get("/cep").param("cep", "abc"))
++                .andExpect(status().isBadRequest())
++                .andExpect(content().string(containsString("CEP invalido")));
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java b/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0aeb53f08ec8c1b97a7aa3fc3ade8c397b72674
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java
+@@ -0,0 +1,82 @@
++package com.example.projeto.web;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.math.BigDecimal;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.hamcrest.Matchers.containsString;
++import static org.hamcrest.Matchers.hasSize;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
++
++/**
++ * Interface web Thymeleaf: listagem, formulario, validacao e PRG.
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++@Transactional
++class ProdutoWebControllerIT {
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Autowired
++    ProdutoRepository repository;
++
++    @Test
++    void deveRenderizarListaComPrecoFormatado() throws Exception {
++        repository.save(new Produto("Teclado Mecanico", new BigDecimal("349.9")));
++
++        mockMvc.perform(get("/produtos"))
++                .andExpect(status().isOk())
++                .andExpect(view().name("produtos/lista"))
++                .andExpect(model().attribute("produtos", hasSize(1)))
++                .andExpect(content().string(containsString("Teclado Mecanico")))
++                .andExpect(content().string(containsString("R$ 349,90")));
++    }
++
++    @Test
++    void deveExibirFormularioVazio() throws Exception {
++        mockMvc.perform(get("/produtos/novo"))
++                .andExpect(status().isOk())
++                .andExpect(view().name("produtos/form"))
++                .andExpect(model().attributeExists("form"));
++    }
++
++    @Test
++    void deveCadastrarERedirecionar() throws Exception {
++        mockMvc.perform(post("/produtos/cadastrar").param("nome", "Webcam").param("preco", "199.90"))
++                .andExpect(status().is3xxRedirection())
++                .andExpect(redirectedUrl("/produtos"));
++
++        assertThat(repository.findByNomeContainingIgnoreCase("webcam")).hasSize(1);
++    }
++
++    @Test
++    void deveReexibirFormularioComErrosDeValidacao() throws Exception {
++        mockMvc.perform(post("/produtos/cadastrar").param("nome", "").param("preco", "-1"))
++                .andExpect(status().isOk())
++                .andExpect(view().name("produtos/form"))
++                .andExpect(model().attributeHasFieldErrors("form", "nome", "preco"))
++                .andExpect(content().string(containsString("Informe o nome do produto")));
++    }
++
++    @Test
++    void raizRedirecionaParaProdutos() throws Exception {
++        mockMvc.perform(get("/"))
++                .andExpect(redirectedUrl("/produtos"));
++    }
++}

@@ -1,0 +1,497 @@
+diff --git a/.github/workflows/projeto-final-sonar.yml b/.github/workflows/projeto-final-sonar.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b435401ee1f275a208bb0fd0d43a89776917fc0
+--- /dev/null
++++ b/.github/workflows/projeto-final-sonar.yml
+@@ -0,0 +1,57 @@
++name: Projeto Final - SonarQube
++
++# Analise estatica (aula 14 - tarefa pos-aula / aula 15).
++# So executa a analise se o secret SONAR_TOKEN existir; caso contrario o job
++# termina com sucesso registrando que a analise foi pulada.
++on:
++  pull_request:
++    paths:
++      - 'projeto-final/**'
++      - '.github/workflows/projeto-final-sonar.yml'
++  push:
++    branches: [main]
++    paths:
++      - 'projeto-final/**'
++      - '.github/workflows/projeto-final-sonar.yml'
++
++permissions:
++  contents: read
++  pull-requests: read
++
++jobs:
++  sonarqube:
++    runs-on: ubuntu-latest
++    defaults:
++      run:
++        working-directory: projeto-final
++    env:
++      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
++      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
++      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
++    steps:
++      - name: Aviso (sem secret SONAR_TOKEN)
++        if: env.SONAR_TOKEN == ''
++        run: echo "::notice::SONAR_TOKEN nao configurado - analise SonarQube pulada."
++        working-directory: .
++
++      - uses: actions/checkout@v4
++        if: env.SONAR_TOKEN != ''
++        with:
++          fetch-depth: 0   # historico completo melhora a analise de blame/novo codigo
++
++      - name: Configurar JDK 17
++        if: env.SONAR_TOKEN != ''
++        uses: actions/setup-java@v4
++        with:
++          java-version: '17'
++          distribution: 'temurin'
++          cache: maven
++
++      - name: Build, testes e analise SonarQube
++        if: env.SONAR_TOKEN != ''
++        run: |
++          EXTRA=""
++          if [ -n "$SONAR_ORGANIZATION" ]; then EXTRA="-Dsonar.organization=$SONAR_ORGANIZATION"; fi
++          mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
++            -Dsonar.host.url="${SONAR_HOST_URL:-https://sonarcloud.io}" \
++            -Dsonar.token="$SONAR_TOKEN" $EXTRA
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index 361c1c9d9e845591cc7eaf769965bca9d281edb5..547d63548ef9aa4c7d2d90c37204627742c39575 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -7,6 +7,7 @@ Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP d
+ | Aula | Tema | Documentacao |
+ |------|------|--------------|
+ | 13 | MVP: CRUD de Produto, testes, JaCoCo, CI basico (tag `v0.1`) | [docs/aula-13](docs/aula-13/README.md) |
++| 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md) |
+ 
+ ## Como executar
+ 
+@@ -20,3 +21,18 @@ mvn spring-boot:run       # sobe a API em http://localhost:8080
+ 
+ - Swagger UI: http://localhost:8080/swagger-ui.html
+ - Relatorio de cobertura: `target/site/jacoco/index.html`
++
++## Definition of Done (DoD)
++
++Uma User Story so e considerada **pronta** quando:
++
++- [ ] Todos os criterios de aceitacao da US estao atendidos e demonstraveis
++- [ ] Codigo revisado por pelo menos 1 colega (Pull Request aprovado e vinculado a issue)
++- [ ] Testes automatizados escritos (unitario e/ou integracao) e `mvn clean verify` verde no CI
++- [ ] Cobertura de testes > 80% (JaCoCo)
++- [ ] Passa no SonarQube sem bugs criticos nem vulnerabilidades (quality gate verde)
++- [ ] Documentacao Swagger atualizada (endpoints novos visiveis em `/swagger-ui.html`)
++- [ ] README/docs da aula atualizados com as mudancas e evidencias
++- [ ] Nenhum segredo (senha, token, chave) commitado no repositorio
++
++User Stories do projeto: [docs/aula-14/user-stories.md](docs/aula-14/user-stories.md).
+diff --git a/projeto-final/docs/aula-14/README.md b/projeto-final/docs/aula-14/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..e0180d1b2476cb1bbed996a956b6a837b78fc001
+--- /dev/null
++++ b/projeto-final/docs/aula-14/README.md
+@@ -0,0 +1,59 @@
++# Aula 14 - User Stories e Planejamento
++
++## Objetivo
++
++Transformar requisitos em User Stories acionaveis, implementar um endpoint guiado por User Story
++(US-001 - busca por nome) e preparar a gestao agil (GitHub Projects) e a analise SonarQube.
++
++## Entregas
++
++- **US-001 implementada**: `GET /produtos/buscar?nome=...` (query method `findByNomeContainingIgnoreCase`)
++- **Testes de integracao** novos: `deveBuscarProdutosPorNome` e `deveRetornarListaVaziaQuandoBuscaNaoEncontra`
++- **User Stories** (US-001 + 3 adicionais da tarefa pos-aula: US-002 validacao, US-003 total do pedido com desconto, US-004 autenticacao JWT) com criterios de aceitacao, MoSCoW e **sugestao de issues/labels/board**: [user-stories.md](user-stories.md)
++- **Definition of Done** no [README do projeto](../../README.md#definition-of-done-dod)
++- **Workflow SonarQube** (tarefa pos-aula "webhook GitHub-SonarQube"): `.github/workflows/projeto-final-sonar.yml`
++- Propriedades `sonar.*` no `pom.xml` (chave do projeto e caminho do XML do JaCoCo)
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++A .github/workflows/projeto-final-sonar.yml
++M projeto-final/pom.xml                                  (versao 0.2.0 + propriedades sonar.*)
++M projeto-final/README.md                                (tabela de aulas + Definition of Done)
++M projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java          (construtores)
++M projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java (query method)
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java   (GET /buscar)
++M projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java (2 testes)
++A projeto-final/docs/aula-14/README.md
++A projeto-final/docs/aula-14/user-stories.md
++A projeto-final/docs/aula-14/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| `findByNomeContaining(nome)` | Busca sensivel a maiusculas: `xiaomi` nao encontra `Xiaomi`, o que nao atende a intencao da US | `findByNomeContainingIgnoreCase` |
++| `new Produto("Smartphone Xiaomi")` | A entidade da aula 13 nao tinha esse construtor | Construtores `Produto(String)` e `Produto(String, BigDecimal)` |
++| `SonarSource/sonarqube-scan-action@master` | Referencia mutavel (`@master`) - risco de supply chain e quebra sem aviso; o scanner generico tambem nao e o recomendado para projetos Maven | Scanner Maven (`sonar-maven-plugin`) apos `mvn verify`, actions `@v4` |
++| `actions/checkout@v3` | Versao antiga | `actions/checkout@v4` com `fetch-depth: 0` |
++| Workflow falha sem secret | Em forks ou sem configuracao o job quebraria | Analise condicionada a existencia do secret `SONAR_TOKEN` (caso contrario, aviso e sucesso) |
++
++## Pendencias para o dono do repositorio (nao executaveis localmente)
++
++- **GitHub Projects**: criar o board (Backlog | To Do | In Progress | Done) e as issues US-001..US-004 (comandos `gh` em [user-stories.md](user-stories.md#sugestao-de-issues-para-o-github-projects)).
++- **Branch/PR**: `feature/us-001-busca-produtos` + PR vinculado a issue US-001 (`closes #1`).
++- **SonarQube/SonarCloud**: criar o projeto `gqs-projeto-final` e cadastrar os secrets `SONAR_TOKEN` e `SONAR_HOST_URL` (e a variable `SONAR_ORGANIZATION`, se SonarCloud). Sem conta externa a analise **nao foi executada localmente**.
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt) - `mvn clean verify`
++- [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt) - cobertura
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - busca por nome executada com `curl`
++
++Resultado: **7 testes, 0 falhas**; cobertura de linhas 83,3% (20/24). Ainda sem verificacao
++automatica de cobertura minima - o `jacoco:check` (>= 80%) entra na aula 15. Observacao: a busca sem o
++parametro `nome` devolvia o erro padrao do Spring (`400` sem detalhe util); padronizado com
++ProblemDetail na aula 15.
+diff --git a/projeto-final/docs/aula-14/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-14/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a0ddc71d77f355eddc17c0d57408777aaf6bd245
+--- /dev/null
++++ b/projeto-final/docs/aula-14/evidencias/curl-endpoints.txt
+@@ -0,0 +1,59 @@
++﻿# Evidencias de execucao - aula 14 (2026-11-10 15:51:59)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T15:51:57.837-03:00  INFO 10404 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 110.23 seconds (process running for 124.901)
++
++## Cria produto
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi Redmi","preco":1299.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:03 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi Redmi","preco":1299.00}
++
++## Cria produto
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Fone Xiaomi Buds","preco":199.90}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:03 GMT
++
++{"id":2,"nome":"Fone Xiaomi Buds","preco":199.90}
++
++## Cria produto
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Notebook Dell","preco":4500.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:03 GMT
++
++{"id":3,"nome":"Notebook Dell","preco":4500.00}
++
++## US-001: busca por nome (case-insensitive)
++$ curl http://localhost:18089/produtos/buscar?nome=xiaomi
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:05 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi Redmi","preco":1299.00},{"id":2,"nome":"Fone Xiaomi Buds","preco":199.90}]
++
++## US-001: busca sem resultado
++$ curl http://localhost:18089/produtos/buscar?nome=iphone
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:06 GMT
++
++[]
++
++## US-001: parametro obrigatorio ausente (400)
++$ curl http://localhost:18089/produtos/buscar
++HTTP/1.1 400 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 18:52:06 GMT
++Connection: close
++
++{"timestamp":"2026-11-10T18:52:06.379+00:00","status":400,"error":"Bad Request","path":"/produtos/buscar"}
++
+diff --git a/projeto-final/docs/aula-14/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-14/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..875af84fd8822dfd1c8329e3788a534c272acb65
+--- /dev/null
++++ b/projeto-final/docs/aula-14/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,8 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 14
++Instrucoes: 89,7% (78/87)
++Linhas:     83,3% (20/24)
++Branches:   100,0% (2/2)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.interfaces.rest.ProdutoController: 17/17
++  com.example.projeto.domain.model.Produto: 3/7
+diff --git a/projeto-final/docs/aula-14/evidencias/mvn-verify.txt b/projeto-final/docs/aula-14/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..49c40b68e814f9c04d27cc9f79dd33aed03d68e9
+--- /dev/null
++++ b/projeto-final/docs/aula-14/evidencias/mvn-verify.txt
+@@ -0,0 +1,14 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 15:49:47)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.2.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 143.4 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.31 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/docs/aula-14/user-stories.md b/projeto-final/docs/aula-14/user-stories.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..40411e83159330e4f8c45118b7e49e073397c0e5
+--- /dev/null
++++ b/projeto-final/docs/aula-14/user-stories.md
+@@ -0,0 +1,108 @@
++# User Stories - API de Produtos
++
++Template usado (aula 14): *"Como [perfil], eu quero [acao] para [beneficio]"*.
++Priorizacao MoSCoW: **Must**, **Should**, **Could**, **Won't**.
++
++---
++
++## US-001 - Busca de produtos por nome (implementada na aula 14)
++
++**Como** cliente, **eu quero** buscar produtos por parte do nome **para** encontrar rapidamente o item que procuro.
++
++- **Prioridade:** Must have
++- **Labels sugeridas:** `must-have`, `backend`, `sprint-1`
++
++**Criterios de aceitacao**
++- [x] `GET /produtos/buscar?nome=Xiaomi` retorna os produtos cujo nome contem o texto
++- [x] A busca ignora maiusculas/minusculas (`xiaomi` encontra `Smartphone Xiaomi`)
++- [x] Sem resultados retorna `200` com lista vazia `[]`
++- [x] Coberta por teste de integracao (`ProdutoControllerIT#deveBuscarProdutosPorNome`)
++
++**Tasks**
++- [x] Implementar query method `findByNomeContainingIgnoreCase`
++- [x] Criar endpoint `GET /produtos/buscar`
++- [x] Escrever testes de integracao
++
++---
++
++## US-002 - Validacao de campos obrigatorios no cadastro (adicional)
++
++**Como** administrador do catalogo, **eu quero** que o sistema recuse produtos sem nome ou com preco invalido **para** manter o catalogo consistente.
++
++- **Prioridade:** Must have
++- **Labels sugeridas:** `must-have`, `backend`, `qualidade`
++
++**Criterios de aceitacao**
++- [ ] `POST /produtos` sem `nome` (ou com nome em branco) retorna `400 Bad Request`
++- [ ] `preco` nulo, zero ou negativo retorna `400 Bad Request`
++- [ ] O corpo do erro informa o campo invalido e a mensagem em portugues
++- [ ] Teste automatizado cobrindo cada regra
++
++**Tasks**
++- [ ] Adicionar Bean Validation (`@NotBlank`, `@NotNull`, `@Positive`)
++- [ ] Criar handler global de erros (`@RestControllerAdvice`)
++- [ ] Testes de validacao (unitario + integracao)
++
++> Implementada na aula 15 (tarefa pos-aula "teste para validacao de campos obrigatorios").
++
++---
++
++## US-003 - Calculo do total de um pedido com desconto por tipo de cliente (adicional)
++
++**Como** cliente VIP ou PREMIUM, **eu quero** ver o total do meu pedido ja com o meu desconto e o frete **para** saber quanto vou pagar antes de finalizar.
++
++- **Prioridade:** Should have
++- **Labels sugeridas:** `should-have`, `backend`, `refactor`
++
++**Criterios de aceitacao**
++- [ ] VIP recebe 10% de desconto; PREMIUM recebe 20%; REGULAR nao tem desconto
++- [ ] Pedidos com total (apos desconto) abaixo de R$ 100,00 pagam frete fixo de R$ 15,00
++- [ ] Novos tipos de desconto podem ser adicionados sem alterar o servico (aberto/fechado)
++- [ ] Endpoint `POST /pedidos/total` retorna subtotal, desconto, frete e total
++
++> Implementada na aula 16 com os padroes Strategy, Factory e Decorator.
++
++---
++
++## US-004 - Acesso autenticado a API (adicional)
++
++**Como** administrador, **eu quero** que apenas usuarios autenticados acessem a API e que somente administradores alterem o catalogo **para** proteger os dados contra alteracoes indevidas.
++
++- **Prioridade:** Must have
++- **Labels sugeridas:** `must-have`, `security`
++
++**Criterios de aceitacao**
++- [ ] `POST /auth/login` com credenciais validas retorna um access token JWT e um refresh token
++- [ ] Requisicoes a `/api/**` sem token retornam `401`
++- [ ] Usuario com papel `USER` consegue listar, mas recebe `403` ao tentar criar/alterar/remover
++- [ ] `POST /auth/refresh` gera novo access token a partir de um refresh token valido
++- [ ] Nenhum segredo (chave JWT, senha) fica hardcoded no codigo
++
++> Implementada na aula 18.
++
++---
++
++## Sugestao de issues para o GitHub Projects
++
++Board com colunas **Backlog | To Do | In Progress | Done**. Criar uma issue por User Story:
++
++| Issue | Titulo | Labels | Coluna inicial |
++|-------|--------|--------|----------------|
++| #1 | US-001 - Busca de produtos por nome | `must-have`, `backend`, `sprint-1` | Done (aula 14) |
++| #2 | US-002 - Validacao de campos obrigatorios | `must-have`, `backend`, `qualidade` | To Do |
++| #3 | US-003 - Total do pedido com desconto por tipo de cliente | `should-have`, `backend`, `refactor` | Backlog |
++| #4 | US-004 - Acesso autenticado a API (JWT) | `must-have`, `security` | Backlog |
++
++Comandos `gh` sugeridos (a executar pelo dono do repositorio):
++
++```bash
++gh label create must-have --color B60205
++gh label create should-have --color FBCA04
++gh label create backend --color 1D76DB
++gh label create sprint-1 --color 0E8A16
++gh issue create --title "US-001 - Busca de produtos por nome" --label must-have,backend,sprint-1 \
++  --body-file projeto-final/docs/aula-14/user-stories.md
++```
++
++Branch e commit vinculados (fluxo da aula): `feature/us-001-busca-produtos`,
++mensagem `Implementa US-001: Busca de produtos por nome (closes #1)`.
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index ceeec257cbad3b7cb29b2ba07771ae6a56f029ad..c43cd5f11f28ea4f1b415a723b3ece59abdb1e3d 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.1.0</version>
++    <version>0.2.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+@@ -23,6 +23,10 @@
+         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+         <jacoco.version>0.8.12</jacoco.version>
+         <springdoc.version>2.6.0</springdoc.version>
++        <!-- SonarQube/SonarCloud: token e URL vem de variaveis de ambiente/secrets, nunca do pom -->
++        <sonar.projectKey>gqs-projeto-final</sonar.projectKey>
++        <sonar.projectName>IQS - Projeto Final (Produtos)</sonar.projectName>
++        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+     </properties>
+ 
+     <dependencies>
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+index 227a31104ff5fbd63a43008539cc672226df1ceb..f6823f81b7ad5d38c9658cfc45bae340fefa79ca 100644
+--- a/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
++++ b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+@@ -35,4 +35,13 @@ public class Produto {
+ 
+     @Column(precision = 10, scale = 2)
+     private BigDecimal preco;
++
++    public Produto(String nome) {
++        this.nome = nome;
++    }
++
++    public Produto(String nome, BigDecimal preco) {
++        this.nome = nome;
++        this.preco = preco;
++    }
+ }
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java b/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
+index 765aeda80fae970ced247411a3d9201ba8650d0e..baa02bfcb87ccbde67dd45720618266e314a2fe4 100644
+--- a/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
++++ b/projeto-final/src/main/java/com/example/projeto/domain/repository/ProdutoRepository.java
+@@ -3,8 +3,16 @@ package com.example.projeto.domain.repository;
+ import com.example.projeto.domain.model.Produto;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ 
++import java.util.List;
++
+ /**
+  * Repositorio Spring Data JPA de {@link Produto}.
+  */
+ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
++
++    /**
++     * US-001: busca produtos cujo nome contem o texto informado (sem diferenciar maiusculas).
++     * Query method: o Spring Data gera o JPQL a partir do nome do metodo.
++     */
++    List<Produto> findByNomeContainingIgnoreCase(String nome);
+ }
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+index fc973990f53e86fa1f97eb70bec2fe7fd1092eae..d24b2769ed4d425fd2a11a18f4f9453c315628d6 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
+ import org.springframework.web.bind.annotation.PutMapping;
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RequestParam;
+ import org.springframework.web.bind.annotation.ResponseStatus;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+@@ -35,6 +36,12 @@ public class ProdutoController {
+         return repository.findAll();
+     }
+ 
++    /** US-001: GET /produtos/buscar?nome=Xiaomi */
++    @GetMapping("/buscar")
++    public List<Produto> buscarPorNome(@RequestParam String nome) {
++        return repository.findByNomeContainingIgnoreCase(nome);
++    }
++
+     @GetMapping("/{id}")
+     public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+         return repository.findById(id)
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+index 429ac0e0c3a3d72ed7b424e5fe2da02e411eb27f..05cb6fa9c7e14d65b5eba55f1d49da94f7f1fe1c 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.math.BigDecimal;
+ 
++import static org.hamcrest.Matchers.containsString;
+ import static org.hamcrest.Matchers.hasSize;
+ import static org.hamcrest.Matchers.is;
+ import static org.hamcrest.Matchers.notNullValue;
+@@ -79,6 +80,24 @@ class ProdutoControllerIT {
+                 .andExpect(status().isNoContent());
+     }
+ 
++    @Test
++    void deveBuscarProdutosPorNome() throws Exception {
++        repository.save(new Produto("Smartphone Xiaomi"));
++        repository.save(new Produto("Notebook Dell"));
++
++        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$", hasSize(1)))
++                .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
++    }
++
++    @Test
++    void deveRetornarListaVaziaQuandoBuscaNaoEncontra() throws Exception {
++        mockMvc.perform(get("/produtos/buscar?nome=inexistente"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$", hasSize(0)));
++    }
++
+     @Test
+     void deveRetornar404ParaProdutoInexistente() throws Exception {
+         mockMvc.perform(get("/produtos/{id}", 9999)).andExpect(status().isNotFound());

@@ -1,0 +1,1181 @@
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index 2d2aa1e10d00a00ef0ce80b4398e126f23fc16c6..d797308fbaabf94475bc497eb32dda7ae46ce08b 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -9,6 +9,7 @@ Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP d
+ | 13 | MVP: CRUD de Produto, testes, JaCoCo, CI basico (tag `v0.1`) | [docs/aula-13](docs/aula-13/README.md) |
+ | 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md) |
+ | 15 | Sprint 1: CI/CD, camada de servico, validacao (US-002), Testcontainers, JaCoCo >= 80% | [docs/aula-15](docs/aula-15/README.md) |
++| 16 | Refatoracao: Strategy + Factory + Decorator no calculo de pedidos (US-003) | [docs/aula-16](docs/aula-16/README.md), [decisions.md](docs/decisions.md) |
+ 
+ ## Como executar
+ 
+diff --git a/projeto-final/docs/aula-16/README.md b/projeto-final/docs/aula-16/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..55b00e2767ff0448cd52791a53cb49895d3adbe7
+--- /dev/null
++++ b/projeto-final/docs/aula-16/README.md
+@@ -0,0 +1,117 @@
++# Aula 16 - Refatoracao e Padroes de Projeto
++
++## Objetivo
++
++Identificar code smells, aplicar padroes de projeto e refatorar com seguranca, protegido por testes.
++
++## Cenario: servico de pedidos (US-003)
++
++O slide parte de um `PedidoService` legado (fora do projeto ate entao). Ele foi trazido para o
++dominio de Produtos como **US-003 - total do pedido com desconto por tipo de cliente**: os itens
++referenciam produtos do catalogo e o preco vem do banco.
++
++### Codigo original (problematico, do slide)
++
++```java
++public BigDecimal calcularTotal(Pedido pedido, String tipoCliente) {
++    BigDecimal total = BigDecimal.ZERO;
++    for (ItemPedido item : pedido.getItens()) {                       // responsabilidade 1
++        total = total.add(item.getPreco().multiply(new BigDecimal(item.getQuantidade())));
++    }
++    switch (tipoCliente) {                                           // responsabilidade 2
++        case "VIP": total = total.multiply(new BigDecimal("0.9")); break;
++        case "PREMIUM": total = total.multiply(new BigDecimal("0.8")); break;
++    }
++    if (total.compareTo(new BigDecimal("100")) < 0) {                // responsabilidade 3
++        total = total.add(new BigDecimal("15"));
++    }
++    return total;
++}
++```
++
++| Code smell | Onde | Refatoracao / padrao aplicado |
++|------------|------|-------------------------------|
++| Long Method (3 responsabilidades) | `calcularTotal` | Extract/Move Method + delegacao |
++| Switch Statement / aberto para modificacao | `switch (tipoCliente)` | **Strategy** (`PoliticaDesconto`) + **Factory** (`PoliticaDescontoFactory`) |
++| Primitive Obsession | `String tipoCliente` | `enum TipoCliente` |
++| Feature Envy | servico calcula `preco * quantidade` | `ItemPedido#subtotal()` (Move Method), `Pedido#subtotal()` |
++| Numeros magicos | `100`, `15` | `app.frete.valor-minimo-frete-gratis` / `app.frete.valor-fixo` |
++| Logging misturado a regra (tarefa pos-aula) | - | **Decorator** `CalculadoraFreteComLog` |
++
++### Padroes aplicados (3)
++
++1. **Strategy** - `PoliticaDesconto` com `DescontoVIP` (10%), `DescontoPremium` (20%) e `SemDesconto`
++   (REGULAR). Base `DescontoPercentual` concentra a conta e o arredondamento monetario.
++2. **Factory** - `PoliticaDescontoFactory` escolhe a estrategia por `TipoCliente`; recebe as estrategias
++   injetadas pelo Spring e falha na subida se faltar/duplicar alguma. Novo desconto = nova classe `@Component`.
++3. **Decorator** - `CalculadoraFreteComLog` envolve `FreteFixo` (montado em `FreteConfig`), adicionando
++   log e tempo de execucao sem tocar na regra.
++
++Endpoint novo: `POST /pedidos/total` (`PedidoController`) -> `{subtotal, desconto, frete, total}`.
++Decisoes registradas em [`docs/decisions.md`](../decisions.md) (tarefa pos-aula).
++
++### Metricas antes x depois (complexidade ciclomatica, contagem manual por metodo)
++
++| Metodo | Antes | Depois |
++|--------|-------|--------|
++| `PedidoService.calcularTotal` | 5 (for + 2 cases + default implicito + if) | 1 |
++| `PoliticaDesconto.aplicarDesconto` | - | 1 por estrategia |
++| `FreteFixo.calcular` | - | 2 |
++
++O contador `COMPLEXITY` do JaCoCo por metodo (extraido de `jacoco.xml` em
++[`evidencias/complexidade-ciclomatica.txt`](evidencias/complexidade-ciclomatica.txt)) confirma
++complexidade **1** para `PedidoService.calcularTotal` e no maximo 5 em qualquer metodo do pacote
++(o construtor da factory, que valida as estrategias). A comparacao de *code smells* no SonarQube (`mvn sonar:sonar`)
++**nao foi executada localmente** (sem servidor Sonar) - roda no workflow `projeto-final-sonar.yml`
++quando o secret existir.
++
++### Refatoracao segura
++
++Os 5 cenarios do comportamento legado (REGULAR com/sem frete, VIP, PREMIUM, PREMIUM que cai abaixo de
++100 e paga frete) viraram um teste parametrizado (`PedidoServiceTest#deveAplicarDescontoEFreteConformeTipoDeCliente`)
++e o teste do slide (`deveCalcularTotalComDescontoVIP`, estrategia real + frete mockado) foi mantido.
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++M projeto-final/pom.xml                     (versao 0.4.0)
++M projeto-final/README.md
++M projeto-final/src/main/resources/application.yml          (app.frete.*)
++A projeto-final/src/main/java/com/example/projeto/config/FreteConfig.java
++A projeto-final/src/main/java/com/example/projeto/domain/pedido/{TipoCliente,ItemPedido,Pedido,ResumoPedido,PedidoService}.java
++A projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/{PoliticaDesconto,DescontoPercentual,DescontoVIP,DescontoPremium,SemDesconto,PoliticaDescontoFactory}.java
++A projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/{CalculadoraFrete,FreteFixo,CalculadoraFreteComLog}.java
++A projeto-final/src/main/java/com/example/projeto/interfaces/rest/{PedidoController,PedidoRequest}.java
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java (400 para JSON/enum invalido)
++A projeto-final/src/test/java/com/example/projeto/domain/pedido/PedidoServiceTest.java
++A projeto-final/src/test/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactoryTest.java
++A projeto-final/src/test/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteTest.java
++A projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
++A projeto-final/docs/decisions.md
++A projeto-final/docs/aula-16/README.md
++A projeto-final/docs/aula-16/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| `new BigDecimal(item.getQuantidade())` | Construtor `BigDecimal(int)` funciona, mas e inconsistente com a versao refatorada | `BigDecimal.valueOf(quantidade)` |
++| `total.multiply(new BigDecimal("0.9"))` sem arredondamento | Escala cresce a cada operacao (ex.: `90.000`) - comparacoes com `equals` falham | `setScale(2, HALF_UP)` nas estrategias |
++| Teste do slide: `assertEquals(new BigDecimal("90"), ...)` com frete mockado devolvendo o total | Mock esconde o calculo real; `equals` de `BigDecimal` considera escala | `CalculadoraFrete` devolve so o frete; asserts com valores de escala 2 / `compareTo` |
++| `PedidoService(PoliticaDesconto strategy, ...)` | Estrategia fixa por instancia: um servico singleton do Spring nao consegue atender VIP e PREMIUM ao mesmo tempo | Estrategia escolhida por requisicao via `PoliticaDescontoFactory` |
++| `switch` sem `default` | Tipo desconhecido passava sem desconto silenciosamente | `enum` + factory que valida todos os tipos na subida |
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt)
++- [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt)
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - `POST /pedidos/total` para REGULAR/VIP/PREMIUM
++- [`evidencias/log-decorator.txt`](evidencias/log-decorator.txt) - linhas de log geradas pelo Decorator durante as chamadas
++- [`evidencias/complexidade-ciclomatica.txt`](evidencias/complexidade-ciclomatica.txt) - complexidade por metodo (JaCoCo)
++
++Resultado: **44 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`, sem Docker local); cobertura
++**100% de linhas (130/130) e de branches (24/24)**. Observacao: nas respostas o `frete` aparece como
++`15.0`/`0` (escala vinda do YAML) - ajustado para `15.00`/`0.00` na aula 17.
+diff --git a/projeto-final/docs/aula-16/evidencias/complexidade-ciclomatica.txt b/projeto-final/docs/aula-16/evidencias/complexidade-ciclomatica.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..11e75a9bc251f8f7c72590d0dd6a86ad30a39e9e
+--- /dev/null
++++ b/projeto-final/docs/aula-16/evidencias/complexidade-ciclomatica.txt
+@@ -0,0 +1,27 @@
++﻿# Complexidade ciclomatica por metodo (JaCoCo, target/site/jacoco/jacoco.xml) - aula 16
++# contador COMPLEXITY = missed + covered
++PedidoRequest$Item.<init>: 1
++PedidoController.calcularTotal: 1
++PedidoController.lambda$calcularTotal$0: 1
++PedidoRequest.<init>: 1
++CalculadoraFreteComLog.<init>: 1
++CalculadoraFreteComLog.calcular: 1
++CalculadoraFreteComLog.<clinit>: 1
++FreteFixo.<init>: 1
++FreteFixo.calcular: 2
++DescontoPercentual.<init>: 1
++DescontoPercentual.tipoCliente: 1
++DescontoPercentual.aplicarDesconto: 1
++DescontoVIP.<init>: 1
++PoliticaDescontoFactory.<init>: 5
++PoliticaDescontoFactory.obter: 2
++DescontoPremium.<init>: 1
++SemDesconto.<init>: 1
++PedidoService.<init>: 1
++PedidoService.calcularTotal: 1
++ItemPedido.<init>: 3
++ItemPedido.subtotal: 1
++TipoCliente.<clinit>: 1
++ResumoPedido.<init>: 1
++Pedido.<init>: 3
++Pedido.subtotal: 1
+diff --git a/projeto-final/docs/aula-16/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-16/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..3f1778bbcf81e8bb61281ad70171dc14835e8a58
+--- /dev/null
++++ b/projeto-final/docs/aula-16/evidencias/curl-endpoints.txt
+@@ -0,0 +1,68 @@
++﻿# Evidencias de execucao - aula 16 (2026-11-10 16:10:46)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T16:10:46.580-03:00  INFO 4956 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 107.259 seconds (process running for 115.401)
++
++## Cria produto Fone (40.00)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Fone Bluetooth","preco":40.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:52 GMT
++
++{"id":1,"nome":"Fone Bluetooth","preco":40.00}
++
++## Cria produto Cabo (15.00)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Cabo USB-C","preco":15.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:52 GMT
++
++{"id":2,"nome":"Cabo USB-C","preco":15.00}
++
++## Cria produto Notebook (4500.00)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Notebook","preco":4500.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:53 GMT
++
++{"id":3,"nome":"Notebook","preco":4500.00}
++
++## REGULAR: 2 cabos = 30.00, sem desconto, frete 15.00
++$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"REGULAR","itens":[{"produtoId":2,"quantidade":2}]}'
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:54 GMT
++
++{"tipoCliente":"REGULAR","subtotal":30.00,"desconto":0.00,"frete":15.0,"total":45.00}
++
++## VIP: notebook = 4500.00, 10% off, frete gratis
++$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"VIP","itens":[{"produtoId":3,"quantidade":1}]}'
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:54 GMT
++
++{"tipoCliente":"VIP","subtotal":4500.00,"desconto":450.00,"frete":0,"total":4050.00}
++
++## PREMIUM: 110.00 -> 88.00 + frete 15.00
++$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"PREMIUM","itens":[{"produtoId":1,"quantidade":2},{"produtoId":2,"quantidade":2}]}'
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:54 GMT
++
++{"tipoCliente":"PREMIUM","subtotal":110.00,"desconto":22.00,"frete":15.0,"total":103.00}
++
++## Tipo de cliente invalido (400)
++$ curl -X POST http://localhost:18089/pedidos/total -H 'Content-Type: application/json' -d '{"tipoCliente":"OURO","itens":[{"produtoId":1,"quantidade":1}]}'
++HTTP/1.1 400 
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:10:55 GMT
++Connection: close
++
++{"type":"about:blank","title":"Requisicao invalida","status":400,"detail":"Corpo da requisicao invalido ou com valor nao permitido (ex.: tipoCliente deve ser REGULAR, VIP ou PREMIUM)","instance":"/pedidos/total"}
++
+diff --git a/projeto-final/docs/aula-16/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-16/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..03544db248c26ddcd1e57100a5a0cfd3ac44eb89
+--- /dev/null
++++ b/projeto-final/docs/aula-16/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,28 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 16
++Instrucoes: 100,0% (604/604)
++Linhas:     100,0% (130/130)
++Branches:   100,0% (24/24)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
++  com.example.projeto.domain.service.ProdutoService: 13/13
++  com.example.projeto.config.FreteConfig: 2/2
++  com.example.projeto.interfaces.rest.PedidoRequest.Item: 1/1
++  com.example.projeto.interfaces.rest.ApiExceptionHandler: 18/18
++  com.example.projeto.interfaces.rest.PedidoController: 5/5
++  com.example.projeto.interfaces.rest.PedidoRequest: 1/1
++  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
++  com.example.projeto.interfaces.rest.ProdutoController: 7/7
++  com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog: 9/9
++  com.example.projeto.domain.pedido.frete.FreteFixo: 5/5
++  com.example.projeto.domain.pedido.desconto.DescontoPercentual: 6/6
++  com.example.projeto.domain.pedido.desconto.DescontoVIP: 2/2
++  com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory: 12/12
++  com.example.projeto.domain.pedido.desconto.DescontoPremium: 2/2
++  com.example.projeto.domain.pedido.desconto.SemDesconto: 2/2
++  com.example.projeto.domain.pedido.PedidoService: 10/10
++  com.example.projeto.domain.pedido.ItemPedido: 8/8
++  com.example.projeto.domain.pedido.TipoCliente: 4/4
++  com.example.projeto.domain.pedido.ResumoPedido: 1/1
++  com.example.projeto.domain.pedido.Pedido: 8/8
++  com.example.projeto.domain.model.Produto: 10/10
+diff --git a/projeto-final/docs/aula-16/evidencias/log-decorator.txt b/projeto-final/docs/aula-16/evidencias/log-decorator.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..69a87b4fe09911a55d94f8bab8b77ae6c5bf4d2d
+--- /dev/null
++++ b/projeto-final/docs/aula-16/evidencias/log-decorator.txt
+@@ -0,0 +1,4 @@
++﻿# Linhas de log geradas pelo Decorator CalculadoraFreteComLog durante as chamadas acima
++2026-11-10T16:10:54.083-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-4] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=30.00 frete=15.0 calculadora=FreteFixo (167 us)
++2026-11-10T16:10:54.490-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-6] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=4050.00 frete=0 calculadora=FreteFixo (58 us)
++2026-11-10T16:10:54.715-03:00  INFO 4956 --- [projeto-final] [io-18089-exec-5] c.e.p.d.p.frete.CalculadoraFreteComLog   : Frete calculado: total=88.00 frete=15.0 calculadora=FreteFixo (31 us)
+diff --git a/projeto-final/docs/aula-16/evidencias/mvn-verify.txt b/projeto-final/docs/aula-16/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..56f5748003e16770729f07855bc9f2d3fad8816d
+--- /dev/null
++++ b/projeto-final/docs/aula-16/evidencias/mvn-verify.txt
+@@ -0,0 +1,27 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 16:08:50)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.4.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.066 s -- in com.example.projeto.domain.model.ProdutoTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.823 s -- in com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactoryTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.58 s -- in com.example.projeto.domain.pedido.frete.CalculadoraFreteTest
++[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.903 s -- in com.example.projeto.domain.pedido.PedidoServiceTest
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 82.40 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.367 s -- in com.example.projeto.domain.service.ProdutoServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.76 s -- in com.example.projeto.interfaces.rest.PedidoControllerIT
++[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.164 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.784 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++2026-11-10T16:08:29.022-03:00 ERROR 6852 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
++See https://java.testcontainers.org/on_failure.html for more details.
++[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
++[WARNING] Tests run: 44, Failures: 0, Errors: 0, Skipped: 1
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] All coverage checks have been met.
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/docs/decisions.md b/projeto-final/docs/decisions.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..09a0863be06140b3b79d6af4d966c6485f4f1b04
+--- /dev/null
++++ b/projeto-final/docs/decisions.md
+@@ -0,0 +1,40 @@
++# Registro de Decisoes de Projeto (ADR simplificado)
++
++Formato pedido na aula 16 (`docs/decisions.md`). Cada decisao registra padrao, motivo e arquivos.
++
++---
++
++## Decisao 2026-11-10 (aula 16) - Strategy para descontos
++
++**Padrao:** Strategy
++**Motivo:** remover o `switch (tipoCliente)` do `PedidoService` legado (code smells *Long Method* e
++*Switch Statement*; violava o principio aberto/fechado - cada novo tipo de cliente exigia editar o servico).
++**Arquivos alterados:**
++- `domain/pedido/PedidoService.java`
++- `domain/pedido/desconto/PoliticaDesconto.java` (interface Strategy)
++- `domain/pedido/desconto/DescontoPercentual.java`, `DescontoVIP.java`, `DescontoPremium.java`, `SemDesconto.java`
++
++## Decisao 2026-11-10 (aula 16) - Factory para selecionar a estrategia
++
++**Padrao:** Factory (selecao/registro de estrategias)
++**Motivo:** quem chama nao deve conhecer as classes concretas de desconto. A
++`PoliticaDescontoFactory` recebe todas as estrategias do Spring e mapeia `TipoCliente -> PoliticaDesconto`;
++valida na subida que todo tipo tem exatamente uma estrategia (falha rapida). Alternativa considerada:
++`@Conditional`/`@ConditionalOnProperty` (dica do slide) - adequada para escolher **uma** estrategia
++por ambiente, mas aqui a escolha depende do cliente **em cada requisicao**, por isso a factory.
++**Arquivos:** `domain/pedido/desconto/PoliticaDescontoFactory.java`
++
++## Decisao 2026-11-10 (aula 16) - Decorator para logging do frete
++
++**Padrao:** Decorator (tarefa pos-aula: "Decorator para adicionar logging")
++**Motivo:** adicionar log e medicao de tempo ao calculo de frete sem alterar `FreteFixo` nem o
++`PedidoService`. A composicao e feita em `config/FreteConfig.java`.
++**Arquivos:** `domain/pedido/frete/CalculadoraFrete.java`, `FreteFixo.java`, `CalculadoraFreteComLog.java`, `config/FreteConfig.java`
++
++## Decisao 2026-11-10 (aula 16) - Value Objects e Move Method
++
++**Padroes/refatoracoes:** Value Object (`record`), Move Method, Replace Magic Number with Configuration
++**Motivo:** *Primitive Obsession* (`String tipoCliente` -> `enum TipoCliente`), *Feature Envy*
++(o servico calculava `preco * quantidade` de cada item -> `ItemPedido#subtotal()`), numeros magicos
++`100` e `15` -> propriedades `app.frete.*`.
++**Arquivos:** `domain/pedido/TipoCliente.java`, `ItemPedido.java`, `Pedido.java`, `ResumoPedido.java`
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index b41d31c1f81e8f28cc1076abaeeb6c3c07c84bf1..0dbcfcf294547b32b9b7aec57f7133becf6b8ca0 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.3.0</version>
++    <version>0.4.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+diff --git a/projeto-final/src/main/java/com/example/projeto/config/FreteConfig.java b/projeto-final/src/main/java/com/example/projeto/config/FreteConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..3e58de50ef60d3a871386a7583f0eccdb3c8540a
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/config/FreteConfig.java
+@@ -0,0 +1,25 @@
++package com.example.projeto.config;
++
++import com.example.projeto.domain.pedido.frete.CalculadoraFrete;
++import com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog;
++import com.example.projeto.domain.pedido.frete.FreteFixo;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++import java.math.BigDecimal;
++
++/**
++ * Monta a cadeia de frete: {@code FreteFixo} decorado por {@code CalculadoraFreteComLog}.
++ * Trocar a regra de frete (ex.: por regiao) e trocar o componente interno aqui.
++ */
++@Configuration
++public class FreteConfig {
++
++    @Bean
++    public CalculadoraFrete calculadoraFrete(
++            @Value("${app.frete.valor-minimo-frete-gratis:100.00}") BigDecimal minimoFreteGratis,
++            @Value("${app.frete.valor-fixo:15.00}") BigDecimal valorFixo) {
++        return new CalculadoraFreteComLog(new FreteFixo(minimoFreteGratis, valorFixo));
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/ItemPedido.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/ItemPedido.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..1bb4a40ad18d7c89f31534c39001a79f8be7a01e
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/ItemPedido.java
+@@ -0,0 +1,28 @@
++package com.example.projeto.domain.pedido;
++
++import java.math.BigDecimal;
++import java.util.Objects;
++
++/**
++ * Item de um pedido (Value Object imutavel).
++ *
++ * @param preco      preco unitario (nao nulo, nao negativo)
++ * @param quantidade quantidade (maior que zero)
++ */
++public record ItemPedido(BigDecimal preco, int quantidade) {
++
++    public ItemPedido {
++        Objects.requireNonNull(preco, "preco do item e obrigatorio");
++        if (preco.signum() < 0) {
++            throw new IllegalArgumentException("preco do item nao pode ser negativo");
++        }
++        if (quantidade <= 0) {
++            throw new IllegalArgumentException("quantidade deve ser maior que zero");
++        }
++    }
++
++    /** Move Method (Feature Envy): o proprio item sabe calcular seu subtotal. */
++    public BigDecimal subtotal() {
++        return preco.multiply(BigDecimal.valueOf(quantidade));
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/Pedido.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/Pedido.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a48c5751d75585c82e654de8e3084d78f88b6d45
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/Pedido.java
+@@ -0,0 +1,23 @@
++package com.example.projeto.domain.pedido;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++/**
++ * Pedido com seus itens (Value Object imutavel, usado no calculo do total).
++ */
++public record Pedido(List<ItemPedido> itens) {
++
++    public Pedido {
++        if (itens == null || itens.isEmpty()) {
++            throw new IllegalArgumentException("pedido deve ter ao menos um item");
++        }
++        itens = List.copyOf(itens);
++    }
++
++    public BigDecimal subtotal() {
++        return itens.stream()
++                .map(ItemPedido::subtotal)
++                .reduce(BigDecimal.ZERO, BigDecimal::add);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/PedidoService.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/PedidoService.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..18573f2aff8b6d05b4520038af209bd9a32768be
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/PedidoService.java
+@@ -0,0 +1,37 @@
++package com.example.projeto.domain.pedido;
++
++import com.example.projeto.domain.pedido.desconto.PoliticaDesconto;
++import com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory;
++import com.example.projeto.domain.pedido.frete.CalculadoraFrete;
++import org.springframework.stereotype.Service;
++
++import java.math.BigDecimal;
++
++/**
++ * Calcula o total de um pedido (US-003) - versao refatorada na aula 16.
++ * <p>
++ * O codigo legado concentrava 3 responsabilidades num metodo longo com {@code switch}
++ * (Long Method + Switch Statement). Agora: o subtotal e calculado pelos proprios itens
++ * (Move Method), o desconto e delegado a uma <b>Strategy</b> obtida pela <b>Factory</b>,
++ * e o frete a uma {@link CalculadoraFrete} (decorada com log - <b>Decorator</b>).
++ */
++@Service
++public class PedidoService {
++
++    private final PoliticaDescontoFactory descontos;
++    private final CalculadoraFrete calculadoraFrete;
++
++    public PedidoService(PoliticaDescontoFactory descontos, CalculadoraFrete calculadoraFrete) {
++        this.descontos = descontos;
++        this.calculadoraFrete = calculadoraFrete;
++    }
++
++    public ResumoPedido calcularTotal(Pedido pedido, TipoCliente tipoCliente) {
++        BigDecimal subtotal = pedido.subtotal();
++        PoliticaDesconto politica = descontos.obter(tipoCliente);
++        BigDecimal comDesconto = politica.aplicarDesconto(subtotal);
++        BigDecimal frete = calculadoraFrete.calcular(comDesconto);
++        return new ResumoPedido(politica.tipoCliente(), subtotal, subtotal.subtract(comDesconto),
++                frete, comDesconto.add(frete));
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/ResumoPedido.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/ResumoPedido.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab576e93a93fbd083d7f31f0b8225eec9044cdab
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/ResumoPedido.java
+@@ -0,0 +1,13 @@
++package com.example.projeto.domain.pedido;
++
++import java.math.BigDecimal;
++
++/**
++ * Resultado do calculo de um pedido (subtotal, desconto, frete e total).
++ */
++public record ResumoPedido(TipoCliente tipoCliente,
++                           BigDecimal subtotal,
++                           BigDecimal desconto,
++                           BigDecimal frete,
++                           BigDecimal total) {
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/TipoCliente.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/TipoCliente.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..00ddd4d9e4eb15ab6df9e9f9ed1a7962f13567a8
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/TipoCliente.java
+@@ -0,0 +1,12 @@
++package com.example.projeto.domain.pedido;
++
++/**
++ * Tipos de cliente. Substitui a {@code String tipoCliente} do codigo legado
++ * (code smell "Primitive Obsession": qualquer texto era aceito e erros de digitacao
++ * caiam silenciosamente no "sem desconto").
++ */
++public enum TipoCliente {
++    REGULAR,
++    VIP,
++    PREMIUM
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPercentual.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPercentual.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..63a608b814076d67732976450e85c963606ed92c
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPercentual.java
+@@ -0,0 +1,31 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++
++import java.math.BigDecimal;
++import java.math.RoundingMode;
++
++/**
++ * Base comum das estrategias de desconto percentual (evita duplicar a conta e o
++ * arredondamento monetario em cada estrategia).
++ */
++abstract class DescontoPercentual implements PoliticaDesconto {
++
++    private final TipoCliente tipoCliente;
++    private final BigDecimal fator;
++
++    protected DescontoPercentual(TipoCliente tipoCliente, String fator) {
++        this.tipoCliente = tipoCliente;
++        this.fator = new BigDecimal(fator);
++    }
++
++    @Override
++    public TipoCliente tipoCliente() {
++        return tipoCliente;
++    }
++
++    @Override
++    public BigDecimal aplicarDesconto(BigDecimal total) {
++        return total.multiply(fator).setScale(2, RoundingMode.HALF_UP);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPremium.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPremium.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a8d75363221c9aff4443a1930d6e05fb22b6fd4
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoPremium.java
+@@ -0,0 +1,13 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import org.springframework.stereotype.Component;
++
++/** Strategy concreta: cliente PREMIUM tem 20% de desconto. */
++@Component
++public class DescontoPremium extends DescontoPercentual {
++
++    public DescontoPremium() {
++        super(TipoCliente.PREMIUM, "0.8");
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoVIP.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoVIP.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7a83c77d253d64b579f612b068381101dec60b2b
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/DescontoVIP.java
+@@ -0,0 +1,13 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import org.springframework.stereotype.Component;
++
++/** Strategy concreta: cliente VIP tem 10% de desconto. */
++@Component
++public class DescontoVIP extends DescontoPercentual {
++
++    public DescontoVIP() {
++        super(TipoCliente.VIP, "0.9");
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDesconto.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDesconto.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..35ce35764648056800089d0e0a284a5b6a33970f
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDesconto.java
+@@ -0,0 +1,19 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++
++import java.math.BigDecimal;
++
++/**
++ * <b>Strategy</b>: cada politica de desconto encapsula um algoritmo intercambiavel.
++ * Substitui o {@code switch (tipoCliente)} do PedidoService legado; um novo tipo de
++ * desconto e uma nova classe, sem alterar o servico (principio aberto/fechado).
++ */
++public interface PoliticaDesconto {
++
++    /** Tipo de cliente atendido por esta politica (usado pela factory). */
++    TipoCliente tipoCliente();
++
++    /** Retorna o total ja com o desconto aplicado. */
++    BigDecimal aplicarDesconto(BigDecimal total);
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactory.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactory.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..1a1f2e9e94a50dd0f1aed182397ad23d25d14876
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactory.java
+@@ -0,0 +1,42 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import org.springframework.stereotype.Component;
++
++
++import java.util.EnumMap;
++import java.util.List;
++import java.util.Map;
++
++/**
++ * <b>Factory</b>: centraliza a escolha (criacao/selecao) da {@link PoliticaDesconto}
++ * adequada a cada {@link TipoCliente}.
++ * <p>
++ * Recebe todas as estrategias registradas no Spring; adicionar um novo desconto
++ * e so criar um novo {@code @Component} - a factory e o servico nao mudam.
++ * A validacao no construtor garante, na subida da aplicacao, que todo tipo de
++ * cliente tem exatamente uma estrategia (falha rapida em vez de erro em producao).
++ */
++@Component
++public class PoliticaDescontoFactory {
++
++    private final Map<TipoCliente, PoliticaDesconto> politicas = new EnumMap<>(TipoCliente.class);
++
++    public PoliticaDescontoFactory(List<PoliticaDesconto> estrategias) {
++        for (PoliticaDesconto estrategia : estrategias) {
++            PoliticaDesconto anterior = politicas.put(estrategia.tipoCliente(), estrategia);
++            if (anterior != null) {
++                throw new IllegalStateException("Mais de uma politica para " + estrategia.tipoCliente());
++            }
++        }
++        for (TipoCliente tipo : TipoCliente.values()) {
++            if (!politicas.containsKey(tipo)) {
++                throw new IllegalStateException("Nenhuma politica de desconto para " + tipo);
++            }
++        }
++    }
++
++    public PoliticaDesconto obter(TipoCliente tipoCliente) {
++        return politicas.get(tipoCliente == null ? TipoCliente.REGULAR : tipoCliente);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/SemDesconto.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/SemDesconto.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8536b6b7cba93641dd3dce286ee62d9684ac448f
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/desconto/SemDesconto.java
+@@ -0,0 +1,13 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import org.springframework.stereotype.Component;
++
++/** Strategy concreta (Null Object): cliente REGULAR nao tem desconto. */
++@Component
++public class SemDesconto extends DescontoPercentual {
++
++    public SemDesconto() {
++        super(TipoCliente.REGULAR, "1");
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFrete.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFrete.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f8fde1a052c66ace49f877838452e24d6359904a
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFrete.java
+@@ -0,0 +1,14 @@
++package com.example.projeto.domain.pedido.frete;
++
++import java.math.BigDecimal;
++
++/**
++ * Calcula o frete de um pedido a partir do total (ja com desconto).
++ * Interface comum ao componente concreto ({@link FreteFixo}) e ao
++ * <b>Decorator</b> ({@link CalculadoraFreteComLog}).
++ */
++public interface CalculadoraFrete {
++
++    /** Retorna apenas o valor do frete para o total informado. */
++    BigDecimal calcular(BigDecimal total);
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteComLog.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteComLog.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..52ec93de84f38823099eba042c992b66c0d1c012
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteComLog.java
+@@ -0,0 +1,32 @@
++package com.example.projeto.domain.pedido.frete;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.math.BigDecimal;
++import java.util.Objects;
++
++/**
++ * <b>Decorator</b> (tarefa pos-aula 16 - "Decorator para adicionar logging"):
++ * envolve qualquer {@link CalculadoraFrete} e adiciona log + medicao de tempo
++ * sem alterar a implementacao decorada nem quem a utiliza.
++ */
++public class CalculadoraFreteComLog implements CalculadoraFrete {
++
++    private static final Logger log = LoggerFactory.getLogger(CalculadoraFreteComLog.class);
++
++    private final CalculadoraFrete decorada;
++
++    public CalculadoraFreteComLog(CalculadoraFrete decorada) {
++        this.decorada = Objects.requireNonNull(decorada);
++    }
++
++    @Override
++    public BigDecimal calcular(BigDecimal total) {
++        long inicio = System.nanoTime();
++        BigDecimal frete = decorada.calcular(total);
++        log.info("Frete calculado: total={} frete={} calculadora={} ({} us)",
++                total, frete, decorada.getClass().getSimpleName(), (System.nanoTime() - inicio) / 1_000);
++        return frete;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a2d563d84a004d9375d1391465117505a466dbba
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/pedido/frete/FreteFixo.java
+@@ -0,0 +1,24 @@
++package com.example.projeto.domain.pedido.frete;
++
++import java.math.BigDecimal;
++import java.util.Objects;
++
++/**
++ * Frete fixo para pedidos abaixo de um valor minimo; acima dele o frete e gratis.
++ * Os valores (antes "numeros magicos" 100 e 15 no codigo legado) vem de configuracao.
++ */
++public class FreteFixo implements CalculadoraFrete {
++
++    private final BigDecimal valorMinimoFreteGratis;
++    private final BigDecimal valorFrete;
++
++    public FreteFixo(BigDecimal valorMinimoFreteGratis, BigDecimal valorFrete) {
++        this.valorMinimoFreteGratis = Objects.requireNonNull(valorMinimoFreteGratis);
++        this.valorFrete = Objects.requireNonNull(valorFrete);
++    }
++
++    @Override
++    public BigDecimal calcular(BigDecimal total) {
++        return total.compareTo(valorMinimoFreteGratis) < 0 ? valorFrete : BigDecimal.ZERO;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
+index c8b0fe87a6ee146c4a4cbd76956bf32556008c98..d9e889db6cbce0bd5ae203942be9d8a47cb4df38 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
+@@ -3,6 +3,7 @@ package com.example.projeto.interfaces.rest;
+ import com.example.projeto.domain.service.ProdutoNaoEncontradoException;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ProblemDetail;
++import org.springframework.http.converter.HttpMessageNotReadableException;
+ import org.springframework.web.bind.MethodArgumentNotValidException;
+ import org.springframework.web.bind.MissingServletRequestParameterException;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+@@ -35,6 +36,14 @@ public class ApiExceptionHandler {
+         return pd;
+     }
+ 
++    @ExceptionHandler(HttpMessageNotReadableException.class)
++    public ProblemDetail corpoInvalido(HttpMessageNotReadableException ex) {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
++                "Corpo da requisicao invalido ou com valor nao permitido (ex.: tipoCliente deve ser REGULAR, VIP ou PREMIUM)");
++        pd.setTitle("Requisicao invalida");
++        return pd;
++    }
++
+     @ExceptionHandler(MissingServletRequestParameterException.class)
+     public ProblemDetail parametroAusente(MissingServletRequestParameterException ex) {
+         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c725b07cf27efbe3ee6897ddf7d6abc9e01822b5
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoController.java
+@@ -0,0 +1,34 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.pedido.ItemPedido;
++import com.example.projeto.domain.pedido.Pedido;
++import com.example.projeto.domain.pedido.PedidoService;
++import com.example.projeto.domain.pedido.ResumoPedido;
++import com.example.projeto.domain.service.ProdutoService;
++import jakarta.validation.Valid;
++import lombok.RequiredArgsConstructor;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++/**
++ * US-003: calcula subtotal, desconto por tipo de cliente, frete e total de um pedido.
++ */
++@RestController
++@RequestMapping("/pedidos")
++@RequiredArgsConstructor
++public class PedidoController {
++
++    private final PedidoService pedidoService;
++    private final ProdutoService produtoService;
++
++    @PostMapping("/total")
++    public ResumoPedido calcularTotal(@Valid @RequestBody PedidoRequest request) {
++        Pedido pedido = new Pedido(request.itens().stream()
++                .map(item -> new ItemPedido(produtoService.buscarPorId(item.produtoId()).getPrecoFormatado(),
++                        item.quantidade()))
++                .toList());
++        return pedidoService.calcularTotal(pedido, request.tipoCliente());
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoRequest.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoRequest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fbc324129b0ddebb2b85a06a1ab9d888460c6952
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/PedidoRequest.java
+@@ -0,0 +1,23 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import jakarta.validation.Valid;
++import jakarta.validation.constraints.Min;
++import jakarta.validation.constraints.NotEmpty;
++import jakarta.validation.constraints.NotNull;
++
++import java.util.List;
++
++/**
++ * Requisicao de calculo de total: os itens referenciam produtos cadastrados
++ * (o preco vem do catalogo, nunca do cliente).
++ */
++public record PedidoRequest(
++        @NotNull(message = "tipoCliente e obrigatorio") TipoCliente tipoCliente,
++        @NotEmpty(message = "itens e obrigatorio") List<@Valid Item> itens) {
++
++    public record Item(
++            @NotNull(message = "produtoId e obrigatorio") Long produtoId,
++            @Min(value = 1, message = "quantidade deve ser maior que zero") int quantidade) {
++    }
++}
+diff --git a/projeto-final/src/main/resources/application.yml b/projeto-final/src/main/resources/application.yml
+index fe9684d61b27feac52930463a93f8cf004c90364..2aaa5ca9b175d6845409ddfb385cf99d7666151c 100644
+--- a/projeto-final/src/main/resources/application.yml
++++ b/projeto-final/src/main/resources/application.yml
+@@ -13,6 +13,11 @@ spring:
+     console:
+       enabled: true
+ 
++app:
++  frete:
++    valor-minimo-frete-gratis: 100.00
++    valor-fixo: 15.00
++
+ springdoc:
+   swagger-ui:
+     path: /swagger-ui.html
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/pedido/PedidoServiceTest.java b/projeto-final/src/test/java/com/example/projeto/domain/pedido/PedidoServiceTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6abb4d105934a283e10b05cd44f3d7cae0079dbc
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/pedido/PedidoServiceTest.java
+@@ -0,0 +1,82 @@
++package com.example.projeto.domain.pedido;
++
++import com.example.projeto.domain.pedido.desconto.DescontoPremium;
++import com.example.projeto.domain.pedido.desconto.DescontoVIP;
++import com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory;
++import com.example.projeto.domain.pedido.desconto.SemDesconto;
++import com.example.projeto.domain.pedido.frete.CalculadoraFrete;
++import com.example.projeto.domain.pedido.frete.FreteFixo;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++class PedidoServiceTest {
++
++    private final PoliticaDescontoFactory factory =
++            new PoliticaDescontoFactory(List.of(new DescontoVIP(), new DescontoPremium(), new SemDesconto()));
++
++    /** Equivalente ao teste do slide: estrategia VIP real + frete mockado (Arrange/Act/Assert). */
++    @Test
++    void deveCalcularTotalComDescontoVIP() {
++        CalculadoraFrete freteMock = mock(CalculadoraFrete.class);
++        when(freteMock.calcular(any())).thenReturn(BigDecimal.ZERO);
++
++        PedidoService service = new PedidoService(factory, freteMock);
++        Pedido pedido = new Pedido(List.of(new ItemPedido(new BigDecimal("100"), 1)));
++
++        ResumoPedido resumo = service.calcularTotal(pedido, TipoCliente.VIP);
++
++        assertEquals(new BigDecimal("90.00"), resumo.total());
++        assertEquals(new BigDecimal("10.00"), resumo.desconto());
++        verify(freteMock).calcular(new BigDecimal("90.00"));
++    }
++
++    /** Mesmos cenarios do PedidoService legado (comportamento preservado pela refatoracao). */
++    @ParameterizedTest(name = "{0}: subtotal {1} -> total {2}")
++    @CsvSource({
++            "REGULAR, 50.00,  65.00",   // sem desconto, abaixo de 100 -> +15 de frete
++            "REGULAR, 200.00, 200.00",  // sem desconto, frete gratis
++            "VIP,     200.00, 180.00",  // 10% off
++            "PREMIUM, 200.00, 160.00",  // 20% off
++            "PREMIUM, 110.00, 103.00"   // 20% off -> 88.00 (< 100) + 15 de frete
++    })
++    void deveAplicarDescontoEFreteConformeTipoDeCliente(TipoCliente tipo, String subtotal, String esperado) {
++        PedidoService service = new PedidoService(factory,
++                new FreteFixo(new BigDecimal("100"), new BigDecimal("15.00")));
++        Pedido pedido = new Pedido(List.of(new ItemPedido(new BigDecimal(subtotal), 1)));
++
++        assertEquals(0, new BigDecimal(esperado).compareTo(service.calcularTotal(pedido, tipo).total()));
++    }
++
++    @Test
++    void deveSomarItensComQuantidade() {
++        Pedido pedido = new Pedido(List.of(
++                new ItemPedido(new BigDecimal("10.50"), 2),
++                new ItemPedido(new BigDecimal("4.00"), 3)));
++        assertEquals(new BigDecimal("33.00"), pedido.subtotal());
++    }
++
++    @Test
++    void tipoClienteNuloUsaPoliticaRegular() {
++        assertEquals(TipoCliente.REGULAR, factory.obter(null).tipoCliente());
++    }
++
++    @Test
++    void deveRejeitarPedidoSemItensEItensInvalidos() {
++        assertThrows(IllegalArgumentException.class, () -> new Pedido(List.of()));
++        assertThrows(IllegalArgumentException.class, () -> new Pedido(null));
++        assertThrows(IllegalArgumentException.class, () -> new ItemPedido(BigDecimal.ONE, 0));
++        assertThrows(IllegalArgumentException.class, () -> new ItemPedido(new BigDecimal("-1"), 1));
++        assertThrows(NullPointerException.class, () -> new ItemPedido(null, 1));
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactoryTest.java b/projeto-final/src/test/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactoryTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8ff17d205f88e81a80e6638ffdd5fc963ee55d68
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/pedido/desconto/PoliticaDescontoFactoryTest.java
+@@ -0,0 +1,41 @@
++package com.example.projeto.domain.pedido.desconto;
++
++import com.example.projeto.domain.pedido.TipoCliente;
++import org.junit.jupiter.api.Test;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++class PoliticaDescontoFactoryTest {
++
++    @Test
++    void deveRetornarEstrategiaDeCadaTipo() {
++        PoliticaDescontoFactory factory =
++                new PoliticaDescontoFactory(List.of(new DescontoVIP(), new DescontoPremium(), new SemDesconto()));
++
++        assertThat(factory.obter(TipoCliente.VIP)).isInstanceOf(DescontoVIP.class);
++        assertThat(factory.obter(TipoCliente.PREMIUM)).isInstanceOf(DescontoPremium.class);
++        assertThat(factory.obter(TipoCliente.REGULAR)).isInstanceOf(SemDesconto.class);
++        assertThat(factory.obter(TipoCliente.VIP).aplicarDesconto(new BigDecimal("33.33")))
++                .isEqualByComparingTo("30.00");
++    }
++
++    @Test
++    void deveFalharNaSubidaSeFaltarEstrategia() {
++        List<PoliticaDesconto> incompleta = List.of(new DescontoVIP(), new SemDesconto());
++        assertThatThrownBy(() -> new PoliticaDescontoFactory(incompleta))
++                .isInstanceOf(IllegalStateException.class)
++                .hasMessageContaining("PREMIUM");
++    }
++
++    @Test
++    void deveFalharSeHouverEstrategiaDuplicada() {
++        List<PoliticaDesconto> duplicada = List.of(new DescontoVIP(), new DescontoVIP());
++        assertThatThrownBy(() -> new PoliticaDescontoFactory(duplicada))
++                .isInstanceOf(IllegalStateException.class)
++                .hasMessageContaining("Mais de uma");
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteTest.java b/projeto-final/src/test/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..953f035c0f60009ba759451a2b75cced97ff5f7d
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/pedido/frete/CalculadoraFreteTest.java
+@@ -0,0 +1,36 @@
++package com.example.projeto.domain.pedido.frete;
++
++import org.junit.jupiter.api.Test;
++
++import java.math.BigDecimal;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++class CalculadoraFreteTest {
++
++    private final FreteFixo freteFixo = new FreteFixo(new BigDecimal("100"), new BigDecimal("15.00"));
++
++    @Test
++    void freteFixoAbaixoDoMinimo() {
++        assertThat(freteFixo.calcular(new BigDecimal("99.99"))).isEqualByComparingTo("15.00");
++    }
++
++    @Test
++    void freteGratisAPartirDoMinimo() {
++        assertThat(freteFixo.calcular(new BigDecimal("100.00"))).isEqualByComparingTo("0");
++    }
++
++    @Test
++    void decoratorDelegaParaACalculadoraDecorada() {
++        CalculadoraFrete interna = mock(CalculadoraFrete.class);
++        when(interna.calcular(new BigDecimal("50"))).thenReturn(new BigDecimal("7.00"));
++
++        CalculadoraFrete comLog = new CalculadoraFreteComLog(interna);
++
++        assertThat(comLog.calcular(new BigDecimal("50"))).isEqualByComparingTo("7.00");
++        verify(interna).calcular(new BigDecimal("50"));
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c14e20695c61e7d64e48da43ef3d40c4a26ad7c
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+@@ -0,0 +1,79 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.math.BigDecimal;
++
++import static org.hamcrest.Matchers.is;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * US-003: total do pedido com desconto por tipo de cliente e frete (fim a fim).
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++@Transactional
++class PedidoControllerIT {
++
++    private static final String URL = "/pedidos/total";
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Autowired
++    ProdutoRepository repository;
++
++    @Test
++    void deveCalcularTotalParaClientePremiumComFrete() throws Exception {
++        Produto fone = repository.save(new Produto("Fone", new BigDecimal("40.00")));
++        Produto cabo = repository.save(new Produto("Cabo", new BigDecimal("15.00")));
++
++        String corpo = """
++                {"tipoCliente":"PREMIUM","itens":[
++                  {"produtoId":%d,"quantidade":2},
++                  {"produtoId":%d,"quantidade":2}]}
++                """.formatted(fone.getId(), cabo.getId());
++
++        // subtotal 110.00 -> 20% off = 88.00 -> abaixo de 100 -> frete 15.00 -> total 103.00
++        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(corpo))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.subtotal", is(110.00)))
++                .andExpect(jsonPath("$.desconto", is(22.00)))
++                .andExpect(jsonPath("$.frete", is(15.00)))
++                .andExpect(jsonPath("$.total", is(103.00)));
++    }
++
++    @Test
++    void deveRetornar404QuandoProdutoDoPedidoNaoExiste() throws Exception {
++        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"tipoCliente\":\"VIP\",\"itens\":[{\"produtoId\":987654,\"quantidade\":1}]}"))
++                .andExpect(status().isNotFound());
++    }
++
++    @Test
++    void deveRetornar400ParaTipoClienteDesconhecido() throws Exception {
++        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"tipoCliente\":\"OURO\",\"itens\":[{\"produtoId\":1,\"quantidade\":1}]}"))
++                .andExpect(status().isBadRequest())
++                .andExpect(jsonPath("$.title", is("Requisicao invalida")));
++    }
++
++    @Test
++    void deveValidarRequisicao() throws Exception {
++        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"itens\":[]}"))
++                .andExpect(status().isBadRequest())
++                .andExpect(jsonPath("$.campos.tipoCliente", is("tipoCliente e obrigatorio")))
++                .andExpect(jsonPath("$.campos.itens", is("itens e obrigatorio")));
++    }
++}

@@ -1,0 +1,1111 @@
+diff --git a/.github/workflows/projeto-final-ci.yml b/.github/workflows/projeto-final-ci.yml
+index 803cf454ecc19e57d12a125e8de643c82f693b8f..9c4d622bc55ed7ded3cd2ef40db528f49983cb21 100644
+--- a/.github/workflows/projeto-final-ci.yml
++++ b/.github/workflows/projeto-final-ci.yml
+@@ -1,5 +1,8 @@
+ name: Projeto Final - CI
+ 
++# Fluxo (aula 15): Commit -> Build -> Testes (unitarios + integracao + Testcontainers)
++# -> cobertura JaCoCo >= 80% (falha o build se menor) -> [main] Deploy em staging (Heroku).
++# A analise SonarQube fica em projeto-final-sonar.yml (condicionada ao secret SONAR_TOKEN).
+ on:
+   push:
+     paths:
+@@ -29,9 +32,20 @@ jobs:
+           distribution: 'temurin'
+           cache: maven
+ 
+-      - name: Build e testes (mvn verify + JaCoCo)
++      - name: Docker disponivel para Testcontainers
++        run: docker version --format '{{.Server.Version}}'
++
++      - name: Build, testes e verificacao de cobertura (mvn verify)
+         run: mvn -B clean verify
+ 
++      - name: Publicar relatorios de teste
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: surefire-reports
++          path: projeto-final/target/surefire-reports/
++          if-no-files-found: ignore
++
+       - name: Publicar relatorio JaCoCo
+         if: always()
+         uses: actions/upload-artifact@v4
+@@ -39,3 +53,37 @@ jobs:
+           name: jacoco-report
+           path: projeto-final/target/site/jacoco/
+           if-no-files-found: ignore
++
++      - name: Publicar jar
++        uses: actions/upload-artifact@v4
++        with:
++          name: projeto-final-jar
++          path: projeto-final/target/projeto-final.jar
++
++  deploy-heroku:
++    # Tarefa pos-aula 15: estagio de deploy (somente na main e somente se houver secrets).
++    needs: build
++    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
++    runs-on: ubuntu-latest
++    environment: staging
++    env:
++      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
++      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
++    steps:
++      - name: Aviso (sem secrets do Heroku)
++        if: env.HEROKU_API_KEY == '' || env.HEROKU_APP_NAME == ''
++        run: echo "::notice::HEROKU_API_KEY/HEROKU_APP_NAME nao configurados - deploy pulado."
++
++      - name: Baixar jar do build
++        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != ''
++        uses: actions/download-artifact@v4
++        with:
++          name: projeto-final-jar
++          path: dist
++
++      - name: Deploy no Heroku (heroku deploy:jar)
++        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != ''
++        run: |
++          command -v heroku >/dev/null || curl -fsSL https://cli-assets.heroku.com/install.sh | sh
++          heroku plugins:install java
++          heroku deploy:jar dist/projeto-final.jar --app "$HEROKU_APP_NAME" --jdk 17
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index 547d63548ef9aa4c7d2d90c37204627742c39575..2d2aa1e10d00a00ef0ce80b4398e126f23fc16c6 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -8,6 +8,7 @@ Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP d
+ |------|------|--------------|
+ | 13 | MVP: CRUD de Produto, testes, JaCoCo, CI basico (tag `v0.1`) | [docs/aula-13](docs/aula-13/README.md) |
+ | 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md) |
++| 15 | Sprint 1: CI/CD, camada de servico, validacao (US-002), Testcontainers, JaCoCo >= 80% | [docs/aula-15](docs/aula-15/README.md) |
+ 
+ ## Como executar
+ 
+diff --git a/projeto-final/docs/aula-15/README.md b/projeto-final/docs/aula-15/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..70b6befeba61a5b87b4c6329d846068a83abfd9b
+--- /dev/null
++++ b/projeto-final/docs/aula-15/README.md
+@@ -0,0 +1,94 @@
++# Aula 15 - Sprint 1: CI/CD e Testes Automatizados
++
++## Objetivo
++
++Pipeline CI/CD no GitHub Actions, testes automatizados para as funcionalidades novas
++(piramide de testes / principios FIRST) e qualidade garantida por ferramentas.
++
++## Entregas
++
++| Item | Onde |
++|------|------|
++| Pipeline CI: build -> testes -> cobertura -> (main) deploy | `.github/workflows/projeto-final-ci.yml` |
++| Analise SonarQube (condicionada ao secret) | `.github/workflows/projeto-final-sonar.yml` (aula 14) |
++| Camada de servico `ProdutoService` + `ProdutoNaoEncontradoException` | `domain/service` |
++| Teste unitario do service (slide) + cenarios extras | `ProdutoServiceTest` (7 testes, Mockito) |
++| Teste com **Testcontainers + PostgreSQL 15** | `ProdutoPostgresIT` (`@Testcontainers(disabledWithoutDocker = true)`) |
++| Teste so da camada JPA (dica `@DataJpaTest`) | `ProdutoRepositoryTest` |
++| Melhoria apontada pela analise estatica: NPE em `getPrecoFormatado` | `Produto#getPrecoFormatado` + `ProdutoTest` |
++| **Tarefa pos-aula**: teste de validacao de campos obrigatorios (US-002) | `ProdutoRequest` (Bean Validation) + `ApiExceptionHandler` + teste parametrizado em `ProdutoControllerIT` |
++| **Tarefa pos-aula**: estagio de deploy Heroku no CI | job `deploy-heroku` (so na `main`, so com secrets) |
++| Cobertura minima no build | `jacoco:check` - linhas >= 80%, branches >= 70% (falha o `mvn verify`) |
++
++Piramide atual: unitarios (`ProdutoTest`, `ProdutoServiceTest`, `ProdutoControllerTest`) na base;
++integracao (`ProdutoRepositoryTest`, `ProdutoControllerIT`, `ProdutoPostgresIT`) acima.
++
++## Testcontainers e Docker
++
++Nao ha Docker nesta maquina de desenvolvimento. O teste `ProdutoPostgresIT` foi escrito de verdade
++(container `postgres:15-alpine`, `@DynamicPropertySource` com URL/usuario/senha) e anotado com
++`@Testcontainers(disabledWithoutDocker = true)`: localmente ele aparece como **skipped** no relatorio
++(ver `evidencias/mvn-verify.txt`), e no GitHub Actions (`ubuntu-latest` tem Docker - o workflow
++inclusive imprime a versao do Docker antes do build) ele **executa contra um PostgreSQL real**.
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++M .github/workflows/projeto-final-ci.yml        (Docker check, artefatos, job deploy-heroku)
++M projeto-final/pom.xml                          (0.3.0; validation, testcontainers, postgresql(test), jacoco:check)
++M projeto-final/README.md
++M projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java        (getPrecoFormatado null-safe)
++A projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoService.java
++A projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoNaoEncontradoException.java
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java (usa service + @Valid)
++A projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoRequest.java
++A projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
++A projeto-final/src/test/java/com/example/projeto/domain/model/ProdutoTest.java
++A projeto-final/src/test/java/com/example/projeto/domain/repository/ProdutoRepositoryTest.java
++A projeto-final/src/test/java/com/example/projeto/domain/service/ProdutoServiceTest.java
++M projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java (validacao, ProblemDetail)
++M projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java (mock do service)
++A projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
++A projeto-final/docs/aula-15/README.md
++A projeto-final/docs/aula-15/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| `actions/checkout@v3`, `actions/setup-java@v3` | Versoes antigas (runtime Node 16 descontinuado) | `@v4` + cache Maven |
++| `SonarSource/sonarqube-scan-action@master` no CI | Referencia mutavel; quebra o CI sem secrets | Sonar em workflow proprio, scanner Maven, condicionado ao `SONAR_TOKEN` |
++| `on: [push, pull_request]` sem filtro | Monorepo: rodaria para qualquer pasta | `paths: projeto-final/**` + `working-directory: projeto-final` |
++| `@Testcontainers` sem configuracao para ambiente sem Docker | Sem Docker o teste falha com erro (nao e "skip") | `@Testcontainers(disabledWithoutDocker = true)` |
++| `@DynamicPropertySource` so com a URL | Sem `username`/`password` o Spring usa `sa`/vazio do H2 e a conexao com o PostgreSQL falha | Registra URL, usuario, senha, driver e `ddl-auto` |
++| `ProdutoControllerIT` com `@Testcontainers` (mesmo nome do IT de MockMvc) | Duas classes com o mesmo nome/pacote nao compilam | Teste com container em `ProdutoPostgresIT` |
++| `getPrecoFormatado()` "Depois" retorna `BigDecimal.ZERO` | Escala diferente do caso normal (`0` vs `x.yy`) | Retorna `0.00` (`setScale(2)`) e `@JsonIgnore` para nao poluir o JSON |
++| `mvn clean verify sonar:sonar` | Exige servidor Sonar; o prefixo `sonar:` antigo depende de resolucao de plugin | Documentado como nao executado localmente; no CI usa `org.sonarsource.scanner.maven:sonar-maven-plugin:sonar` |
++| Deploy `curl ... | sh` + `heroku deploy:jar target/*.jar` sem condicao de secret | Falha em forks/sem conta; `deploy:jar` exige plugin `java` | Job separado, `needs: build`, so em push na `main`, so se `HEROKU_API_KEY`/`HEROKU_APP_NAME` existirem; instala o plugin; usa o jar do artefato |
++| `when(repository.findByNomeContaining(...))` | Metodo renomeado na aula 14 (`...IgnoreCase`) | Teste ajustado |
++
++## Nao executado localmente (e por que)
++
++- **SonarQube** (`mvn sonar:sonar`): nao ha servidor/conta Sonar. A "1 melhoria baseada no SonarQube"
++  (NPE em `getPrecoFormatado`, regra Sonar *java:S2259 - Null pointers should not be dereferenced*)
++  foi aplicada a partir do exemplo do slide e coberta por teste.
++- **Deploy Heroku**: sem conta; o job fica inativo ate os secrets existirem.
++- **ProdutoPostgresIT**: sem Docker local (skipped); roda no GitHub Actions.
++
++## Pendencias para o dono do repositorio
++
++- Abrir PR com label **`sprint-1`** (`gh label create sprint-1` ja sugerido na aula 14).
++- Cadastrar secrets `SONAR_TOKEN`, `SONAR_HOST_URL` (Sonar) e `HEROKU_API_KEY`, `HEROKU_APP_NAME` (deploy);
++  criar o environment `staging` no GitHub (opcional, o job o referencia).
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt) - testes (inclui o `ProdutoPostgresIT` skipped) e `jacoco:check`
++- [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt)
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - validacao 400, ProblemDetail 404, mass assignment bloqueado
++
++Resultado: **25 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT` - sem Docker local);
++cobertura **100% de linhas (49/49) e branches (4/4)**; `jacoco:check` -> "All coverage checks have been met".
+diff --git a/projeto-final/docs/aula-15/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-15/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..aba7b9dfa914a956d25c7aab828d6ce885966057
+--- /dev/null
++++ b/projeto-final/docs/aula-15/evidencias/curl-endpoints.txt
+@@ -0,0 +1,70 @@
++﻿# Evidencias de execucao - aula 15 (2026-11-10 16:00:42)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T16:00:41.453-03:00  INFO 2012 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 80.391 seconds (process running for 85.329)
++
++## Cria produto valido
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:46 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
++
++## US-002: sem nome (400)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"preco":10.00}'
++HTTP/1.1 400 
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:47 GMT
++Connection: close
++
++{"type":"about:blank","title":"Erro de validacao","status":400,"detail":"Dados invalidos","instance":"/produtos","campos":{"nome":"nome e obrigatorio"}}
++
++## US-002: preco negativo (400)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"nome":"Cabo","preco":-1}'
++HTTP/1.1 400 
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:48 GMT
++Connection: close
++
++{"type":"about:blank","title":"Erro de validacao","status":400,"detail":"Dados invalidos","instance":"/produtos","campos":{"preco":"preco deve ser maior que zero"}}
++
++## US-002: id no corpo e ignorado (sem mass assignment)
++$ curl -X POST http://localhost:18089/produtos -H 'Content-Type: application/json' -d '{"id":999,"nome":"Cabo USB","preco":25.00}'
++HTTP/1.1 201 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:49 GMT
++
++{"id":2,"nome":"Cabo USB","preco":25.00}
++
++## Produto inexistente: ProblemDetail 404
++$ curl http://localhost:18089/produtos/12345
++HTTP/1.1 404 
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:50 GMT
++
++{"type":"about:blank","title":"Recurso nao encontrado","status":404,"detail":"Produto nao encontrado: id=12345","instance":"/produtos/12345"}
++
++## Busca sem parametro: ProblemDetail 400
++$ curl http://localhost:18089/produtos/buscar
++HTTP/1.1 400 
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:50 GMT
++Connection: close
++
++{"type":"about:blank","title":"Requisicao invalida","status":400,"detail":"Parametro obrigatorio ausente: nome","instance":"/produtos/buscar"}
++
++## Lista final
++$ curl http://localhost:18089/produtos
++HTTP/1.1 200 
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:00:52 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90},{"id":2,"nome":"Cabo USB","preco":25.00}]
++
+diff --git a/projeto-final/docs/aula-15/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-15/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..65b5397e53622807584dd0e662c9fa52e8b73c3c
+--- /dev/null
++++ b/projeto-final/docs/aula-15/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,12 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 15
++Instrucoes: 100,0% (204/204)
++Linhas:     100,0% (49/49)
++Branches:   100,0% (4/4)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
++  com.example.projeto.domain.service.ProdutoService: 13/13
++  com.example.projeto.interfaces.rest.ApiExceptionHandler: 15/15
++  com.example.projeto.interfaces.rest.ProdutoController: 7/7
++  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
++  com.example.projeto.domain.model.Produto: 10/10
+diff --git a/projeto-final/docs/aula-15/evidencias/mvn-verify.txt b/projeto-final/docs/aula-15/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec31b1f2c7baaeede6aef8620444cd075b8df84f
+--- /dev/null
++++ b/projeto-final/docs/aula-15/evidencias/mvn-verify.txt
+@@ -0,0 +1,23 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 15:59:14)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.3.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.696 s -- in com.example.projeto.domain.model.ProdutoTest
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 81.76 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.18 s -- in com.example.projeto.domain.service.ProdutoServiceTest
++[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 43.14 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.142 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++2026-11-10T15:58:42.079-03:00 ERROR 5056 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
++See https://java.testcontainers.org/on_failure.html for more details.
++[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0.016 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
++[WARNING] Tests run: 25, Failures: 0, Errors: 0, Skipped: 1
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] All coverage checks have been met.
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index c43cd5f11f28ea4f1b415a723b3ece59abdb1e3d..b41d31c1f81e8f28cc1076abaeeb6c3c07c84bf1 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.2.0</version>
++    <version>0.3.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+@@ -55,11 +55,33 @@
+             <version>${springdoc.version}</version>
+         </dependency>
+ 
++        <!-- Bean Validation (US-002) -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-validation</artifactId>
++        </dependency>
++
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-test</artifactId>
+             <scope>test</scope>
+         </dependency>
++        <!-- Testcontainers + PostgreSQL real nos testes de integracao (rodam no CI, que tem Docker) -->
++        <dependency>
++            <groupId>org.testcontainers</groupId>
++            <artifactId>junit-jupiter</artifactId>
++            <scope>test</scope>
++        </dependency>
++        <dependency>
++            <groupId>org.testcontainers</groupId>
++            <artifactId>postgresql</artifactId>
++            <scope>test</scope>
++        </dependency>
++        <dependency>
++            <groupId>org.postgresql</groupId>
++            <artifactId>postgresql</artifactId>
++            <scope>test</scope>
++        </dependency>
+     </dependencies>
+ 
+     <build>
+@@ -112,6 +134,33 @@
+                             <goal>report</goal>
+                         </goals>
+                     </execution>
++                    <!-- Quality gate local (DoD): build falha se a cobertura de linhas ficar abaixo de 80% -->
++                    <execution>
++                        <id>check</id>
++                        <phase>verify</phase>
++                        <goals>
++                            <goal>check</goal>
++                        </goals>
++                        <configuration>
++                            <rules>
++                                <rule>
++                                    <element>BUNDLE</element>
++                                    <limits>
++                                        <limit>
++                                            <counter>LINE</counter>
++                                            <value>COVEREDRATIO</value>
++                                            <minimum>0.80</minimum>
++                                        </limit>
++                                        <limit>
++                                            <counter>BRANCH</counter>
++                                            <value>COVEREDRATIO</value>
++                                            <minimum>0.70</minimum>
++                                        </limit>
++                                    </limits>
++                                </rule>
++                            </rules>
++                        </configuration>
++                    </execution>
+                 </executions>
+             </plugin>
+         </plugins>
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+index f6823f81b7ad5d38c9658cfc45bae340fefa79ca..2166b8603aee964b579889f565b085c8046484b3 100644
+--- a/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
++++ b/projeto-final/src/main/java/com/example/projeto/domain/model/Produto.java
+@@ -1,5 +1,6 @@
+ package com.example.projeto.domain.model;
+ 
++import com.fasterxml.jackson.annotation.JsonIgnore;
+ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.GeneratedValue;
+@@ -11,6 +12,7 @@ import lombok.Setter;
+ import lombok.ToString;
+ 
+ import java.math.BigDecimal;
++import java.math.RoundingMode;
+ 
+ /**
+  * Entidade JPA Produto (modelo de dominio do MVP).
+@@ -44,4 +46,19 @@ public class Produto {
+         this.nome = nome;
+         this.preco = preco;
+     }
++
++    /**
++     * Preco com 2 casas decimais (arredondamento HALF_UP).
++     * <p>
++     * Correcao apontada pela analise estatica (aula 15): a versao original chamava
++     * {@code preco.setScale(...)} sem verificar nulo (possivel NullPointerException).
++     * Com preco nulo retorna {@code 0.00} (o slide retornava {@code BigDecimal.ZERO},
++     * com escala 0, inconsistente com o caso normal).
++     */
++    @JsonIgnore
++    public BigDecimal getPrecoFormatado() {
++        return preco != null
++                ? preco.setScale(2, RoundingMode.HALF_UP)
++                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
++    }
+ }
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoNaoEncontradoException.java b/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoNaoEncontradoException.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6ece19fd9e7d54bd57e9999db5acc9b4bbb3ca7e
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoNaoEncontradoException.java
+@@ -0,0 +1,11 @@
++package com.example.projeto.domain.service;
++
++/**
++ * Lancada quando um produto solicitado nao existe (mapeada para HTTP 404).
++ */
++public class ProdutoNaoEncontradoException extends RuntimeException {
++
++    public ProdutoNaoEncontradoException(Long id) {
++        super("Produto nao encontrado: id=" + id);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoService.java b/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoService.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fa4ed41f3b68273dbe0684a43d96c054414986c5
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/domain/service/ProdutoService.java
+@@ -0,0 +1,56 @@
++package com.example.projeto.domain.service;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import lombok.RequiredArgsConstructor;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import java.util.List;
++
++/**
++ * Regras de negocio de produtos. Os controllers deixam de acessar o repositorio
++ * diretamente (separacao de responsabilidades - camada de servico).
++ */
++@Service
++@RequiredArgsConstructor
++@Transactional(readOnly = true)
++public class ProdutoService {
++
++    private final ProdutoRepository repository;
++
++    public List<Produto> listarTodos() {
++        return repository.findAll();
++    }
++
++    public Produto buscarPorId(Long id) {
++        return repository.findById(id).orElseThrow(() -> new ProdutoNaoEncontradoException(id));
++    }
++
++    /** US-001: busca por parte do nome, sem diferenciar maiusculas/minusculas. */
++    public List<Produto> buscarPorNome(String nome) {
++        return repository.findByNomeContainingIgnoreCase(nome);
++    }
++
++    @Transactional
++    public Produto cadastrar(Produto produto) {
++        produto.setId(null);
++        return repository.save(produto);
++    }
++
++    @Transactional
++    public Produto atualizar(Long id, Produto dados) {
++        Produto existente = buscarPorId(id);
++        existente.setNome(dados.getNome());
++        existente.setPreco(dados.getPreco());
++        return repository.save(existente);
++    }
++
++    @Transactional
++    public void remover(Long id) {
++        if (!repository.existsById(id)) {
++            throw new ProdutoNaoEncontradoException(id);
++        }
++        repository.deleteById(id);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c8b0fe87a6ee146c4a4cbd76956bf32556008c98
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ApiExceptionHandler.java
+@@ -0,0 +1,45 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.service.ProdutoNaoEncontradoException;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ProblemDetail;
++import org.springframework.web.bind.MethodArgumentNotValidException;
++import org.springframework.web.bind.MissingServletRequestParameterException;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.RestControllerAdvice;
++
++import java.util.LinkedHashMap;
++import java.util.Map;
++
++/**
++ * Tratamento global de erros da API REST no formato RFC 7807 (ProblemDetail).
++ */
++@RestControllerAdvice(basePackages = "com.example.projeto.interfaces.rest")
++public class ApiExceptionHandler {
++
++    @ExceptionHandler(ProdutoNaoEncontradoException.class)
++    public ProblemDetail naoEncontrado(ProdutoNaoEncontradoException ex) {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
++        pd.setTitle("Recurso nao encontrado");
++        return pd;
++    }
++
++    @ExceptionHandler(MethodArgumentNotValidException.class)
++    public ProblemDetail validacao(MethodArgumentNotValidException ex) {
++        Map<String, String> campos = new LinkedHashMap<>();
++        ex.getBindingResult().getFieldErrors()
++                .forEach(erro -> campos.putIfAbsent(erro.getField(), erro.getDefaultMessage()));
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dados invalidos");
++        pd.setTitle("Erro de validacao");
++        pd.setProperty("campos", campos);
++        return pd;
++    }
++
++    @ExceptionHandler(MissingServletRequestParameterException.class)
++    public ProblemDetail parametroAusente(MissingServletRequestParameterException ex) {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
++                "Parametro obrigatorio ausente: " + ex.getParameterName());
++        pd.setTitle("Requisicao invalida");
++        return pd;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+index d24b2769ed4d425fd2a11a18f4f9453c315628d6..b9b28b777b64b3dd0cb2e12f1f8efbfc0e83f948 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+@@ -1,10 +1,10 @@
+ package com.example.projeto.interfaces.rest;
+ 
+ import com.example.projeto.domain.model.Produto;
+-import com.example.projeto.domain.repository.ProdutoRepository;
++import com.example.projeto.domain.service.ProdutoService;
++import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
+-import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PathVariable;
+@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
+ import java.util.List;
+ 
+ /**
+- * API REST de produtos (CRUD do MVP).
++ * API REST de produtos.
+  * <p>
+  * Pacote {@code interfaces.rest}: o slide usa {@code interface.rest}, mas
+  * {@code interface} e palavra reservada do Java e nao compila como nome de pacote.
+@@ -29,50 +29,38 @@ import java.util.List;
+ @RequiredArgsConstructor
+ public class ProdutoController {
+ 
+-    private final ProdutoRepository repository;
++    private final ProdutoService service;
+ 
+     @GetMapping
+     public List<Produto> listar() {
+-        return repository.findAll();
++        return service.listarTodos();
+     }
+ 
+     /** US-001: GET /produtos/buscar?nome=Xiaomi */
+     @GetMapping("/buscar")
+     public List<Produto> buscarPorNome(@RequestParam String nome) {
+-        return repository.findByNomeContainingIgnoreCase(nome);
++        return service.buscarPorNome(nome);
+     }
+ 
+     @GetMapping("/{id}")
+-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
+-        return repository.findById(id)
+-                .map(ResponseEntity::ok)
+-                .orElse(ResponseEntity.notFound().build());
++    public Produto buscarPorId(@PathVariable Long id) {
++        return service.buscarPorId(id);
+     }
+ 
+     @PostMapping
+     @ResponseStatus(HttpStatus.CREATED)
+-    public Produto criar(@RequestBody Produto produto) {
+-        produto.setId(null);
+-        return repository.save(produto);
++    public Produto criar(@Valid @RequestBody ProdutoRequest request) {
++        return service.cadastrar(request.toEntity());
+     }
+ 
+     @PutMapping("/{id}")
+-    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto dados) {
+-        return repository.findById(id)
+-                .map(existente -> {
+-                    existente.setNome(dados.getNome());
+-                    existente.setPreco(dados.getPreco());
+-                    return ResponseEntity.ok(repository.save(existente));
+-                })
+-                .orElse(ResponseEntity.notFound().build());
++    public Produto atualizar(@PathVariable Long id, @Valid @RequestBody ProdutoRequest request) {
++        return service.atualizar(id, request.toEntity());
+     }
+ 
+     @DeleteMapping("/{id}")
+-    public ResponseEntity<Void> remover(@PathVariable Long id) {
+-        if (!repository.existsById(id)) {
+-            return ResponseEntity.notFound().build();
+-        }
+-        repository.deleteById(id);
+-        return ResponseEntity.noContent().build();
++    @ResponseStatus(HttpStatus.NO_CONTENT)
++    public void remover(@PathVariable Long id) {
++        service.remover(id);
+     }
+ }
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoRequest.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoRequest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..1421d99590a5ea1972151a41df183e7ff4679e28
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoRequest.java
+@@ -0,0 +1,31 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.model.Produto;
++import jakarta.validation.constraints.Digits;
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotNull;
++import jakarta.validation.constraints.Positive;
++import jakarta.validation.constraints.Size;
++
++import java.math.BigDecimal;
++
++/**
++ * DTO de entrada da API (US-002: validacao de campos obrigatorios).
++ * <p>
++ * Evita receber a entidade JPA diretamente no corpo da requisicao (o cliente
++ * poderia enviar o {@code id} e sobrescrever registros - "mass assignment").
++ */
++public record ProdutoRequest(
++        @NotBlank(message = "nome e obrigatorio")
++        @Size(max = 120, message = "nome deve ter no maximo 120 caracteres")
++        String nome,
++
++        @NotNull(message = "preco e obrigatorio")
++        @Positive(message = "preco deve ser maior que zero")
++        @Digits(integer = 8, fraction = 2, message = "preco deve ter no maximo 8 digitos inteiros e 2 decimais")
++        BigDecimal preco) {
++
++    public Produto toEntity() {
++        return new Produto(nome.trim(), preco);
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/model/ProdutoTest.java b/projeto-final/src/test/java/com/example/projeto/domain/model/ProdutoTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b3d627a4f4e7d84e6b3f02e253ac16b9a5af8c2
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/model/ProdutoTest.java
+@@ -0,0 +1,26 @@
++package com.example.projeto.domain.model;
++
++import org.junit.jupiter.api.Test;
++
++import java.math.BigDecimal;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++/**
++ * Melhoria apontada pela analise estatica (aula 15): possivel NullPointerException
++ * em {@link Produto#getPrecoFormatado()}.
++ */
++class ProdutoTest {
++
++    @Test
++    void deveFormatarPrecoComDuasCasasArredondandoHalfUp() {
++        Produto p = new Produto("Cabo", new BigDecimal("10.005"));
++        assertEquals(new BigDecimal("10.01"), p.getPrecoFormatado());
++    }
++
++    @Test
++    void naoDeveLancarNullPointerQuandoPrecoNulo() {
++        Produto p = new Produto("Sem preco");
++        assertEquals(new BigDecimal("0.00"), p.getPrecoFormatado());
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/repository/ProdutoRepositoryTest.java b/projeto-final/src/test/java/com/example/projeto/domain/repository/ProdutoRepositoryTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b5050eaedf99af4f3370551fd047147cf9671db
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/repository/ProdutoRepositoryTest.java
+@@ -0,0 +1,31 @@
++package com.example.projeto.domain.repository;
++
++import com.example.projeto.domain.model.Produto;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++/**
++ * Testa apenas a camada JPA (dica da aula 15: {@code @DataJpaTest}).
++ */
++@DataJpaTest
++class ProdutoRepositoryTest {
++
++    @Autowired
++    ProdutoRepository repository;
++
++    @Test
++    void deveBuscarPorNomeIgnorandoMaiusculas() {
++        repository.save(new Produto("Smartphone Xiaomi", new BigDecimal("1500.00")));
++        repository.save(new Produto("Notebook Dell", new BigDecimal("4000.00")));
++
++        List<Produto> encontrados = repository.findByNomeContainingIgnoreCase("XIAOMI");
++
++        assertThat(encontrados).extracting(Produto::getNome).containsExactly("Smartphone Xiaomi");
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/domain/service/ProdutoServiceTest.java b/projeto-final/src/test/java/com/example/projeto/domain/service/ProdutoServiceTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..61d9e8cca518fd33911b3fcdf6b194961960f78b
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/domain/service/ProdutoServiceTest.java
+@@ -0,0 +1,97 @@
++package com.example.projeto.domain.service;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.InjectMocks;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import java.math.BigDecimal;
++import java.util.List;
++import java.util.Optional;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNull;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.never;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++/**
++ * Testes unitarios do servico (Mockito, sem Spring) - piramide de testes: base larga e rapida.
++ */
++@ExtendWith(MockitoExtension.class)
++class ProdutoServiceTest {
++
++    @Mock
++    ProdutoRepository repository;
++
++    @InjectMocks
++    ProdutoService service;
++
++    @Test
++    void deveBuscarProdutosPorNome() {
++        when(repository.findByNomeContainingIgnoreCase("Xiaomi"))
++                .thenReturn(List.of(new Produto("Smartphone Xiaomi")));
++
++        List<Produto> result = service.buscarPorNome("Xiaomi");
++
++        assertEquals(1, result.size());
++        verify(repository).findByNomeContainingIgnoreCase("Xiaomi");
++    }
++
++    @Test
++    void deveListarTodos() {
++        when(repository.findAll()).thenReturn(List.of(new Produto("A"), new Produto("B")));
++        assertEquals(2, service.listarTodos().size());
++    }
++
++    @Test
++    void deveLancarExcecaoQuandoProdutoNaoExiste() {
++        when(repository.findById(99L)).thenReturn(Optional.empty());
++        ProdutoNaoEncontradoException ex =
++                assertThrows(ProdutoNaoEncontradoException.class, () -> service.buscarPorId(99L));
++        assertEquals("Produto nao encontrado: id=99", ex.getMessage());
++    }
++
++    @Test
++    void deveIgnorarIdInformadoAoCadastrar() {
++        Produto novo = new Produto("Teclado", new BigDecimal("150.00"));
++        novo.setId(42L);
++        when(repository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        Produto salvo = service.cadastrar(novo);
++
++        assertNull(salvo.getId());
++    }
++
++    @Test
++    void deveAtualizarProdutoExistente() {
++        Produto existente = new Produto("Mouse", new BigDecimal("50.00"));
++        existente.setId(1L);
++        when(repository.findById(1L)).thenReturn(Optional.of(existente));
++        when(repository.save(existente)).thenReturn(existente);
++
++        Produto atualizado = service.atualizar(1L, new Produto("Mouse Gamer", new BigDecimal("80.00")));
++
++        assertEquals("Mouse Gamer", atualizado.getNome());
++        assertEquals(new BigDecimal("80.00"), atualizado.getPreco());
++    }
++
++    @Test
++    void naoDeveRemoverProdutoInexistente() {
++        when(repository.existsById(7L)).thenReturn(false);
++        assertThrows(ProdutoNaoEncontradoException.class, () -> service.remover(7L));
++        verify(repository, never()).deleteById(any());
++    }
++
++    @Test
++    void deveRemoverProdutoExistente() {
++        when(repository.existsById(7L)).thenReturn(true);
++        service.remover(7L);
++        verify(repository).deleteById(7L);
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+index 05cb6fa9c7e14d65b5eba55f1d49da94f7f1fe1c..174cf2ba6d08bb0ce76e6c26e453e46360ed3798 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+@@ -3,6 +3,8 @@ package com.example.projeto.interfaces.rest;
+ import com.example.projeto.domain.model.Produto;
+ import com.example.projeto.domain.repository.ProdutoRepository;
+ import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+ import org.springframework.boot.test.context.SpringBootTest;
+@@ -32,29 +34,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
+ @Transactional
+ class ProdutoControllerIT {
+ 
++    private static final String URL = "/produtos";
++
+     @Autowired
+     MockMvc mockMvc;
+ 
+     @Autowired
+     ProdutoRepository repository;
+ 
+-    private Produto salvar(String nome, String preco) {
+-        Produto p = new Produto();
+-        p.setNome(nome);
+-        p.setPreco(new BigDecimal(preco));
+-        return repository.save(p);
+-    }
+-
+     @Test
+     void deveListarProdutosVazios() throws Exception {
+-        mockMvc.perform(get("/produtos"))
++        mockMvc.perform(get(URL))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$", hasSize(0)));
+     }
+ 
+     @Test
+     void deveCriarProduto() throws Exception {
+-        mockMvc.perform(post("/produtos")
++        mockMvc.perform(post(URL)
+                         .contentType(MediaType.APPLICATION_JSON)
+                         .content("{\"nome\":\"Notebook\",\"preco\":3500.00}"))
+                 .andExpect(status().isCreated())
+@@ -64,19 +61,19 @@ class ProdutoControllerIT {
+ 
+     @Test
+     void deveBuscarAtualizarERemoverProduto() throws Exception {
+-        Produto p = salvar("Mouse", "50.00");
++        Produto p = repository.save(new Produto("Mouse", new BigDecimal("50.00")));
+ 
+-        mockMvc.perform(get("/produtos/{id}", p.getId()))
++        mockMvc.perform(get(URL + "/{id}", p.getId()))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$.nome", is("Mouse")));
+ 
+-        mockMvc.perform(put("/produtos/{id}", p.getId())
++        mockMvc.perform(put(URL + "/{id}", p.getId())
+                         .contentType(MediaType.APPLICATION_JSON)
+                         .content("{\"nome\":\"Mouse Gamer\",\"preco\":80.00}"))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$.nome", is("Mouse Gamer")));
+ 
+-        mockMvc.perform(delete("/produtos/{id}", p.getId()))
++        mockMvc.perform(delete(URL + "/{id}", p.getId()))
+                 .andExpect(status().isNoContent());
+     }
+ 
+@@ -85,7 +82,7 @@ class ProdutoControllerIT {
+         repository.save(new Produto("Smartphone Xiaomi"));
+         repository.save(new Produto("Notebook Dell"));
+ 
+-        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
++        mockMvc.perform(get(URL + "/buscar?nome=xiaomi"))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$", hasSize(1)))
+                 .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
+@@ -93,18 +90,45 @@ class ProdutoControllerIT {
+ 
+     @Test
+     void deveRetornarListaVaziaQuandoBuscaNaoEncontra() throws Exception {
+-        mockMvc.perform(get("/produtos/buscar?nome=inexistente"))
++        mockMvc.perform(get(URL + "/buscar?nome=inexistente"))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$", hasSize(0)));
+     }
+ 
++    @Test
++    void deveRetornar400QuandoParametroDeBuscaAusente() throws Exception {
++        mockMvc.perform(get(URL + "/buscar"))
++                .andExpect(status().isBadRequest())
++                .andExpect(jsonPath("$.detail", containsString("nome")));
++    }
++
+     @Test
+     void deveRetornar404ParaProdutoInexistente() throws Exception {
+-        mockMvc.perform(get("/produtos/{id}", 9999)).andExpect(status().isNotFound());
+-        mockMvc.perform(put("/produtos/{id}", 9999)
++        mockMvc.perform(get(URL + "/{id}", 9999))
++                .andExpect(status().isNotFound())
++                .andExpect(jsonPath("$.title", is("Recurso nao encontrado")));
++        mockMvc.perform(put(URL + "/{id}", 9999)
+                         .contentType(MediaType.APPLICATION_JSON)
+                         .content("{\"nome\":\"X\",\"preco\":1.00}"))
+                 .andExpect(status().isNotFound());
+-        mockMvc.perform(delete("/produtos/{id}", 9999)).andExpect(status().isNotFound());
++        mockMvc.perform(delete(URL + "/{id}", 9999)).andExpect(status().isNotFound());
++    }
++
++    /** US-002 (tarefa pos-aula 15): validacao de campos obrigatorios. */
++    @ParameterizedTest(name = "[{index}] {0} -> campo {1}")
++    @CsvSource(delimiter = '|', value = {
++            "{\"preco\":10.00}                  | nome  | nome e obrigatorio",
++            "{\"nome\":\"   \",\"preco\":10.00} | nome  | nome e obrigatorio",
++            "{\"nome\":\"Cabo\"}                | preco | preco e obrigatorio",
++            "{\"nome\":\"Cabo\",\"preco\":0}    | preco | preco deve ser maior que zero",
++            "{\"nome\":\"Cabo\",\"preco\":-5}   | preco | preco deve ser maior que zero"
++    })
++    void deveRejeitarCamposObrigatoriosInvalidos(String corpo, String campo, String mensagem) throws Exception {
++        mockMvc.perform(post(URL)
++                        .contentType(MediaType.APPLICATION_JSON)
++                        .content(corpo))
++                .andExpect(status().isBadRequest())
++                .andExpect(jsonPath("$.title", is("Erro de validacao")))
++                .andExpect(jsonPath("$.campos." + campo, is(mensagem)));
+     }
+ }
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
+index 7828262761c01f6f5b31baf20f6d954372aa877e..83c24b4e2b2fa5900f1b7529df0add49f235ff0e 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerTest.java
+@@ -1,13 +1,19 @@
+ package com.example.projeto.interfaces.rest;
+ 
+-import com.example.projeto.domain.repository.ProdutoRepository;
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.service.ProdutoService;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
+ 
++import java.math.BigDecimal;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
+ 
+ /**
+  * Teste unitario do controller com Mockito (sem contexto Spring).
+@@ -16,14 +22,24 @@ import static org.mockito.Mockito.verify;
+ class ProdutoControllerTest {
+ 
+     @Mock
+-    ProdutoRepository repository;
++    ProdutoService service;
+ 
+     @InjectMocks
+     ProdutoController controller;
+ 
+     @Test
+-    void deveChamarRepositoryAoListar() {
++    void deveChamarServiceAoListar() {
+         controller.listar();
+-        verify(repository).findAll();
++        verify(service).listarTodos();
++    }
++
++    @Test
++    void deveConverterRequestEmEntidadeAoCriar() {
++        when(service.cadastrar(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        Produto criado = controller.criar(new ProdutoRequest("  Monitor  ", new BigDecimal("899.90")));
++
++        assertEquals("Monitor", criado.getNome());
++        assertEquals(new BigDecimal("899.90"), criado.getPreco());
+     }
+ }
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..30091eb4115ad4998575dfbbc8d7381ce9843e98
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+@@ -0,0 +1,66 @@
++package com.example.projeto.interfaces.rest;
++
++import com.example.projeto.domain.model.Produto;
++import com.example.projeto.domain.repository.ProdutoRepository;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.test.context.DynamicPropertyRegistry;
++import org.springframework.test.context.DynamicPropertySource;
++import org.springframework.test.web.servlet.MockMvc;
++import org.testcontainers.containers.PostgreSQLContainer;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++
++import java.math.BigDecimal;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.hamcrest.Matchers.containsString;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * Teste de integracao contra um PostgreSQL REAL em container (Testcontainers).
++ * <p>
++ * {@code disabledWithoutDocker = true}: sem Docker (ex.: maquina de desenvolvimento
++ * sem Docker) a classe e marcada como "skipped" em vez de falhar. No GitHub Actions
++ * (ubuntu-latest tem Docker) o teste roda de verdade.
++ */
++@Testcontainers(disabledWithoutDocker = true)
++@SpringBootTest
++@AutoConfigureMockMvc
++class ProdutoPostgresIT {
++
++    @Container
++    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
++
++    @DynamicPropertySource
++    static void configure(DynamicPropertyRegistry registry) {
++        registry.add("spring.datasource.url", postgres::getJdbcUrl);
++        registry.add("spring.datasource.username", postgres::getUsername);
++        registry.add("spring.datasource.password", postgres::getPassword);
++        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
++        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
++    }
++
++    @Autowired
++    ProdutoRepository repository;
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Test
++    void devePersistirProdutoNoBancoReal() throws Exception {
++        Produto salvo = repository.save(new Produto("Smartphone Xiaomi", new BigDecimal("1999.90")));
++
++        assertThat(salvo.getId()).isNotNull();
++        assertThat(repository.findById(salvo.getId())).get()
++                .extracting(Produto::getPreco).isEqualTo(new BigDecimal("1999.90"));
++
++        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
++    }
++}

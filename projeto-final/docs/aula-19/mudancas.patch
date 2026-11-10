@@ -1,0 +1,1234 @@
+diff --git a/.github/workflows/projeto-final-ci.yml b/.github/workflows/projeto-final-ci.yml
+index 9c4d622bc55ed7ded3cd2ef40db528f49983cb21..25f1ef8663ab81b2b5ef7523bc6db616db8b6199 100644
+--- a/.github/workflows/projeto-final-ci.yml
++++ b/.github/workflows/projeto-final-ci.yml
+@@ -86,4 +86,17 @@ jobs:
+         run: |
+           command -v heroku >/dev/null || curl -fsSL https://cli-assets.heroku.com/install.sh | sh
+           heroku plugins:install java
++          # perfil prod via config var SPRING_PROFILES_ACTIVE=prod no Heroku (porta lida de $PORT)
+           heroku deploy:jar dist/projeto-final.jar --app "$HEROKU_APP_NAME" --jdk 17
++
++      # Aula 19: smoke test do deploy via Actuator (so se a variable HEROKU_APP_URL existir)
++      - name: Smoke test /actuator/health
++        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != '' && vars.HEROKU_APP_URL != ''
++        env:
++          APP_URL: ${{ vars.HEROKU_APP_URL }}
++        run: |
++          for i in 1 2 3 4 5 6; do
++            if curl -fsS "$APP_URL/actuator/health" | grep -q '"status":"UP"'; then echo "App UP"; exit 0; fi
++            sleep 20
++          done
++          echo "::error::Health check falhou em $APP_URL/actuator/health"; exit 1
+diff --git a/projeto-final/Procfile b/projeto-final/Procfile
+new file mode 100644
+index 0000000000000000000000000000000000000000..28fe44cc7a2a7c9cd5d6336d375c55a4b49e8bc8
+--- /dev/null
++++ b/projeto-final/Procfile
+@@ -0,0 +1 @@
++web: java -Dserver.port=$PORT $JAVA_OPTS -jar target/projeto-final.jar --spring.profiles.active=prod
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index 8c59ed439c8e69537e959ce600942c3c1c8d33e4..f3004f2cfbb4dbd9532a22b2edab0b7a98e89e58 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -1,30 +1,79 @@
+ # Projeto Final - API de Produtos (IQS, aulas 13 a 19)
+ 
+-Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP de CRUD de
+-`Produto` ate autenticacao JWT, monitoramento e deploy. Toda a documentacao por aula fica em
+-[`docs/`](docs/).
++Projeto unico em **Spring Boot 3.3.5 (Java 17, Maven)** que evolui aula a aula, do MVP de CRUD de
++`Produto` ate autenticacao JWT, monitoramento e deploy. A documentacao de cada aula (o que foi feito,
++arquivos alterados, correcoes em relacao aos slides e evidencias de execucao) fica em [`docs/`](docs/).
+ 
+ | Aula | Tema | Documentacao |
+ |------|------|--------------|
+ | 13 | MVP: CRUD de Produto, testes, JaCoCo, CI basico (tag `v0.1`) | [docs/aula-13](docs/aula-13/README.md) |
+-| 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md) |
++| 14 | User Stories, busca por nome (US-001), Definition of Done, SonarQube | [docs/aula-14](docs/aula-14/README.md), [user-stories.md](docs/aula-14/user-stories.md) |
+ | 15 | Sprint 1: CI/CD, camada de servico, validacao (US-002), Testcontainers, JaCoCo >= 80% | [docs/aula-15](docs/aula-15/README.md) |
+ | 16 | Refatoracao: Strategy + Factory + Decorator no calculo de pedidos (US-003) | [docs/aula-16](docs/aula-16/README.md), [decisions.md](docs/decisions.md) |
+ | 17 | Frontend Thymeleaf + AJAX, API externa ViaCEP, tratamento de erros (API em `/api/**`) | [docs/aula-17](docs/aula-17/README.md) |
+ | 18 | Spring Security 6 + JWT (login, roles, refresh token), roles no frontend | [docs/aula-18](docs/aula-18/README.md), [auth-guide.md](docs/auth-guide.md) |
++| 19 | Deploy (Procfile, system.properties, perfil prod) e monitoramento (Actuator + health customizado) | [docs/aula-19](docs/aula-19/README.md) |
++
++## Arquitetura
++
++Monolito em camadas (decisao da aula 13), pacote base `com.example.projeto`:
++
++| Pacote | Responsabilidade |
++|--------|------------------|
++| `domain.model`, `domain.repository`, `domain.service` | Entidade `Produto`, Spring Data JPA, regras de negocio |
++| `domain.pedido` (+ `desconto`, `frete`) | Calculo de pedidos: **Strategy**, **Factory**, **Decorator** (aula 16) |
++| `interfaces.rest` | API REST JSON (`/api/produtos`, `/api/pedidos`), erros em ProblemDetail (RFC 7807) |
++| `web` | Paginas Thymeleaf (`/produtos`, `/cep`) |
++| `integration` | Cliente HTTP da API externa ViaCEP |
++| `auth`, `config` | JWT, Spring Security (2 cadeias), Swagger, frete, health |
++| `health` | `ApiExternaHealthIndicator` (Actuator) |
++
++### Endpoints principais
++
++| Metodo | Caminho | Acesso |
++|--------|---------|--------|
++| POST | `/auth/login`, `/auth/refresh` | publico |
++| GET | `/api/produtos`, `/api/produtos/{id}`, `/api/produtos/buscar?nome=` | USER/ADMIN (JWT) |
++| POST/PUT/DELETE | `/api/produtos`, `/api/produtos/{id}` | ADMIN (JWT) |
++| POST | `/api/pedidos/total` | USER/ADMIN (JWT) |
++| GET | `/actuator/health`, `/actuator/info` | publico |
++| GET | `/actuator/metrics` | ADMIN (JWT) |
++| GET | `/produtos`, `/cep` (paginas) | login por formulario |
++| GET | `/swagger-ui.html`, `/v3/api-docs` | publico (desligado em `prod` por padrao) |
++
++Detalhes de autenticacao, usuarios de desenvolvimento e roteiro curl/Postman: [docs/auth-guide.md](docs/auth-guide.md).
+ 
+ ## Como executar
+ 
+-Pre-requisitos: JDK 17 e Maven 3.9+.
++Pre-requisitos: JDK 17 e Maven 3.9+ (Docker opcional - so para o teste com Testcontainers).
+ 
+ ```bash
+ cd projeto-final
+-mvn clean verify          # compila, roda testes e gera o relatorio JaCoCo
+-mvn spring-boot:run       # sobe a API em http://localhost:8080
++mvn clean verify                 # compila, testa, gera JaCoCo e FALHA se cobertura < 80% (linhas)
++mvn spring-boot:run              # perfil dev (padrao) em http://localhost:8080
+ ```
+ 
++- Paginas: http://localhost:8080/produtos (login `admin` / `admin-dev-2026` - somente dev)
+ - Swagger UI: http://localhost:8080/swagger-ui.html
+-- Relatorio de cobertura: `target/site/jacoco/index.html`
++- Health: http://localhost:8080/actuator/health
++- Cobertura: `target/site/jacoco/index.html`
++
++Producao (perfil `prod`, exige segredos por variavel de ambiente - ver [aula 19](docs/aula-19/README.md)):
++
++```bash
++export JWT_SECRET="$(openssl rand -base64 48)" ADMIN_PASSWORD_HASH='<bcrypt>' CLIENTE_PASSWORD_HASH='<bcrypt>'
++java -jar target/projeto-final.jar --spring.profiles.active=prod
++```
++
++## Qualidade
++
++| Item | Situacao |
++|------|----------|
++| Testes | 80+ testes JUnit 5 (unitarios com Mockito, `@DataJpaTest`, `@RestClientTest`, MockMvc de integracao, Testcontainers/PostgreSQL) |
++| Cobertura | JaCoCo com `check` no `mvn verify`: linhas >= 80% e branches >= 70% (atual: ~100% linhas) |
++| CI | `.github/workflows/projeto-final-ci.yml` (build, testes com Docker/Testcontainers, artefatos, deploy condicional) |
++| Analise estatica | `.github/workflows/projeto-final-sonar.yml` (SonarQube/SonarCloud, so com secret `SONAR_TOKEN`) |
++| Decisoes de projeto | [docs/decisions.md](docs/decisions.md) |
+ 
+ ## Definition of Done (DoD)
+ 
+@@ -33,10 +82,27 @@ Uma User Story so e considerada **pronta** quando:
+ - [ ] Todos os criterios de aceitacao da US estao atendidos e demonstraveis
+ - [ ] Codigo revisado por pelo menos 1 colega (Pull Request aprovado e vinculado a issue)
+ - [ ] Testes automatizados escritos (unitario e/ou integracao) e `mvn clean verify` verde no CI
+-- [ ] Cobertura de testes > 80% (JaCoCo)
++- [ ] Cobertura de testes > 80% (JaCoCo) - verificada automaticamente pelo `jacoco:check`
+ - [ ] Passa no SonarQube sem bugs criticos nem vulnerabilidades (quality gate verde)
+ - [ ] Documentacao Swagger atualizada (endpoints novos visiveis em `/swagger-ui.html`)
+ - [ ] README/docs da aula atualizados com as mudancas e evidencias
+ - [ ] Nenhum segredo (senha, token, chave) commitado no repositorio
+ 
+ User Stories do projeto: [docs/aula-14/user-stories.md](docs/aula-14/user-stories.md).
++
++## Historico por aula (para tags/commits)
++
++Cada `docs/aula-NN/mudancas.patch` contem o diff exato (formato `git diff --binary`, caminhos a partir
++da raiz do repositorio) do estado da aula anterior para o estado da aula NN, incluindo
++`.github/workflows/projeto-final-*.yml`. A partir de um repositorio sem `projeto-final/`:
++
++```bash
++for n in 13 14 15 16 17 18 19; do
++  git apply --binary "/caminho/para/copia/projeto-final/docs/aula-$n/mudancas.patch"
++  git add -A && git commit -m "Projeto final: aula $n"
++  [ "$n" = 13 ] && git tag -a v0.1 -m "MVP inicial"
++done
++```
++
++(Os proprios arquivos `mudancas.patch` nao fazem parte dos patches; copie-os por ultimo se quiser
++versiona-los.)
+diff --git a/projeto-final/docs/aula-19/README.md b/projeto-final/docs/aula-19/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6b5cfc2576712871bb658c088149a39e9265f029
+--- /dev/null
++++ b/projeto-final/docs/aula-19/README.md
+@@ -0,0 +1,114 @@
++# Aula 19 - Deploy e Monitoramento (Heroku / Actuator)
++
++> A aula 19 nao tem PDF: o conteudo veio de `Aula_19_IQS.java` (system.properties, Procfile, comandos
++> Heroku, Actuator, `ApiExternaHealthIndicator`, `DataSourceHealthIndicator` e "Como Deployar").
++
++## Entregas
++
++| Item | Onde |
++|------|------|
++| `system.properties` (`java.runtime.version=17`) | `projeto-final/system.properties` |
++| `Procfile` corrigido | `projeto-final/Procfile` |
++| Spring Boot Actuator (`health`, `info`, `metrics`) | `pom.xml`, `application.yml` |
++| **Health indicator customizado** da API externa (ViaCEP) | `health/ApiExternaHealthIndicator.java` -> componente `apiExterna` |
++| Health do banco com `SELECT 1` (slide) | `config/HealthConfig.java` -> componente `db` |
++| Perfil de producao (segredos obrigatorios, Postgres via `JDBC_DATABASE_URL`, detalhes do health so para ADMIN) | `application-prod.yml` |
++| Seguranca dos endpoints do Actuator | `health`/`info` publicos; `metrics` e demais exigem `ADMIN` (JWT) |
++| Smoke test pos-deploy no CI (`/actuator/health`) | job `deploy-heroku` em `.github/workflows/projeto-final-ci.yml` |
++| Driver PostgreSQL em runtime (antes so teste) | `pom.xml` |
++
++## Como Deployar
++
++### Heroku (Git) - fluxo do slide
++
++Este repositorio e um monorepo (`projeto-final/` e uma subpasta), entao o buildpack Java precisa
++saber onde esta o `pom.xml`:
++
++```bash
++heroku login
++heroku create meu-app-produtos
++heroku buildpacks:add -a meu-app-produtos https://github.com/lstoll/heroku-buildpack-monorepo
++heroku buildpacks:add -a meu-app-produtos heroku/java
++heroku config:set -a meu-app-produtos APP_BASE=projeto-final \
++  JWT_SECRET="$(openssl rand -base64 48)" \
++  ADMIN_PASSWORD_HASH='<hash BCrypt>' CLIENTE_PASSWORD_HASH='<hash BCrypt>'
++heroku addons:create -a meu-app-produtos heroku-postgresql:essential-0   # opcional (sem ele usa H2 em memoria)
++git push heroku main
++heroku logs --tail -a meu-app-produtos
++curl https://<app>.herokuapp.com/actuator/health
++# {"status":"UP"}   (em prod os componentes so aparecem para ADMIN autenticado)
++```
++
++O `Procfile` sobe o jar com `--spring.profiles.active=prod`; o `system.properties` fixa o Java 17.
++
++### Heroku (CI) - deploy do jar
++
++O job `deploy-heroku` do workflow `projeto-final-ci.yml` (criado na aula 15) roda apenas em push na
++`main` e **somente se** os secrets `HEROKU_API_KEY` e `HEROKU_APP_NAME` existirem. Nesta aula ele
++ganhou um *smoke test*: se a variable `HEROKU_APP_URL` estiver definida, faz `curl` em
++`$HEROKU_APP_URL/actuator/health` e falha o job se nao responder `UP`. As variaveis de ambiente da app
++(`SPRING_PROFILES_ACTIVE=prod`, `JWT_SECRET`, hashes) devem ser configuradas no Heroku
++(`heroku config:set`) - no `deploy:jar` o Procfile do repositorio nao e usado, por isso o perfil vem
++da config var e a porta de `$PORT` (`server.port: ${PORT:8080}` no perfil prod).
++
++### AWS (alternativa, documentada)
++
++Elastic Beanstalk (plataforma *Corretto 17*): `mvn -B clean verify`, `eb init`, `eb create`, e enviar
++`target/projeto-final.jar`; definir `SERVER_PORT=5000`, `SPRING_PROFILES_ACTIVE=prod`, `JWT_SECRET`,
++`ADMIN_PASSWORD_HASH`, `CLIENTE_PASSWORD_HASH` e, com RDS PostgreSQL, `JDBC_DATABASE_URL`,
++`JDBC_DATABASE_USERNAME`, `JDBC_DATABASE_PASSWORD`. Health check do load balancer: `/actuator/health`.
++
++### Nao executado (e por que)
++
++- **Deploy no Heroku/AWS nao foi executado**: nao ha conta (e o projeto nao usa contas externas).
++  Os arquivos (`Procfile`, `system.properties`, `application-prod.yml`, job de deploy condicional)
++  estao prontos; o perfil `prod` foi **executado localmente** simulando o Heroku (variavel `PORT`,
++  segredos por variavel de ambiente) - ver evidencias.
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++M .github/workflows/projeto-final-ci.yml             (smoke test /actuator/health apos o deploy)
++A projeto-final/Procfile
++A projeto-final/system.properties
++M projeto-final/pom.xml                               (1.0.0; actuator; postgresql runtime)
++M projeto-final/README.md
++M projeto-final/src/main/resources/application.yml    (management.*, info.*)
++A projeto-final/src/main/resources/application-prod.yml
++A projeto-final/src/main/java/com/example/projeto/health/ApiExternaHealthIndicator.java
++A projeto-final/src/main/java/com/example/projeto/config/HealthConfig.java
++M projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java (regras /actuator/**)
++A projeto-final/src/test/java/com/example/projeto/health/{ApiExternaHealthIndicatorTest,ActuatorIT}.java
++A projeto-final/docs/aula-19/README.md
++A projeto-final/docs/aula-19/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao ao material
++
++| Material | Problema | Correcao |
++|----------|----------|----------|
++| `web: java -jar target/ *.jar --server.port=$PORT` | O espaco em `target/ *.jar` vira dois argumentos (`target/` e o glob do diretorio atual): o Java tenta abrir `target/` como jar e a app nao sobe | `java -Dserver.port=$PORT $JAVA_OPTS -jar target/projeto-final.jar --spring.profiles.active=prod` (`finalName` fixo no pom) |
++| `return Health.up().build();  # Status UP` | Comentario `#` dentro de Java nao compila | Comentarios Java; `checkApiExterna()` (inexistente) implementado via `CepService` |
++| `show-details: always` | Em producao expoe detalhes internos (erros, banco) a qualquer um | `always` em dev; `when-authorized` + role `ADMIN` em `prod` |
++| `include: health,info,metrics` sem seguranca | `metrics` publico vaza informacao operacional | `health`/`info` publicos; `/actuator/**` restante exige `ADMIN` |
++| Bean `dbHealth` com `DataSourceHealthIndicator` | Com outro nome o Boot mantem o indicador automatico e o banco aparece duas vezes (`db` e `dbHealth`) | Bean `dbHealthIndicator` (substitui o automatico) |
++| `info` vazio | Desde o Boot 2.6 `info.*` so aparece com `management.info.env.enabled=true` | Habilitado, com nome/versao do pom |
++| (achado durante os testes) `cep-referencia: 01001000` no YAML | YAML 1.1 le numeros com zero a esquerda como octal: o CEP virava `262656` e o health ficava DOWN (o `ActuatorIT` pegou) | Valor entre aspas (`'01001000'`) |
++| `git push heroku main` num monorepo | O buildpack nao encontra o `pom.xml` na raiz | Buildpack monorepo + `APP_BASE=projeto-final` (ou deploy do jar pelo CI) |
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt), [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt), [`evidencias/jacoco-relatorio.png`](evidencias/jacoco-relatorio.png)
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - `/actuator/health` (com `apiExterna` e `db`), `info`, `metrics` 401/403/200
++- [`evidencias/prod-sem-segredos.txt`](evidencias/prod-sem-segredos.txt) - perfil `prod` sem `JWT_SECRET`: a app se recusa a subir
++- [`evidencias/prod-local.txt`](evidencias/prod-local.txt) - perfil `prod` com segredos por variavel de ambiente e `PORT` (simulando Heroku)
++
++Resultado final do projeto: **85 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`, roda so com
++Docker/CI); cobertura JaCoCo **100% de linhas (343/343), 100% de instrucoes, 91,9% de branches**;
++`jacoco:check` (linhas >= 80%, branches >= 70%) aprovado. Health local: `apiExterna` UP (ViaCEP real),
++`db` UP com `SELECT 1`. Perfil `prod` sem segredos: **falha na subida** (`APPLICATION FAILED TO START`,
++`app.security.admin.passwordHash` em branco); com segredos: sobe na porta de `PORT`, health anonimo so
++mostra `{"status":"UP"}` e detalhes so com token ADMIN; Swagger desligado (404).
++Caminhos locais da maquina foram mascarados nas evidencias.
+diff --git a/projeto-final/docs/aula-19/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-19/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7b0191185d5a1dc66a77045f4b80decafdf5f14
+--- /dev/null
++++ b/projeto-final/docs/aula-19/evidencias/curl-endpoints.txt
+@@ -0,0 +1,94 @@
++# Evidencias de execucao - aula 19 (2026-11-10 16:39:09)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T16:39:08.538-03:00  INFO 6840 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 50.162 seconds (process running for 51.784)
++
++## Health publico (dev: show-details=always) com indicador customizado apiExterna e db (SELECT 1)
++$ curl http://localhost:18089/actuator/health
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/vnd.spring-boot.actuator.v3+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:39:13 GMT
++
++{"status":"UP","components":{"apiExterna":{"status":"UP","details":{"api":"ViaCEP","cepReferencia":"01001-000","tempoRespostaMs":2441}},"db":{"status":"UP","details":{"database":"H2","validationQuery":"SELECT 1","result":1}},"diskSpace":{"status":"UP","details":{"total":255457226752,"free":206625775616,"threshold":10485760,"path":"<diretorio-do-projeto>","exists":true}},"ping":{"status":"UP"}}}
++
++## Info publico
++$ curl http://localhost:18089/actuator/info
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/vnd.spring-boot.actuator.v3+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:39:13 GMT
++
++{"app":{"name":"projeto-final","version":"1.0.0","description":"API de Produtos - Projeto Final IQS","java":"17.0.21"}}
++
++## Metrics sem token -> 401
++$ curl http://localhost:18089/actuator/metrics
++HTTP/1.1 401 
++Set-Cookie: JSESSIONID=171C490CC4AC74A72C4599F646F2AC54; Path=/; HttpOnly
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 108
++Date: Tue, 10 Nov 2026 19:39:13 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
++
++## Login cliente
++$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"cliente","password":"cliente-dev-2026"}'
++(tokens omitidos)
++
++## Metrics com token de cliente -> 403
++$ curl http://localhost:18089/actuator/metrics -H 'Authorization: Bearer <accessToken cliente>'
++HTTP/1.1 403 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 118
++Date: Tue, 10 Nov 2026 19:39:16 GMT
++
++{"type":"about:blank","title":"Acesso negado","status":403,"detail":"Seu perfil nao tem permissao para esta operacao"}
++
++## Login admin
++$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin-dev-2026"}'
++(tokens omitidos)
++
++## Metrics com token de admin -> 200 (lista resumida)
++$ curl http://localhost:18089/actuator/metrics -H 'Authorization: Bearer <accessToken admin>'
++HTTP/1.1 200 
++names (96): application.ready.time, application.started.time, disk.free, disk.total, executor.active, executor.completed, executor.pool.core, executor.pool.max, executor.pool.size, executor.queue.remaining, executor.queued, hikaricp.connections, ...
++
++## Metrica http.server.requests (admin)
++$ curl http://localhost:18089/actuator/metrics/http.server.requests -H 'Authorization: Bearer <accessToken admin>'
++HTTP/1.1 200 
++Content-Disposition: inline;filename=f.txt
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/vnd.spring-boot.actuator.v3+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:39:17 GMT
++
++{"name":"http.server.requests","baseUnit":"seconds","measurements":[{"statistic":"COUNT","value":7.0},{"statistic":"TOTAL_TIME","value":5.906754899999999},{"statistic":"MAX","value":3.2837253}],"availableTags":[{"tag":"exception","values":["none"]},{"tag":"method","values":["POST","GET"]},{"tag":"error","values":["none"]},{"tag":"uri","values":["/auth/login","/actuator/info","/actuator/health","/actuator/metrics"]},{"tag":"outcome","values":["CLIENT_ERROR","SUCCESS"]},{"tag":"status","values":["401","200","403"]}]}
++
+diff --git a/projeto-final/docs/aula-19/evidencias/jacoco-relatorio.png b/projeto-final/docs/aula-19/evidencias/jacoco-relatorio.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..457de762519b4b0d32950d05383b27140e466f48
+GIT binary patch
+literal 20631
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/aula-19/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-19/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..c38cb16b7db6425a6db19fe463f793d10d80e8c7
+--- /dev/null
++++ b/projeto-final/docs/aula-19/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,51 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 19
++Instrucoes: 100,0% (1657/1657)
++Linhas:     100,0% (343/343)
++Branches:   91,9% (57/62)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
++  com.example.projeto.domain.service.ProdutoService: 13/13
++  com.example.projeto.config.HealthConfig: 2/2
++  com.example.projeto.config.FreteConfig: 2/2
++  com.example.projeto.config.OpenApiConfig: 1/1
++  com.example.projeto.config.SecurityConfig: 46/46
++  com.example.projeto.health.ApiExternaHealthIndicator: 17/17
++  com.example.projeto.interfaces.rest.PedidoRequest.Item: 1/1
++  com.example.projeto.interfaces.rest.ApiExceptionHandler: 18/18
++  com.example.projeto.interfaces.rest.PedidoController: 5/5
++  com.example.projeto.interfaces.rest.PedidoRequest: 1/1
++  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
++  com.example.projeto.interfaces.rest.ProdutoController: 7/7
++  com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog: 9/9
++  com.example.projeto.domain.pedido.frete.FreteFixo: 6/6
++  com.example.projeto.integration.Endereco: 1/1
++  com.example.projeto.integration.CepService: 17/17
++  com.example.projeto.integration.CepNaoEncontradoException: 2/2
++  com.example.projeto.web.ProdutoForm: 2/2
++  com.example.projeto.web.WebExceptionHandler: 12/12
++  com.example.projeto.web.CepWebController: 4/4
++  com.example.projeto.web.HomeController: 2/2
++  com.example.projeto.web.ProdutoWebController: 8/8
++  com.example.projeto.auth.AuthController.TokenResponse: 1/1
++  com.example.projeto.auth.AuthController.RefreshRequest: 1/1
++  com.example.projeto.auth.AuthController: 14/14
++  com.example.projeto.auth.JwtAuthFilter: 24/24
++  com.example.projeto.auth.UsuariosProperties: 1/1
++  com.example.projeto.auth.AuthController.LoginRequest: 1/1
++  com.example.projeto.auth.JwtProperties: 1/1
++  com.example.projeto.auth.TokenInvalidoException: 4/4
++  com.example.projeto.auth.JwtService: 42/42
++  com.example.projeto.auth.UsuarioFactory: 8/8
++  com.example.projeto.auth.UsuariosProperties.Usuario: 1/1
++  com.example.projeto.domain.pedido.desconto.DescontoPercentual: 6/6
++  com.example.projeto.domain.pedido.desconto.DescontoVIP: 2/2
++  com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory: 12/12
++  com.example.projeto.domain.pedido.desconto.DescontoPremium: 2/2
++  com.example.projeto.domain.pedido.desconto.SemDesconto: 2/2
++  com.example.projeto.domain.pedido.PedidoService: 10/10
++  com.example.projeto.domain.pedido.ItemPedido: 8/8
++  com.example.projeto.domain.pedido.TipoCliente: 4/4
++  com.example.projeto.domain.pedido.ResumoPedido: 1/1
++  com.example.projeto.domain.pedido.Pedido: 8/8
++  com.example.projeto.domain.model.Produto: 10/10
+diff --git a/projeto-final/docs/aula-19/evidencias/mvn-verify.txt b/projeto-final/docs/aula-19/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..fd6f6adff3ed272c1bb2a0c89c9715811aaa0f99
+--- /dev/null
++++ b/projeto-final/docs/aula-19/evidencias/mvn-verify.txt
+@@ -0,0 +1,35 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 16:38:16)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 1.0.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 46.10 s -- in com.example.projeto.auth.AuthControllerIT
++[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.618 s -- in com.example.projeto.auth.JwtServiceTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.099 s -- in com.example.projeto.auth.UsuarioFactoryTest
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.034 s -- in com.example.projeto.domain.model.ProdutoTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.035 s -- in com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactoryTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.200 s -- in com.example.projeto.domain.pedido.frete.CalculadoraFreteTest
++[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.525 s -- in com.example.projeto.domain.pedido.PedidoServiceTest
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.653 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.853 s -- in com.example.projeto.domain.service.ProdutoServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 12.69 s -- in com.example.projeto.health.ActuatorIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.127 s -- in com.example.projeto.health.ApiExternaHealthIndicatorTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.340 s -- in com.example.projeto.integration.CepServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.727 s -- in com.example.projeto.interfaces.rest.PedidoControllerIT
++[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.383 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.296 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++2026-11-10T16:38:07.414-03:00 ERROR 3292 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
++See https://java.testcontainers.org/on_failure.html for more details.
++[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
++[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.854 s -- in com.example.projeto.web.CepWebControllerIT
++[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.862 s -- in com.example.projeto.web.ProdutoWebControllerIT
++[WARNING] Tests run: 85, Failures: 0, Errors: 0, Skipped: 1
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] All coverage checks have been met.
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/docs/aula-19/evidencias/prod-local.txt b/projeto-final/docs/aula-19/evidencias/prod-local.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae47c203ad2dfda8badca17622739514597e748a
+--- /dev/null
++++ b/projeto-final/docs/aula-19/evidencias/prod-local.txt
+@@ -0,0 +1,40 @@
++# Perfil prod local simulando Heroku: PORT=18092, SPRING profile via linha de comando do Procfile,
++# JWT_SECRET aleatorio gerado na hora (48 bytes), hashes BCrypt por variavel de ambiente.
++$ java -Dserver.port=$PORT -jar target/projeto-final.jar --spring.profiles.active=prod
++
++2026-11-10T16:39:59.783-03:00  INFO 5376 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : The following 1 profile is active: "prod"
++2026-11-10T16:40:40.408-03:00  INFO 5376 --- [projeto-final] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 18092 (http) with context path '/'
++2026-11-10T16:40:40.506-03:00  INFO 5376 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 44.136 seconds (process running for 47.297)
++
++## GET /actuator/health anonimo (prod: show-details=when-authorized -> so o status)
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/vnd.spring-boot.actuator.v3+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:40:43 GMT
++
++{"status":"UP"}
++
++## POST /auth/login (admin) -> token obtido: sim
++
++## GET /actuator/health com token ADMIN (prod: detalhes visiveis so para ADMIN)
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/vnd.spring-boot.actuator.v3+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:40:44 GMT
++
++{"status":"UP","components":{"apiExterna":{"status":"UP","details":{"api":"ViaCEP","cepReferencia":"01001-000","tempoRespostaMs":121}},"db":{"status":"UP","details":{"database":"H2","validationQuery":"SELECT 1","result":1}},"diskSpace":{"status":"UP","details":{"total":255457226752,"free":206625742848,"threshold":10485760,"path":"<diretorio-do-projeto>","exists":true}},"ping":{"status":"UP"}}}
++
++## GET /v3/api-docs (Swagger desligado em prod por padrao: SWAGGER_ENABLED=false)
++HTTP/1.1 404 
+diff --git a/projeto-final/docs/aula-19/evidencias/prod-sem-segredos.txt b/projeto-final/docs/aula-19/evidencias/prod-sem-segredos.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..426fe144c822bbbf32bc92c56f0c8cada97d8386
+--- /dev/null
++++ b/projeto-final/docs/aula-19/evidencias/prod-sem-segredos.txt
+@@ -0,0 +1,23 @@
++﻿# Comando (simulando o Procfile, SEM as variaveis JWT_SECRET/ADMIN_PASSWORD_HASH/CLIENTE_PASSWORD_HASH):
++$ java -Dserver.port=$PORT -jar target/projeto-final.jar --spring.profiles.active=prod
++# exit code do processo: 1
++
++
++***************************
++APPLICATION FAILED TO START
++***************************
++
++Description:
++
++Binding to target com.example.projeto.auth.UsuariosProperties failed:
++
++    Property: app.security.admin.passwordHash
++    Value: ""
++    Origin: class path resource [application.yml] from projeto-final.jar - 41:22
++    Reason: não deve estar em branco
++
++
++Action:
++
++Update your application's configuration
++
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index cda27b46f9c3245f50f4ac2a2d089edf180827cd..4a9f756af87905e4f4b610502867367c87d4d145 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.6.0</version>
++    <version>1.0.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+@@ -61,6 +61,17 @@
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-thymeleaf</artifactId>
+         </dependency>
++        <!-- Monitoramento: /actuator/health, info, metrics (aula 19) -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-actuator</artifactId>
++        </dependency>
++        <!-- Driver PostgreSQL: producao (Heroku Postgres/RDS) e Testcontainers -->
++        <dependency>
++            <groupId>org.postgresql</groupId>
++            <artifactId>postgresql</artifactId>
++            <scope>runtime</scope>
++        </dependency>
+         <!-- Bean Validation (US-002) -->
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+@@ -116,11 +127,6 @@
+             <artifactId>postgresql</artifactId>
+             <scope>test</scope>
+         </dependency>
+-        <dependency>
+-            <groupId>org.postgresql</groupId>
+-            <artifactId>postgresql</artifactId>
+-            <scope>test</scope>
+-        </dependency>
+     </dependencies>
+ 
+     <build>
+diff --git a/projeto-final/src/main/java/com/example/projeto/config/HealthConfig.java b/projeto-final/src/main/java/com/example/projeto/config/HealthConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8d1334ba873bd06eda34ad104eb7fcc07bba8427
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/config/HealthConfig.java
+@@ -0,0 +1,23 @@
++package com.example.projeto.config;
++
++import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++import javax.sql.DataSource;
++
++/**
++ * Health check do banco com query explicita (exemplo do slide).
++ * <p>
++ * O nome do bean e {@code dbHealthIndicator} de proposito: substitui o indicador
++ * auto-configurado pelo Spring Boot (que e condicional a ausencia desse nome) em vez
++ * de criar um segundo componente duplicado. Aparece como {@code db} no health.
++ */
++@Configuration
++public class HealthConfig {
++
++    @Bean
++    public DataSourceHealthIndicator dbHealthIndicator(DataSource dataSource) {
++        return new DataSourceHealthIndicator(dataSource, "SELECT 1");
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java b/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java
+index c9c2344a54df598304e6eb80096b336525fc6abf..e97934e2843ae9cbd788ab930ee97f56a4ccb0d7 100644
+--- a/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java
++++ b/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java
+@@ -40,7 +40,7 @@ import java.io.IOException;
+  * <p>
+  * Duas cadeias:
+  * <ol>
+- *   <li><b>API</b> ({@code /api/**}, {@code /auth/**}): JWT Bearer, sem criar sessao,
++ *   <li><b>API</b> ({@code /api/**}, {@code /auth/**}, {@code /actuator/**}): JWT Bearer, sem criar sessao,
+  *   respostas 401/403 em JSON. CSRF e ignorado apenas para {@code /auth/**} e para
+  *   requisicoes com {@code Authorization: Bearer} (tokens nao sao enviados
+  *   automaticamente pelo navegador, logo nao ha CSRF). Requisicoes autenticadas por
+@@ -72,12 +72,15 @@ public class SecurityConfig {
+                         "Seu perfil nao tem permissao para esta operacao");
+ 
+         http
+-                .securityMatcher("/api/**", "/auth/**")
++                .securityMatcher("/api/**", "/auth/**", "/actuator/**")
+                 .csrf(csrf -> csrf.ignoringRequestMatchers(requisicaoComBearer(), req ->
+                         req.getRequestURI().startsWith(req.getContextPath() + "/auth/")))
+                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.NEVER))
+                 .authorizeHttpRequests(auth -> auth
+                         .requestMatchers("/auth/**").permitAll()
++                        // Actuator (aula 19): health/info publicos (health de Heroku/load balancer), resto so ADMIN
++                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
++                        .requestMatchers("/actuator/**").hasRole(UsuarioFactory.ROLE_ADMIN)
+                         .anyRequest().authenticated())
+                 .httpBasic(basic -> basic.disable())
+                 .formLogin(form -> form.disable())
+diff --git a/projeto-final/src/main/java/com/example/projeto/health/ApiExternaHealthIndicator.java b/projeto-final/src/main/java/com/example/projeto/health/ApiExternaHealthIndicator.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc7deaa9541e62f040aab453c20b19207d871dd3
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/health/ApiExternaHealthIndicator.java
+@@ -0,0 +1,48 @@
++package com.example.projeto.health;
++
++import com.example.projeto.integration.CepService;
++import com.example.projeto.integration.Endereco;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.boot.actuate.health.Health;
++import org.springframework.boot.actuate.health.HealthIndicator;
++import org.springframework.stereotype.Component;
++
++/**
++ * Indicador de saude customizado (aula 19): verifica se a API externa ViaCEP
++ * responde, consultando um CEP de referencia. Aparece em {@code /actuator/health}
++ * como o componente {@code apiExterna} (nome do bean sem o sufixo "HealthIndicator").
++ * <p>
++ * O slide deixava {@code checkApiExterna()} indefinido e usava comentarios com
++ * {@code #} dentro do Java (nao compila).
++ */
++@Component
++public class ApiExternaHealthIndicator implements HealthIndicator {
++
++    private final CepService cepService;
++    private final String cepReferencia;
++
++    public ApiExternaHealthIndicator(CepService cepService,
++                                     @Value("${app.health.cep-referencia:01001000}") String cepReferencia) {
++        this.cepService = cepService;
++        this.cepReferencia = cepReferencia;
++    }
++
++    @Override
++    public Health health() {
++        long inicio = System.nanoTime();
++        try {
++            Endereco endereco = cepService.buscarPorCep(cepReferencia);
++            return Health.up()
++                    .withDetail("api", "ViaCEP")
++                    .withDetail("cepReferencia", endereco.cep())
++                    .withDetail("tempoRespostaMs", (System.nanoTime() - inicio) / 1_000_000)
++                    .build();
++        } catch (RuntimeException e) {
++            return Health.down()
++                    .withDetail("api", "ViaCEP")
++                    .withDetail("erro", "API externa indisponivel")
++                    .withDetail("causa", e.getClass().getSimpleName())
++                    .build();
++        }
++    }
++}
+diff --git a/projeto-final/src/main/resources/application-prod.yml b/projeto-final/src/main/resources/application-prod.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..3e328bdac65ff076f7f70f8d94c41bab3f5d7ba3
+--- /dev/null
++++ b/projeto-final/src/main/resources/application-prod.yml
+@@ -0,0 +1,35 @@
++# Perfil de PRODUCAO (Heroku/AWS): SPRING_PROFILES_ACTIVE=prod (o Procfile ja passa o perfil).
++# Nao ha defaults para segredos: sem JWT_SECRET, ADMIN_PASSWORD_HASH e CLIENTE_PASSWORD_HASH
++# a aplicacao NAO sobe (falha rapida em vez de rodar com credenciais de desenvolvimento).
++spring:
++  datasource:
++    # Heroku Postgres: o buildpack Java exporta JDBC_DATABASE_URL/USERNAME/PASSWORD.
++    # Sem banco provisionado cai para H2 em memoria (somente demonstracao - dados se perdem no restart).
++    url: ${JDBC_DATABASE_URL:jdbc:h2:mem:produtos;DB_CLOSE_DELAY=-1}
++    username: ${JDBC_DATABASE_USERNAME:sa}
++    password: ${JDBC_DATABASE_PASSWORD:}
++  jpa:
++    hibernate:
++      ddl-auto: update
++
++server:
++  # Heroku informa a porta em $PORT
++  port: ${PORT:8080}
++  forward-headers-strategy: framework
++
++management:
++  endpoint:
++    health:
++      # Em producao detalhes (componentes, erros) so para ADMIN autenticado
++      show-details: when-authorized
++      roles: ADMIN
++
++springdoc:
++  swagger-ui:
++    enabled: ${SWAGGER_ENABLED:false}
++  api-docs:
++    enabled: ${SWAGGER_ENABLED:false}
++
++logging:
++  level:
++    root: INFO
+diff --git a/projeto-final/src/main/resources/application.yml b/projeto-final/src/main/resources/application.yml
+index 3a21a29bd5d1dfdce7fad6b39f33fb631ed9b186..dcf81d130d712226f08943834e2840b9c374e15d 100644
+--- a/projeto-final/src/main/resources/application.yml
++++ b/projeto-final/src/main/resources/application.yml
+@@ -25,6 +25,10 @@ app:
+   viacep:
+     url: https://viacep.com.br/ws
+     timeout: 3s
++  health:
++    # CEP consultado pelo ApiExternaHealthIndicator
++    # entre aspas: sem elas o YAML 1.1 leria 01001000 como numero octal
++    cep-referencia: '01001000'
+   jwt:
+     # Obrigatorio fora do perfil dev: variavel de ambiente JWT_SECRET (>= 32 bytes)
+     secret: ${JWT_SECRET:}
+@@ -39,6 +43,26 @@ app:
+       username: ${CLIENTE_USERNAME:cliente}
+       password-hash: ${CLIENTE_PASSWORD_HASH:}
+ 
++management:
++  endpoints:
++    web:
++      exposure:
++        include: health,info,metrics
++  endpoint:
++    health:
++      # dev: detalhes sempre visiveis (slide). Em prod: when-authorized + ADMIN (application-prod.yml)
++      show-details: always
++  info:
++    env:
++      enabled: true
++
++info:
++  app:
++    name: '@project.artifactId@'
++    version: '@project.version@'
++    description: API de Produtos - Projeto Final IQS
++    java: '@java.version@'
++
+ springdoc:
+   swagger-ui:
+     path: /swagger-ui.html
+diff --git a/projeto-final/src/test/java/com/example/projeto/health/ActuatorIT.java b/projeto-final/src/test/java/com/example/projeto/health/ActuatorIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2ad84ff233524429f3b225ee3e3f06b8e2b695a3
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/health/ActuatorIT.java
+@@ -0,0 +1,83 @@
++package com.example.projeto.health;
++
++import com.example.projeto.integration.CepService;
++import com.example.projeto.integration.Endereco;
++import com.example.projeto.support.MockMvcComJwt;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.client.ResourceAccessException;
++import org.springframework.web.context.WebApplicationContext;
++
++import static org.hamcrest.Matchers.is;
++import static org.hamcrest.Matchers.notNullValue;
++import static org.mockito.Mockito.when;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * Endpoints do Actuator (aula 19): health com indicador customizado, info e metrics protegido.
++ * A API externa e mockada para o teste nao depender da internet.
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++class ActuatorIT {
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Autowired
++    WebApplicationContext contexto;
++
++    @MockBean
++    CepService cepService;
++
++    @BeforeEach
++    void apiExternaNoAr() {
++        when(cepService.buscarPorCep("01001000"))
++                .thenReturn(new Endereco("01001-000", "Praca da Se", null, "Se", "Sao Paulo", "SP", null));
++    }
++
++    @Test
++    void healthPublicoComComponentesApiExternaEDb() throws Exception {
++        mockMvc.perform(get("/actuator/health"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.status", is("UP")))
++                .andExpect(jsonPath("$.components.apiExterna.status", is("UP")))
++                .andExpect(jsonPath("$.components.db.status", is("UP")))
++                .andExpect(jsonPath("$.components.db.details.validationQuery", is("SELECT 1")));
++    }
++
++    @Test
++    void healthDownQuandoApiExternaCai() throws Exception {
++        when(cepService.buscarPorCep("01001000")).thenThrow(new ResourceAccessException("timeout"));
++
++        mockMvc.perform(get("/actuator/health"))
++                .andExpect(status().isServiceUnavailable())
++                .andExpect(jsonPath("$.components.apiExterna.status", is("DOWN")))
++                .andExpect(jsonPath("$.components.apiExterna.details.erro", is("API externa indisponivel")));
++    }
++
++    @Test
++    void infoPublicoComVersao() throws Exception {
++        mockMvc.perform(get("/actuator/info"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.app.name", is("projeto-final")))
++                .andExpect(jsonPath("$.app.version", notNullValue()));
++    }
++
++    @Test
++    void metricsExigeAdmin() throws Exception {
++        mockMvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
++        MockMvcComJwt.criar(contexto, "cliente").perform(get("/actuator/metrics"))
++                .andExpect(status().isForbidden());
++        MockMvcComJwt.criar(contexto, "admin").perform(get("/actuator/metrics"))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.names", notNullValue()));
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/health/ApiExternaHealthIndicatorTest.java b/projeto-final/src/test/java/com/example/projeto/health/ApiExternaHealthIndicatorTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..19e6d75f7ef5fdb2ca50b712334ddd34558d78e2
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/health/ApiExternaHealthIndicatorTest.java
+@@ -0,0 +1,41 @@
++package com.example.projeto.health;
++
++import com.example.projeto.integration.CepService;
++import com.example.projeto.integration.Endereco;
++import org.junit.jupiter.api.Test;
++import org.springframework.boot.actuate.health.Health;
++import org.springframework.boot.actuate.health.Status;
++import org.springframework.web.client.ResourceAccessException;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++class ApiExternaHealthIndicatorTest {
++
++    private final CepService cepService = mock(CepService.class);
++    private final ApiExternaHealthIndicator indicador = new ApiExternaHealthIndicator(cepService, "01001000");
++
++    @Test
++    void upQuandoApiExternaResponde() {
++        when(cepService.buscarPorCep("01001000"))
++                .thenReturn(new Endereco("01001-000", "Praca da Se", null, "Se", "Sao Paulo", "SP", null));
++
++        Health health = indicador.health();
++
++        assertThat(health.getStatus()).isEqualTo(Status.UP);
++        assertThat(health.getDetails()).containsEntry("api", "ViaCEP").containsKey("tempoRespostaMs");
++    }
++
++    @Test
++    void downComDetalheQuandoApiExternaFalha() {
++        when(cepService.buscarPorCep("01001000")).thenThrow(new ResourceAccessException("timeout"));
++
++        Health health = indicador.health();
++
++        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
++        assertThat(health.getDetails())
++                .containsEntry("erro", "API externa indisponivel")
++                .containsEntry("causa", "ResourceAccessException");
++    }
++}
+diff --git a/projeto-final/system.properties b/projeto-final/system.properties
+new file mode 100644
+index 0000000000000000000000000000000000000000..eafd676cd4eddab05e8d07a2eba0d7b9e662ce33
+--- /dev/null
++++ b/projeto-final/system.properties
+@@ -0,0 +1 @@
++java.runtime.version=17

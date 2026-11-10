@@ -1,0 +1,2598 @@
+diff --git a/projeto-final/README.md b/projeto-final/README.md
+index 3e33c79ddbe3e001f49f8e7d611522e18cfa6fbb..8c59ed439c8e69537e959ce600942c3c1c8d33e4 100644
+--- a/projeto-final/README.md
++++ b/projeto-final/README.md
+@@ -11,6 +11,7 @@ Projeto unico em Spring Boot 3 (Java 17, Maven) que evolui aula a aula, do MVP d
+ | 15 | Sprint 1: CI/CD, camada de servico, validacao (US-002), Testcontainers, JaCoCo >= 80% | [docs/aula-15](docs/aula-15/README.md) |
+ | 16 | Refatoracao: Strategy + Factory + Decorator no calculo de pedidos (US-003) | [docs/aula-16](docs/aula-16/README.md), [decisions.md](docs/decisions.md) |
+ | 17 | Frontend Thymeleaf + AJAX, API externa ViaCEP, tratamento de erros (API em `/api/**`) | [docs/aula-17](docs/aula-17/README.md) |
++| 18 | Spring Security 6 + JWT (login, roles, refresh token), roles no frontend | [docs/aula-18](docs/aula-18/README.md), [auth-guide.md](docs/auth-guide.md) |
+ 
+ ## Como executar
+ 
+diff --git a/projeto-final/docs/aula-18/README.md b/projeto-final/docs/aula-18/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c9c5764e00521e8bd4bbfdf10ba8f44a31576aa
+--- /dev/null
++++ b/projeto-final/docs/aula-18/README.md
+@@ -0,0 +1,76 @@
++# Aula 18 - Autenticacao e Autorizacao com Spring Security (JWT)
++
++## Objetivo
++
++Autenticacao JWT, controle de acesso por papeis (roles) e testes com chamadas autenticadas.
++
++## Entregas (checklist)
++
++- [x] **Rota de login gerando JWT**: `POST /auth/login` -> `accessToken` + `refreshToken` (`AuthController`)
++- [x] **Endpoint protegido acessivel apenas com token**: `/api/**` exige `Authorization: Bearer` (401 sem token)
++- [x] **Controle por roles**: `ADMIN` altera o catalogo, `USER` so le (`@PreAuthorize`, dica da aula) -> 403
++- [x] **Testes documentados** em [`docs/auth-guide.md`](../auth-guide.md) (curl + roteiro Postman)
++- [x] **Tarefa pos-aula: refresh tokens** - `POST /auth/refresh` com rotacao do par de tokens
++- [x] **Tarefa pos-aula: controle de roles no frontend** - `sec:authorize` (botao "Novo produto" so para ADMIN,
++  nome/perfil do usuario e "Sair" no cabecalho) + login por formulario nas paginas web
++- [x] **Factory Method para usuarios** (tarefa pos-aula 16) - `UsuarioFactory` (registrado em `docs/decisions.md`)
++- [x] Swagger com esquema `bearerAuth` (botao *Authorize*)
++
++Componentes (tabela do slide):
++
++| Componente | Implementacao |
++|------------|---------------|
++| `SecurityFilterChain` | `SecurityConfig` - duas cadeias: API (JWT, sem sessao) e Web (form login, CSRF) |
++| `UserDetailsService` | `InMemoryUserDetailsManager` com usuarios criados pela `UsuarioFactory` (senhas BCrypt) |
++| `JwtAuthenticationFilter` | `JwtAuthFilter` (valida access token e popula o `SecurityContext`) |
++| geracao/validacao de token | `JwtService` (jjwt 0.12.6, HS256, claims `typ`/`roles`/`iss`/`jti`) |
++
++## Arquivos adicionados/alterados nesta aula
++
++```
++M projeto-final/pom.xml                    (0.6.0; security, jjwt-api/impl/jackson, thymeleaf-extras-springsecurity6, spring-security-test)
++M projeto-final/README.md
++M projeto-final/docs/decisions.md          (Factory Method de usuarios)
++M projeto-final/src/main/resources/application.yml       (profiles.default=dev, app.jwt.*, app.security.*, h2-console off)
++A projeto-final/src/main/resources/application-dev.yml   (defaults SOMENTE de dev: chave JWT e hashes BCrypt)
++A projeto-final/src/main/java/com/example/projeto/auth/{AuthController,JwtService,JwtAuthFilter,JwtProperties,TokenInvalidoException,UsuarioFactory,UsuariosProperties}.java
++A projeto-final/src/main/java/com/example/projeto/config/{SecurityConfig,OpenApiConfig}.java
++M projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java (@PreAuthorize ADMIN nas escritas)
++M projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java          (@PreAuthorize ADMIN no cadastro)
++M projeto-final/src/main/resources/templates/{fragments/cabecalho.html,produtos/lista.html} (sec:authorize)
++A projeto-final/src/test/java/com/example/projeto/auth/{AuthControllerIT,JwtServiceTest,UsuarioFactoryTest}.java
++M projeto-final/src/test/java/com/example/projeto/interfaces/rest/{ProdutoControllerIT,PedidoControllerIT,ProdutoPostgresIT}.java (token JWT real)
++M projeto-final/src/test/java/com/example/projeto/web/{ProdutoWebControllerIT,CepWebControllerIT}.java (@WithMockUser + csrf)
++A projeto-final/docs/auth-guide.md
++A projeto-final/docs/aula-18/README.md
++A projeto-final/docs/aula-18/evidencias/*
++```
++
++Patch exato: [`mudancas.patch`](mudancas.patch).
++
++## Correcoes em relacao aos slides
++
++| Slide | Problema | Correcao |
++|-------|----------|----------|
++| So `jjwt-api` 0.11.5 no pom | `jjwt-api` contem apenas interfaces: em runtime falha com `UnknownClassException: ...DefaultJwtBuilder` (faltam `jjwt-impl` e `jjwt-jackson`) | `jjwt-api` + `jjwt-impl` (runtime) + `jjwt-jackson` (runtime), versao 0.12.6 |
++| `SECRET_KEY = "mySecretKey123!"` hardcoded | Segredo versionado no Git; e com 15 bytes, curto demais para HS256 (jjwt 0.12 recusa chaves < 256 bits) | `app.jwt.secret` lido de `JWT_SECRET`; default **apenas** no perfil `dev`; validacao de >= 32 bytes na subida; em `prod` sem a variavel a app nao sobe |
++| `.signWith(SignatureAlgorithm.HS256, SECRET_KEY)`, `setSubject`, `Jwts.parser()...` | API depreciada/removida no jjwt 0.12 | `signWith(SecretKey, Jwts.SIG.HS256)`, `subject()`, `parser().verifyWith(...)` |
++| `.csrf().disable()` | Sintaxe do Spring Security 5: removida no 6.1+ (nao compila no Boot 3.3) e desligava CSRF de tudo | DSL lambda `csrf(c -> c.ignoringRequestMatchers(...))`: ignora so `/auth/**` e requisicoes Bearer; sessoes web continuam protegidas |
++| `jwtAuthFilter()` sem definicao; filtro sem dependencias | Nao compila; se fosse `@Component` o Boot o registraria tambem como filtro global (executa 2x) | `new JwtAuthFilter(jwtService, entryPoint)` dentro do `SecurityConfig` |
++| Filtro ignora token invalido e segue | Token expirado resultava em 403 enganoso | Token presente e invalido -> 401 JSON (`AuthenticationEntryPoint`) |
++| Login `admin` / `123456` | Senha fraca e em texto puro | Usuarios em memoria com **hash BCrypt** (`{bcrypt}`), senhas de dev documentadas no auth-guide; em prod hashes por variavel de ambiente (`ADMIN_PASSWORD_HASH`, `CLIENTE_PASSWORD_HASH`) |
++| Refresh: `validateToken(refreshToken)` aceita qualquer token | Um access token roubado serviria para renovar indefinidamente | Claim `typ` (`access`/`refresh`) verificada nos dois sentidos; refresh rotaciona o par |
++| `InvalidTokenException`, `userService` | Classes inexistentes | `TokenInvalidoException`, `UserDetailsService` |
++| `requestMatchers("/auth/**")` numa cadeia unica | Paginas Thymeleaf (aula 17) ficariam sem login e o AJAX quebraria | Duas cadeias (API JWT / Web form login) |
++
++## Evidencias
++
++- [`evidencias/mvn-verify.txt`](evidencias/mvn-verify.txt), [`evidencias/jacoco-resumo.txt`](evidencias/jacoco-resumo.txt)
++- [`evidencias/curl-endpoints.txt`](evidencias/curl-endpoints.txt) - login, 401 sem token, 200 com token, 403 para `cliente`, 201 para `admin`, refresh, token trocado
++- [`evidencias/swagger-ui.png`](evidencias/swagger-ui.png) - Swagger UI com o botao *Authorize* (bearerAuth)
++- [`evidencias/pagina-login.png`](evidencias/pagina-login.png) - login por formulario das paginas web
++
++Resultado: **79 testes, 0 falhas, 1 skipped** (`ProdutoPostgresIT`); cobertura **100% de linhas
++(322/322), 91,9% de branches**. Os testes da API usam um **JWT real** (`support/MockMvcComJwt`), entao
++passam pelo filtro e pelo `@PreAuthorize` de verdade; o fluxo completo esta em `AuthControllerIT` (11 cenarios).
++Nas evidencias os tokens aparecem encurtados (sao de desenvolvimento e expiram em 15 min).
+diff --git a/projeto-final/docs/aula-18/evidencias/curl-endpoints.txt b/projeto-final/docs/aula-18/evidencias/curl-endpoints.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..48eb483b53607238e1d0cc4ff234a2313384b984
+--- /dev/null
++++ b/projeto-final/docs/aula-18/evidencias/curl-endpoints.txt
+@@ -0,0 +1,236 @@
++﻿# Evidencias de execucao - aula 18 (2026-11-10 16:33:03)
++# App: java -jar target/projeto-final.jar --server.port=18089 
++2026-11-10T16:33:01.754-03:00  INFO 4732 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 19.102 seconds (process running for 20.596)
++
++## 1. Sem token -> 401 (JSON)
++$ curl http://localhost:18089/api/produtos
++HTTP/1.1 401 
++Set-Cookie: JSESSIONID=E35499E9551275BDF4BDF358FA3A21D0; Path=/; HttpOnly
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 108
++Date: Tue, 10 Nov 2026 19:33:04 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
++
++## 2. Senha errada -> 401
++$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"123456"}'
++HTTP/1.1 401 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:04 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Usuario ou senha invalidos","instance":"/auth/login"}
++
++## 3. Login admin -> access + refresh token
++$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin-dev-2026"}'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:05 GMT
++
++{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(287 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(241 chars)","tokenType":"Bearer","expiresIn":900}
++
++# claims do access token (payload base64url decodificado): {"jti":"a8f6168b-f77c-437a-a0a9-e34f81baadbe","iss":"projeto-final","sub":"admin","iat":1794339184,"exp":1794340084,"typ":"access","roles":["ROLE_ADMIN","ROLE_USER"]}
++
++## 4. Admin cria produto com token -> 201
++$ curl -X POST http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>' -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
++HTTP/1.1 201 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:05 GMT
++
++{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
++
++## 5. Admin lista com token -> 200
++$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:06 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
++
++## 6. Login cliente
++$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"cliente","password":"cliente-dev-2026"}'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:06 GMT
++
++{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(272 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(244 chars)","tokenType":"Bearer","expiresIn":900}
++
++## 7. Cliente lista -> 200
++$ curl http://localhost:18089/api/produtos/buscar?nome=xiaomi -H 'Authorization: Bearer <accessToken cliente>'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:06 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
++
++## 8. Cliente tenta criar -> 403
++$ curl -X POST http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken cliente>' -H 'Content-Type: application/json' -d '{"nome":"X","preco":1.00}'
++HTTP/1.1 403 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 118
++Date: Tue, 10 Nov 2026 19:33:06 GMT
++
++{"type":"about:blank","title":"Acesso negado","status":403,"detail":"Seu perfil nao tem permissao para esta operacao"}
++
++## 9. Cliente calcula pedido -> 200
++$ curl -X POST http://localhost:18089/api/pedidos/total -H 'Authorization: Bearer <accessToken cliente>' -H 'Content-Type: application/json' -d '{"tipoCliente":"VIP","itens":[{"produtoId":1,"quantidade":1}]}'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++{"tipoCliente":"VIP","subtotal":1999.90,"desconto":199.99,"frete":0.00,"total":1799.91}
++
++## 10. Refresh token -> novo par
++$ curl -X POST http://localhost:18089/auth/refresh -H 'Content-Type: application/json' -d '{"refreshToken":"<refreshToken cliente>"}'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(272 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(244 chars)","tokenType":"Bearer","expiresIn":900}
++
++## 11. Novo access token funciona -> 200
++$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <novo accessToken>'
++HTTP/1.1 200 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
++
++## 12. Access token usado como refresh -> 401
++$ curl -X POST http://localhost:18089/auth/refresh -H 'Content-Type: application/json' -d '{"refreshToken":"<accessToken cliente>"}'
++HTTP/1.1 401 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Transfer-Encoding: chunked
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Tipo de token invalido: esperado refresh","instance":"/auth/refresh"}
++
++## 13. Refresh token usado como Bearer -> 401
++$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <refreshToken cliente>'
++HTTP/1.1 401 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 108
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
++
++## 14. Token adulterado -> 401
++$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>x'
++HTTP/1.1 401 
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Content-Type: application/problem+json
++Content-Length: 108
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
++
++## 15. Pagina web sem login -> redireciona para /login
++$ curl http://localhost:18089/produtos
++HTTP/1.1 302 
++Set-Cookie: JSESSIONID=82D03CDC2C5C4C24FE42B4E3738D64F1; Path=/; HttpOnly
++X-Content-Type-Options: nosniff
++X-XSS-Protection: 0
++Cache-Control: no-cache, no-store, max-age=0, must-revalidate
++Pragma: no-cache
++Expires: 0
++X-Frame-Options: DENY
++Location: http://localhost:18089/login
++Content-Length: 0
++Date: Tue, 10 Nov 2026 19:33:07 GMT
++
++## 16. OpenAPI publico com esquema bearerAuth
++$ curl http://localhost:18089/v3/api-docs
++HTTP/1.1 200 
++
++# trecho: "securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}
+diff --git a/projeto-final/docs/aula-18/evidencias/jacoco-resumo.txt b/projeto-final/docs/aula-18/evidencias/jacoco-resumo.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..a7a65f35925a6ebd176787f1e1da0021c4a280c3
+--- /dev/null
++++ b/projeto-final/docs/aula-18/evidencias/jacoco-resumo.txt
+@@ -0,0 +1,49 @@
++﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 18
++Instrucoes: 100,0% (1567/1567)
++Linhas:     100,0% (322/322)
++Branches:   91,9% (57/62)
++
++Por classe (linhas cobertas/total):
++  com.example.projeto.domain.service.ProdutoNaoEncontradoException: 2/2
++  com.example.projeto.domain.service.ProdutoService: 13/13
++  com.example.projeto.config.FreteConfig: 2/2
++  com.example.projeto.config.OpenApiConfig: 1/1
++  com.example.projeto.config.SecurityConfig: 44/44
++  com.example.projeto.interfaces.rest.PedidoRequest.Item: 1/1
++  com.example.projeto.interfaces.rest.ApiExceptionHandler: 18/18
++  com.example.projeto.interfaces.rest.PedidoController: 5/5
++  com.example.projeto.interfaces.rest.PedidoRequest: 1/1
++  com.example.projeto.interfaces.rest.ProdutoRequest: 2/2
++  com.example.projeto.interfaces.rest.ProdutoController: 7/7
++  com.example.projeto.domain.pedido.frete.CalculadoraFreteComLog: 9/9
++  com.example.projeto.domain.pedido.frete.FreteFixo: 6/6
++  com.example.projeto.integration.Endereco: 1/1
++  com.example.projeto.integration.CepService: 17/17
++  com.example.projeto.integration.CepNaoEncontradoException: 2/2
++  com.example.projeto.web.ProdutoForm: 2/2
++  com.example.projeto.web.WebExceptionHandler: 12/12
++  com.example.projeto.web.CepWebController: 4/4
++  com.example.projeto.web.HomeController: 2/2
++  com.example.projeto.web.ProdutoWebController: 8/8
++  com.example.projeto.auth.AuthController.TokenResponse: 1/1
++  com.example.projeto.auth.AuthController.RefreshRequest: 1/1
++  com.example.projeto.auth.AuthController: 14/14
++  com.example.projeto.auth.JwtAuthFilter: 24/24
++  com.example.projeto.auth.UsuariosProperties: 1/1
++  com.example.projeto.auth.AuthController.LoginRequest: 1/1
++  com.example.projeto.auth.JwtProperties: 1/1
++  com.example.projeto.auth.TokenInvalidoException: 4/4
++  com.example.projeto.auth.JwtService: 42/42
++  com.example.projeto.auth.UsuarioFactory: 8/8
++  com.example.projeto.auth.UsuariosProperties.Usuario: 1/1
++  com.example.projeto.domain.pedido.desconto.DescontoPercentual: 6/6
++  com.example.projeto.domain.pedido.desconto.DescontoVIP: 2/2
++  com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactory: 12/12
++  com.example.projeto.domain.pedido.desconto.DescontoPremium: 2/2
++  com.example.projeto.domain.pedido.desconto.SemDesconto: 2/2
++  com.example.projeto.domain.pedido.PedidoService: 10/10
++  com.example.projeto.domain.pedido.ItemPedido: 8/8
++  com.example.projeto.domain.pedido.TipoCliente: 4/4
++  com.example.projeto.domain.pedido.ResumoPedido: 1/1
++  com.example.projeto.domain.pedido.Pedido: 8/8
++  com.example.projeto.domain.model.Produto: 10/10
+diff --git a/projeto-final/docs/aula-18/evidencias/mvn-verify.txt b/projeto-final/docs/aula-18/evidencias/mvn-verify.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f02678d9092d40cfbdf6310b907a461db4877fd
+--- /dev/null
++++ b/projeto-final/docs/aula-18/evidencias/mvn-verify.txt
+@@ -0,0 +1,33 @@
++﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 16:32:31)
++# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
++# Exit code: 0
++
++[INFO] Building projeto-final 0.6.0
++[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
++[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
++[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 52.54 s -- in com.example.projeto.auth.AuthControllerIT
++[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.261 s -- in com.example.projeto.auth.JwtServiceTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.266 s -- in com.example.projeto.auth.UsuarioFactoryTest
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.108 s -- in com.example.projeto.domain.model.ProdutoTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.079 s -- in com.example.projeto.domain.pedido.desconto.PoliticaDescontoFactoryTest
++[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.343 s -- in com.example.projeto.domain.pedido.frete.CalculadoraFreteTest
++[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.169 s -- in com.example.projeto.domain.pedido.PedidoServiceTest
++[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.161 s -- in com.example.projeto.domain.repository.ProdutoRepositoryTest
++[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.847 s -- in com.example.projeto.domain.service.ProdutoServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.501 s -- in com.example.projeto.integration.CepServiceTest
++[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.277 s -- in com.example.projeto.interfaces.rest.PedidoControllerIT
++[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.557 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
++[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.974 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
++2026-11-10T16:31:55.107-03:00 ERROR 5860 --- [projeto-final] [           main] o.t.d.DockerClientProviderStrategy       : Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
++See https://java.testcontainers.org/on_failure.html for more details.
++[WARNING] Tests run: 1, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 0 s -- in com.example.projeto.interfaces.rest.ProdutoPostgresIT
++[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 22.98 s -- in com.example.projeto.web.CepWebControllerIT
++[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.699 s -- in com.example.projeto.web.ProdutoWebControllerIT
++[WARNING] Tests run: 79, Failures: 0, Errors: 0, Skipped: 1
++[INFO] Building jar: projeto-final\target\projeto-final.jar
++[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] --- jacoco:0.8.12:check (check) @ projeto-final ---
++[INFO] Loading execution data file projeto-final\target\jacoco.exec
++[INFO] All coverage checks have been met.
++[INFO] BUILD SUCCESS
+diff --git a/projeto-final/docs/aula-18/evidencias/pagina-login.png b/projeto-final/docs/aula-18/evidencias/pagina-login.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..a1dc864c65735493b86b9ba9a452c6bc22ae28ec
+GIT binary patch
+literal 4273
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/aula-18/evidencias/swagger-ui.png b/projeto-final/docs/aula-18/evidencias/swagger-ui.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..87b99a2b3ccee9f1c8926455362d361bd443b220
+GIT binary patch
+literal 34289
+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
+QpTO?kR=JfeYw-Mk0n*$@$N&HU
+
+literal 0
+HcmV?d00001
+
+diff --git a/projeto-final/docs/auth-guide.md b/projeto-final/docs/auth-guide.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d9833f56f564acd7c1d2d35fcad3d95eb67d752c
+--- /dev/null
++++ b/projeto-final/docs/auth-guide.md
+@@ -0,0 +1,122 @@
++# Guia de Autenticacao (JWT) - API de Produtos
++
++Entrega da aula 18 ("Testes Postman documentados em `docs/auth-guide.md`") + refresh token
++(tarefa pos-aula). Todos os comandos abaixo foram executados de verdade contra a aplicacao local;
++as saidas estao em [`aula-18/evidencias/curl-endpoints.txt`](aula-18/evidencias/curl-endpoints.txt).
++
++## Visao geral
++
++```
++Client --(1) POST /auth/login {username,password}--> AuthAPI
++Client <--(2) {accessToken, refreshToken} ------------ AuthAPI
++Client --(3) GET /api/produtos  Authorization: Bearer <accessToken> --> ResourceAPI
++Client <--(4) dados protegidos -------------------------------------- ResourceAPI
++Client --(5) POST /auth/refresh {refreshToken} --> AuthAPI  (quando o access token expira)
++```
++
++| Token | Validade (padrao) | Claims | Uso |
++|-------|-------------------|--------|-----|
++| access | 15 min (`app.jwt.access-expiration`) | `sub`, `roles`, `typ=access`, `iss`, `jti` | Header `Authorization: Bearer ...` em `/api/**` |
++| refresh | 7 dias (`app.jwt.refresh-expiration`) | `sub`, `typ=refresh`, `iss`, `jti` | Somente no corpo de `POST /auth/refresh` |
++
++Assinatura HS256 (jjwt 0.12.6). Um refresh token **nao** e aceito como access token e vice-versa.
++No refresh os papeis sao recarregados do cadastro e um **novo par** e emitido (rotacao).
++
++## Usuarios de desenvolvimento (perfil `dev`)
++
++| Usuario | Senha (somente dev) | Papeis | Pode |
++|---------|---------------------|--------|------|
++| `admin` | `admin-dev-2026` | `ADMIN`, `USER` | ler e alterar o catalogo, acessar `/produtos/novo` |
++| `cliente` | `cliente-dev-2026` | `USER` | listar/buscar produtos e calcular pedidos |
++
++As senhas **nao** estao no codigo nem na configuracao: `application-dev.yml` guarda apenas os
++**hashes BCrypt** (custo 10). Para gerar um hash novo:
++
++```bash
++# com o Spring Boot CLI ou qualquer ferramenta BCrypt; exemplo em Java (jshell) com spring-security-crypto no classpath:
++new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("minha-senha")
++```
++
++## Configuracao por ambiente
++
++| Propriedade | Variavel de ambiente | dev (padrao) | prod |
++|-------------|----------------------|--------------|------|
++| `app.jwt.secret` | `JWT_SECRET` | chave de desenvolvimento em `application-dev.yml` | **obrigatoria** (>= 32 bytes); sem ela a app nao sobe |
++| `app.security.admin.password-hash` | `ADMIN_PASSWORD_HASH` | hash de `admin-dev-2026` | **obrigatoria** |
++| `app.security.cliente.password-hash` | `CLIENTE_PASSWORD_HASH` | hash de `cliente-dev-2026` | **obrigatoria** |
++| `app.security.admin.username` / `cliente.username` | `ADMIN_USERNAME` / `CLIENTE_USERNAME` | `admin` / `cliente` | opcional |
++
++Gerar uma chave forte: `openssl rand -base64 48`.
++
++## Testes (curl / Postman)
++
++Os mesmos passos podem ser importados no Postman (cada bloco = uma request; use uma variavel de
++ambiente `{{token}}` com o `accessToken` retornado no passo 1).
++
++### 1. Login
++
++```http
++POST /auth/login HTTP/1.1
++Content-Type: application/json
++
++{ "username": "admin", "password": "admin-dev-2026" }
++```
++
++```bash
++curl -s -X POST http://localhost:8080/auth/login -H "Content-Type: application/json" \
++  -d '{"username":"admin","password":"admin-dev-2026"}'
++# 200 {"accessToken":"eyJ...","refreshToken":"eyJ...","tokenType":"Bearer","expiresIn":900}
++```
++
++Postman: aba *Tests* -> `pm.environment.set("token", pm.response.json().accessToken);`
++
++### 2. Acesso a recurso protegido
++
++```http
++GET /api/produtos HTTP/1.1
++Authorization: Bearer {{token}}
++```
++
++| Cenario | Resultado esperado |
++|---------|--------------------|
++| Sem header `Authorization` | `401` `{"title":"Nao autenticado",...}` |
++| Token mal formado / assinatura errada / expirado | `401` |
++| Token valido de `cliente` em `GET /api/produtos` | `200` |
++| Token valido de `cliente` em `POST /api/produtos` | `403` `{"title":"Acesso negado",...}` |
++| Token valido de `admin` em `POST /api/produtos` | `201` |
++| Senha errada em `/auth/login` | `401` `{"detail":"Usuario ou senha invalidos"}` |
++
++### 3. Refresh token
++
++```bash
++curl -s -X POST http://localhost:8080/auth/refresh -H "Content-Type: application/json" \
++  -d '{"refreshToken":"<refreshToken do passo 1>"}'
++# 200 com novo accessToken e novo refreshToken
++```
++
++Enviar um **access** token em `/auth/refresh` -> `401`; enviar um **refresh** token como Bearer -> `401`.
++
++### 4. Swagger UI
++
++`http://localhost:8080/swagger-ui.html` e publico; clique em **Authorize** e cole o `accessToken`
++(sem o prefixo `Bearer`) para testar os endpoints protegidos.
++
++## Interface web
++
++As paginas Thymeleaf (`/produtos`, `/cep`) usam **login por formulario** (`/login`) e sessao, com
++CSRF ativo. O botao "Novo produto" so aparece para `ADMIN` (`sec:authorize`) e `/produtos/novo`
++exige `ADMIN` (`@PreAuthorize`) - controle de papeis no frontend (tarefa pos-aula 18).
++O AJAX da pagina chama `/api/produtos` com o cookie de sessao (leitura permitida); escrita em `/api/**`
++por sessao exige token CSRF.
++
++## Regras de autorizacao (resumo)
++
++| Rota | Regra |
++|------|-------|
++| `/auth/**` | publica |
++| `/swagger-ui/**`, `/v3/api-docs/**`, `/login`, `/css/**` | publica |
++| `GET /api/**`, `POST /api/pedidos/total` | autenticado (`USER` ou `ADMIN`) |
++| `POST/PUT/DELETE /api/produtos/**` | `@PreAuthorize("hasRole('ADMIN')")` |
++| `/produtos/novo`, `/produtos/cadastrar` (web) | `@PreAuthorize("hasRole('ADMIN')")` |
++| `/admin/**` | `hasRole('ADMIN')` (regra do slide, reservada) |
++| demais paginas | autenticado (sessao) |
+diff --git a/projeto-final/docs/decisions.md b/projeto-final/docs/decisions.md
+index 09a0863be06140b3b79d6af4d966c6485f4f1b04..fcfdce5f58f6f79194cb49d3b5d68d736f41d561 100644
+--- a/projeto-final/docs/decisions.md
++++ b/projeto-final/docs/decisions.md
+@@ -38,3 +38,17 @@ por ambiente, mas aqui a escolha depende do cliente **em cada requisicao**, por
+ (o servico calculava `preco * quantidade` de cada item -> `ItemPedido#subtotal()`), numeros magicos
+ `100` e `15` -> propriedades `app.frete.*`.
+ **Arquivos:** `domain/pedido/TipoCliente.java`, `ItemPedido.java`, `Pedido.java`, `ResumoPedido.java`
++
++## Decisao 2026-11-10 (aula 18) - Factory Method para usuarios
++
++**Padrao:** Factory Method (tarefa pos-aula 16: "Factory Method para criacao de usuarios")
++**Motivo:** a criacao de `UserDetails` com os papeis corretos (`criarAdmin` -> ADMIN+USER,
++`criarCliente` -> USER) fica num unico lugar, que tambem recusa senhas que nao sejam hash BCrypt.
++**Arquivos:** `auth/UsuarioFactory.java`, `config/SecurityConfig.java`
++
++## Decisao 2026-11-10 (aula 18) - Duas cadeias de seguranca
++
++**Decisao:** `SecurityFilterChain` da API (JWT, sem sessao, 401/403 em JSON) separada da cadeia Web
++(form login, sessao, CSRF). **Motivo:** a aula 17 introduziu paginas Thymeleaf; uma cadeia unica
++stateless com CSRF desligado (slide) deixaria as paginas sem login ou sem protecao CSRF.
++**Arquivos:** `config/SecurityConfig.java`, `auth/JwtAuthFilter.java`
+diff --git a/projeto-final/pom.xml b/projeto-final/pom.xml
+index bdbc6e63795f8910b9915625f150e9fb1718934b..cda27b46f9c3245f50f4ac2a2d089edf180827cd 100644
+--- a/projeto-final/pom.xml
++++ b/projeto-final/pom.xml
+@@ -13,7 +13,7 @@
+ 
+     <groupId>com.example</groupId>
+     <artifactId>projeto-final</artifactId>
+-    <version>0.5.0</version>
++    <version>0.6.0</version>
+     <name>projeto-final</name>
+     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
+ 
+@@ -23,6 +23,7 @@
+         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+         <jacoco.version>0.8.12</jacoco.version>
+         <springdoc.version>2.6.0</springdoc.version>
++        <jjwt.version>0.12.6</jjwt.version>
+         <!-- SonarQube/SonarCloud: token e URL vem de variaveis de ambiente/secrets, nunca do pom -->
+         <sonar.projectKey>gqs-projeto-final</sonar.projectKey>
+         <sonar.projectName>IQS - Projeto Final (Produtos)</sonar.projectName>
+@@ -55,22 +56,55 @@
+             <version>${springdoc.version}</version>
+         </dependency>
+ 
+-        <!-- Frontend server-side (aula 17) -->
+-        <dependency>
+-            <groupId>org.springframework.boot</groupId>
+-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+-        </dependency>
++        <!-- Frontend server-side (aula 17) -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-thymeleaf</artifactId>
++        </dependency>
+         <!-- Bean Validation (US-002) -->
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-validation</artifactId>
+         </dependency>
+ 
++        <!-- Seguranca + JWT (aula 18). O slide trazia so o jjwt-api, que contem apenas
++             interfaces: sem jjwt-impl e jjwt-jackson a geracao do token falha em runtime. -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-security</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>org.thymeleaf.extras</groupId>
++            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>io.jsonwebtoken</groupId>
++            <artifactId>jjwt-api</artifactId>
++            <version>${jjwt.version}</version>
++        </dependency>
++        <dependency>
++            <groupId>io.jsonwebtoken</groupId>
++            <artifactId>jjwt-impl</artifactId>
++            <version>${jjwt.version}</version>
++            <scope>runtime</scope>
++        </dependency>
++        <dependency>
++            <groupId>io.jsonwebtoken</groupId>
++            <artifactId>jjwt-jackson</artifactId>
++            <version>${jjwt.version}</version>
++            <scope>runtime</scope>
++        </dependency>
++
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-test</artifactId>
+             <scope>test</scope>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework.security</groupId>
++            <artifactId>spring-security-test</artifactId>
++            <scope>test</scope>
++        </dependency>
+         <!-- Testcontainers + PostgreSQL real nos testes de integracao (rodam no CI, que tem Docker) -->
+         <dependency>
+             <groupId>org.testcontainers</groupId>
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/AuthController.java b/projeto-final/src/main/java/com/example/projeto/auth/AuthController.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..966354ae1439df6d4ef1222c2b18776d12e82a49
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/AuthController.java
+@@ -0,0 +1,79 @@
++package com.example.projeto.auth;
++
++import io.jsonwebtoken.Claims;
++import jakarta.validation.Valid;
++import jakarta.validation.constraints.NotBlank;
++import lombok.RequiredArgsConstructor;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ProblemDetail;
++import org.springframework.security.authentication.AuthenticationManager;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.AuthenticationException;
++import org.springframework.security.core.userdetails.UserDetails;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++
++/**
++ * Endpoints publicos de autenticacao: login e renovacao de tokens (refresh).
++ */
++@RestController
++@RequestMapping("/auth")
++@RequiredArgsConstructor
++public class AuthController {
++
++    private final AuthenticationManager authenticationManager;
++    private final UserDetailsService userDetailsService;
++    private final JwtService jwtService;
++
++    public record LoginRequest(@NotBlank String username, @NotBlank String password) {
++    }
++
++    public record RefreshRequest(@NotBlank String refreshToken) {
++    }
++
++    public record TokenResponse(String accessToken, String refreshToken, String tokenType, long expiresIn) {
++    }
++
++    /** POST /auth/login - troca usuario/senha por access token + refresh token. */
++    @PostMapping("/login")
++    public TokenResponse login(@Valid @RequestBody LoginRequest request) {
++        var autenticacao = authenticationManager.authenticate(
++                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
++        return emitir((UserDetails) autenticacao.getPrincipal());
++    }
++
++    /**
++     * POST /auth/refresh (tarefa pos-aula 18) - valida o refresh token e emite um novo par
++     * (rotacao: o cliente passa a usar o novo refresh token). Os papeis sao recarregados
++     * do {@link UserDetailsService}, entao mudancas de permissao valem no proximo refresh.
++     */
++    @PostMapping("/refresh")
++    public TokenResponse refresh(@Valid @RequestBody RefreshRequest request) {
++        Claims claims = jwtService.validar(request.refreshToken(), JwtService.TIPO_REFRESH);
++        UserDetails usuario = userDetailsService.loadUserByUsername(jwtService.extrairUsername(claims));
++        return emitir(usuario);
++    }
++
++    private TokenResponse emitir(UserDetails usuario) {
++        return new TokenResponse(jwtService.gerarAccessToken(usuario), jwtService.gerarRefreshToken(usuario),
++                "Bearer", jwtService.validadeAccessToken().toSeconds());
++    }
++
++    @ExceptionHandler(AuthenticationException.class)
++    public ProblemDetail credenciaisInvalidas() {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Usuario ou senha invalidos");
++        pd.setTitle("Nao autenticado");
++        return pd;
++    }
++
++    @ExceptionHandler(TokenInvalidoException.class)
++    public ProblemDetail tokenInvalido(TokenInvalidoException ex) {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
++        pd.setTitle("Nao autenticado");
++        return pd;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/JwtAuthFilter.java b/projeto-final/src/main/java/com/example/projeto/auth/JwtAuthFilter.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fc8e9d58592e86c17367d19b91aefd1ab5dcf0d5
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/JwtAuthFilter.java
+@@ -0,0 +1,70 @@
++package com.example.projeto.auth;
++
++import io.jsonwebtoken.Claims;
++import jakarta.servlet.FilterChain;
++import jakarta.servlet.ServletException;
++import jakarta.servlet.http.HttpServletRequest;
++import jakarta.servlet.http.HttpServletResponse;
++import org.springframework.http.HttpHeaders;
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
++import org.springframework.security.core.context.SecurityContext;
++import org.springframework.security.core.context.SecurityContextHolder;
++import org.springframework.security.web.AuthenticationEntryPoint;
++import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
++import org.springframework.security.authentication.InsufficientAuthenticationException;
++import org.springframework.web.filter.OncePerRequestFilter;
++
++import java.io.IOException;
++
++/**
++ * Le o header {@code Authorization: Bearer <token>}, valida o access token e popula
++ * o {@code SecurityContext}.
++ * <p>
++ * Nao e um {@code @Component} de proposito: o Spring Boot registraria qualquer bean
++ * {@code Filter} tambem como filtro global do servlet, executando-o duas vezes e fora
++ * da cadeia de seguranca. Ele e instanciado em {@code SecurityConfig}.
++ * Token presente porem invalido/expirado responde 401 imediatamente (em vez de
++ * seguir anonimo e devolver um 403 enganoso).
++ */
++public class JwtAuthFilter extends OncePerRequestFilter {
++
++    private static final String PREFIXO = "Bearer ";
++
++    private final JwtService jwtService;
++    private final AuthenticationEntryPoint entryPoint;
++
++    public JwtAuthFilter(JwtService jwtService, AuthenticationEntryPoint entryPoint) {
++        this.jwtService = jwtService;
++        this.entryPoint = entryPoint;
++    }
++
++    @Override
++    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
++                                    FilterChain chain) throws ServletException, IOException {
++        String token = extrairToken(request);
++        if (token != null) {
++            try {
++                Claims claims = jwtService.validar(token, JwtService.TIPO_ACCESS);
++                var auth = new UsernamePasswordAuthenticationToken(
++                        jwtService.extrairUsername(claims), null, jwtService.extrairRoles(claims));
++                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
++                SecurityContext contexto = SecurityContextHolder.createEmptyContext();
++                contexto.setAuthentication(auth);
++                SecurityContextHolder.setContext(contexto);
++            } catch (TokenInvalidoException e) {
++                SecurityContextHolder.clearContext();
++                entryPoint.commence(request, response, new InsufficientAuthenticationException(e.getMessage(), e));
++                return;
++            }
++        }
++        chain.doFilter(request, response);
++    }
++
++    static String extrairToken(HttpServletRequest request) {
++        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
++        if (header != null && header.startsWith(PREFIXO) && header.length() > PREFIXO.length()) {
++            return header.substring(PREFIXO.length()).trim();
++        }
++        return null;
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/JwtProperties.java b/projeto-final/src/main/java/com/example/projeto/auth/JwtProperties.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..95116bca95be229a481cb3abaeaaa75b6d8bbe03
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/JwtProperties.java
+@@ -0,0 +1,29 @@
++package com.example.projeto.auth;
++
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotNull;
++import org.springframework.boot.context.properties.ConfigurationProperties;
++import org.springframework.validation.annotation.Validated;
++
++import java.time.Duration;
++
++/**
++ * Configuracao do JWT lida de {@code app.jwt.*}.
++ * <p>
++ * A chave NUNCA fica no codigo (o slide tinha {@code SECRET_KEY = "mySecretKey123!"}):
++ * em producao vem da variavel de ambiente {@code JWT_SECRET}; o perfil {@code dev}
++ * (padrao local e dos testes) define uma chave de desenvolvimento.
++ *
++ * @param secret            chave HMAC (minimo 32 bytes / 256 bits para HS256)
++ * @param issuer            emissor gravado e exigido nos tokens
++ * @param accessExpiration  validade do access token
++ * @param refreshExpiration validade do refresh token
++ */
++@Validated
++@ConfigurationProperties(prefix = "app.jwt")
++public record JwtProperties(
++        @NotBlank(message = "app.jwt.secret (JWT_SECRET) e obrigatorio") String secret,
++        @NotBlank String issuer,
++        @NotNull Duration accessExpiration,
++        @NotNull Duration refreshExpiration) {
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/JwtService.java b/projeto-final/src/main/java/com/example/projeto/auth/JwtService.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e9ecc3dc5357fd76213afb051910badfc6d3ef55
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/JwtService.java
+@@ -0,0 +1,121 @@
++package com.example.projeto.auth;
++
++import io.jsonwebtoken.Claims;
++import io.jsonwebtoken.JwtException;
++import io.jsonwebtoken.Jwts;
++import io.jsonwebtoken.security.Keys;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.security.core.GrantedAuthority;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++import org.springframework.stereotype.Service;
++
++import javax.crypto.SecretKey;
++import java.nio.charset.StandardCharsets;
++import java.time.Clock;
++import java.time.Duration;
++import java.time.Instant;
++import java.util.Collection;
++import java.util.Date;
++import java.util.List;
++import java.util.UUID;
++
++/**
++ * Geracao e validacao de tokens JWT (jjwt 0.12, HS256).
++ * <p>
++ * Dois tipos de token, distinguidos pela claim {@code typ}: {@code access} (curta
++ * duracao, carrega os papeis) e {@code refresh} (longa duracao, so serve para obter
++ * um novo par de tokens em {@code /auth/refresh}).
++ */
++@Service
++public class JwtService {
++
++    static final String CLAIM_TIPO = "typ";
++    static final String CLAIM_ROLES = "roles";
++    public static final String TIPO_ACCESS = "access";
++    public static final String TIPO_REFRESH = "refresh";
++    private static final int TAMANHO_MINIMO_CHAVE = 32;
++
++    private final JwtProperties props;
++    private final SecretKey chave;
++    private final Clock clock;
++
++    @Autowired
++    public JwtService(JwtProperties props) {
++        this(props, Clock.systemUTC());
++    }
++
++    JwtService(JwtProperties props, Clock clock) {
++        byte[] bytes = props.secret().getBytes(StandardCharsets.UTF_8);
++        if (bytes.length < TAMANHO_MINIMO_CHAVE) {
++            throw new IllegalStateException(
++                    "app.jwt.secret (JWT_SECRET) deve ter no minimo " + TAMANHO_MINIMO_CHAVE + " bytes para HS256");
++        }
++        this.props = props;
++        this.chave = Keys.hmacShaKeyFor(bytes);
++        this.clock = clock;
++    }
++
++    public String gerarAccessToken(UserDetails usuario) {
++        List<String> roles = usuario.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
++        return gerar(usuario.getUsername(), TIPO_ACCESS, props.accessExpiration(), roles);
++    }
++
++    public String gerarRefreshToken(UserDetails usuario) {
++        return gerar(usuario.getUsername(), TIPO_REFRESH, props.refreshExpiration(), null);
++    }
++
++    public Duration validadeAccessToken() {
++        return props.accessExpiration();
++    }
++
++    /**
++     * Valida assinatura, emissor, expiracao e tipo do token.
++     *
++     * @throws TokenInvalidoException se qualquer verificacao falhar
++     */
++    public Claims validar(String token, String tipoEsperado) {
++        try {
++            Claims claims = Jwts.parser()
++                    .verifyWith(chave)
++                    .requireIssuer(props.issuer())
++                    .clock(() -> Date.from(clock.instant()))
++                    .build()
++                    .parseSignedClaims(token)
++                    .getPayload();
++            if (!tipoEsperado.equals(claims.get(CLAIM_TIPO, String.class))) {
++                throw new TokenInvalidoException("Tipo de token invalido: esperado " + tipoEsperado);
++            }
++            return claims;
++        } catch (JwtException | IllegalArgumentException e) {
++            throw new TokenInvalidoException("Token invalido ou expirado", e);
++        }
++    }
++
++    public String extrairUsername(Claims claims) {
++        return claims.getSubject();
++    }
++
++    public Collection<SimpleGrantedAuthority> extrairRoles(Claims claims) {
++        List<?> roles = claims.get(CLAIM_ROLES, List.class);
++        if (roles == null) {
++            return List.of();
++        }
++        return roles.stream().map(String::valueOf).map(SimpleGrantedAuthority::new).toList();
++    }
++
++    private String gerar(String username, String tipo, Duration validade, List<String> roles) {
++        Instant agora = clock.instant();
++        var builder = Jwts.builder()
++                .id(UUID.randomUUID().toString())
++                .issuer(props.issuer())
++                .subject(username)
++                .issuedAt(Date.from(agora))
++                .expiration(Date.from(agora.plus(validade)))
++                .claim(CLAIM_TIPO, tipo);
++        if (roles != null) {
++            builder.claim(CLAIM_ROLES, roles);
++        }
++        return builder.signWith(chave, Jwts.SIG.HS256).compact();
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/TokenInvalidoException.java b/projeto-final/src/main/java/com/example/projeto/auth/TokenInvalidoException.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..95e80dbca53699ca0d5e52c6e1a61c2753295ef7
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/TokenInvalidoException.java
+@@ -0,0 +1,16 @@
++package com.example.projeto.auth;
++
++/**
++ * Token JWT ausente, mal formado, expirado, com assinatura invalida ou do tipo errado.
++ * (O slide usa {@code InvalidTokenException}, classe que nao existe no projeto.)
++ */
++public class TokenInvalidoException extends RuntimeException {
++
++    public TokenInvalidoException(String mensagem) {
++        super(mensagem);
++    }
++
++    public TokenInvalidoException(String mensagem, Throwable causa) {
++        super(mensagem, causa);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/UsuarioFactory.java b/projeto-final/src/main/java/com/example/projeto/auth/UsuarioFactory.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..1a9e6b6a3f99de353cb9e175ad5c8027ef3ea90e
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/UsuarioFactory.java
+@@ -0,0 +1,39 @@
++package com.example.projeto.auth;
++
++import org.springframework.security.core.userdetails.User;
++import org.springframework.security.core.userdetails.UserDetails;
++
++/**
++ * <b>Factory Method</b> para criacao de usuarios (tarefa pos-aula 16).
++ * Centraliza quais papeis cada perfil recebe; quem cria usuarios nao monta
++ * listas de roles "na mao" (evita, por exemplo, um admin sem o papel USER).
++ * As senhas chegam sempre como hash BCrypt - nunca em texto puro.
++ */
++public final class UsuarioFactory {
++
++    public static final String ROLE_ADMIN = "ADMIN";
++    public static final String ROLE_USER = "USER";
++
++    private UsuarioFactory() {
++    }
++
++    /** Administrador: le e altera o catalogo. */
++    public static UserDetails criarAdmin(String username, String senhaHashBcrypt) {
++        return criar(username, senhaHashBcrypt, ROLE_ADMIN, ROLE_USER);
++    }
++
++    /** Cliente: somente leitura do catalogo e calculo de pedidos. */
++    public static UserDetails criarCliente(String username, String senhaHashBcrypt) {
++        return criar(username, senhaHashBcrypt, ROLE_USER);
++    }
++
++    private static UserDetails criar(String username, String senhaHashBcrypt, String... roles) {
++        if (senhaHashBcrypt == null || !senhaHashBcrypt.startsWith("$2")) {
++            throw new IllegalArgumentException("A senha do usuario '" + username + "' deve ser um hash BCrypt");
++        }
++        return User.withUsername(username)
++                .password("{bcrypt}" + senhaHashBcrypt)
++                .roles(roles)
++                .build();
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/auth/UsuariosProperties.java b/projeto-final/src/main/java/com/example/projeto/auth/UsuariosProperties.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..0bc382b63fd8f6d1649c23d422370854a0e801e0
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/auth/UsuariosProperties.java
+@@ -0,0 +1,20 @@
++package com.example.projeto.auth;
++
++import jakarta.validation.Valid;
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotNull;
++import org.springframework.boot.context.properties.ConfigurationProperties;
++import org.springframework.validation.annotation.Validated;
++
++/**
++ * Usuarios em memoria ({@code app.security.*}). Somente hashes BCrypt: as senhas em
++ * texto puro de desenvolvimento estao documentadas em {@code docs/auth-guide.md};
++ * em producao os hashes vem de variaveis de ambiente.
++ */
++@Validated
++@ConfigurationProperties(prefix = "app.security")
++public record UsuariosProperties(@Valid @NotNull Usuario admin, @Valid @NotNull Usuario cliente) {
++
++    public record Usuario(@NotBlank String username, @NotBlank String passwordHash) {
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/config/OpenApiConfig.java b/projeto-final/src/main/java/com/example/projeto/config/OpenApiConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4bc2e0d93b0825e88266620a557c67814b6bd59
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/config/OpenApiConfig.java
+@@ -0,0 +1,21 @@
++package com.example.projeto.config;
++
++import io.swagger.v3.oas.annotations.OpenAPIDefinition;
++import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
++import io.swagger.v3.oas.annotations.info.Info;
++import io.swagger.v3.oas.annotations.security.SecurityRequirement;
++import io.swagger.v3.oas.annotations.security.SecurityScheme;
++import org.springframework.context.annotation.Configuration;
++
++/**
++ * Documentacao Swagger/OpenAPI com o esquema de seguranca Bearer JWT
++ * (botao "Authorize" no Swagger UI - cole o accessToken de /auth/login).
++ */
++@Configuration
++@OpenAPIDefinition(
++        info = @Info(title = "API de Produtos - Projeto Final IQS", version = "v1",
++                description = "CRUD de produtos, busca por nome, calculo de pedidos e autenticacao JWT"),
++        security = @SecurityRequirement(name = "bearerAuth"))
++@SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
++public class OpenApiConfig {
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java b/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c9c2344a54df598304e6eb80096b336525fc6abf
+--- /dev/null
++++ b/projeto-final/src/main/java/com/example/projeto/config/SecurityConfig.java
+@@ -0,0 +1,138 @@
++package com.example.projeto.config;
++
++import com.example.projeto.auth.JwtAuthFilter;
++import com.example.projeto.auth.JwtProperties;
++import com.example.projeto.auth.JwtService;
++import com.example.projeto.auth.UsuarioFactory;
++import com.example.projeto.auth.UsuariosProperties;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import jakarta.servlet.http.HttpServletRequest;
++import org.springframework.boot.context.properties.EnableConfigurationProperties;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.core.annotation.Order;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.http.ProblemDetail;
++import org.springframework.security.authentication.AuthenticationManager;
++import org.springframework.security.authentication.ProviderManager;
++import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
++import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
++import org.springframework.security.config.annotation.web.builders.HttpSecurity;
++import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
++import org.springframework.security.config.http.SessionCreationPolicy;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.crypto.factory.PasswordEncoderFactories;
++import org.springframework.security.crypto.password.PasswordEncoder;
++import org.springframework.security.provisioning.InMemoryUserDetailsManager;
++import org.springframework.security.web.AuthenticationEntryPoint;
++import org.springframework.security.web.SecurityFilterChain;
++import org.springframework.security.web.access.AccessDeniedHandler;
++import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
++import org.springframework.security.web.util.matcher.RequestMatcher;
++
++import java.io.IOException;
++
++/**
++ * Seguranca com Spring Security 6 (DSL lambda; {@code .csrf().disable()} do slide foi
++ * removido no Spring Security 6/7).
++ * <p>
++ * Duas cadeias:
++ * <ol>
++ *   <li><b>API</b> ({@code /api/**}, {@code /auth/**}): JWT Bearer, sem criar sessao,
++ *   respostas 401/403 em JSON. CSRF e ignorado apenas para {@code /auth/**} e para
++ *   requisicoes com {@code Authorization: Bearer} (tokens nao sao enviados
++ *   automaticamente pelo navegador, logo nao ha CSRF). Requisicoes autenticadas por
++ *   sessao (o AJAX da pagina web) continuam protegidas por CSRF.</li>
++ *   <li><b>Web</b> (demais rotas): login por formulario e sessao, CSRF ativo.</li>
++ * </ol>
++ * Autorizacao fina por metodo com {@code @PreAuthorize} (dica da aula 18).
++ */
++@Configuration
++@EnableWebSecurity
++@EnableMethodSecurity
++@EnableConfigurationProperties({JwtProperties.class, UsuariosProperties.class})
++public class SecurityConfig {
++
++    private static final String[] ROTAS_PUBLICAS_WEB = {
++            "/css/**", "/favicon.ico", "/error", "/login",
++            "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**"
++    };
++
++    @Bean
++    @Order(1)
++    public SecurityFilterChain apiFilterChain(HttpSecurity http, JwtService jwtService,
++                                              ObjectMapper objectMapper) throws Exception {
++        AuthenticationEntryPoint entryPoint = (req, res, ex) ->
++                escreverProblema(res, objectMapper, HttpStatus.UNAUTHORIZED, "Nao autenticado",
++                        "Token ausente, invalido ou expirado");
++        AccessDeniedHandler acessoNegado = (req, res, ex) ->
++                escreverProblema(res, objectMapper, HttpStatus.FORBIDDEN, "Acesso negado",
++                        "Seu perfil nao tem permissao para esta operacao");
++
++        http
++                .securityMatcher("/api/**", "/auth/**")
++                .csrf(csrf -> csrf.ignoringRequestMatchers(requisicaoComBearer(), req ->
++                        req.getRequestURI().startsWith(req.getContextPath() + "/auth/")))
++                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.NEVER))
++                .authorizeHttpRequests(auth -> auth
++                        .requestMatchers("/auth/**").permitAll()
++                        .anyRequest().authenticated())
++                .httpBasic(basic -> basic.disable())
++                .formLogin(form -> form.disable())
++                .exceptionHandling(e -> e.authenticationEntryPoint(entryPoint).accessDeniedHandler(acessoNegado))
++                .addFilterBefore(new JwtAuthFilter(jwtService, entryPoint), UsernamePasswordAuthenticationFilter.class);
++        return http.build();
++    }
++
++    @Bean
++    @Order(2)
++    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
++        http
++                .authorizeHttpRequests(auth -> auth
++                        .requestMatchers(ROTAS_PUBLICAS_WEB).permitAll()
++                        .requestMatchers("/admin/**").hasRole(UsuarioFactory.ROLE_ADMIN)
++                        .anyRequest().authenticated())
++                .formLogin(form -> form.defaultSuccessUrl("/produtos", true).permitAll())
++                .logout(logout -> logout.logoutSuccessUrl("/login?logout").permitAll());
++        return http.build();
++    }
++
++    @Bean
++    public PasswordEncoder passwordEncoder() {
++        // Delegating: le o prefixo {bcrypt} dos hashes; BCrypt e o padrao para novas senhas.
++        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
++    }
++
++    @Bean
++    public UserDetailsService userDetailsService(UsuariosProperties usuarios) {
++        return new InMemoryUserDetailsManager(
++                UsuarioFactory.criarAdmin(usuarios.admin().username(), usuarios.admin().passwordHash()),
++                UsuarioFactory.criarCliente(usuarios.cliente().username(), usuarios.cliente().passwordHash()));
++    }
++
++    @Bean
++    public AuthenticationManager authenticationManager(UserDetailsService uds, PasswordEncoder encoder) {
++        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
++        provider.setUserDetailsService(uds);
++        provider.setPasswordEncoder(encoder);
++        return new ProviderManager(provider);
++    }
++
++    private static RequestMatcher requisicaoComBearer() {
++        return (HttpServletRequest req) -> {
++            String header = req.getHeader(HttpHeaders.AUTHORIZATION);
++            return header != null && header.startsWith("Bearer ");
++        };
++    }
++
++    private static void escreverProblema(jakarta.servlet.http.HttpServletResponse res, ObjectMapper mapper,
++                                         HttpStatus status, String titulo, String detalhe) throws IOException {
++        ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, detalhe);
++        pd.setTitle(titulo);
++        res.setStatus(status.value());
++        res.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
++        mapper.writeValue(res.getOutputStream(), pd);
++    }
++}
+diff --git a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+index 5be002d764d779b27e02b3752c253f6ae7ddf189..508579a8bd70060a2be8e88a51e7b98837460d25 100644
+--- a/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
++++ b/projeto-final/src/main/java/com/example/projeto/interfaces/rest/ProdutoController.java
+@@ -5,6 +5,7 @@ import com.example.projeto.domain.service.ProdutoService;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.http.HttpStatus;
++import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PathVariable;
+@@ -29,6 +30,9 @@ import java.util.List;
+ @RequiredArgsConstructor
+ public class ProdutoController {
+ 
++    /** Escrita no catalogo apenas para ADMIN (aula 18 - dica: @PreAuthorize). */
++    static final String SOMENTE_ADMIN = "hasRole('ADMIN')";
++
+     private final ProdutoService service;
+ 
+     @GetMapping
+@@ -49,16 +53,19 @@ public class ProdutoController {
+ 
+     @PostMapping
+     @ResponseStatus(HttpStatus.CREATED)
++    @PreAuthorize(SOMENTE_ADMIN)
+     public Produto criar(@Valid @RequestBody ProdutoRequest request) {
+         return service.cadastrar(request.toEntity());
+     }
+ 
+     @PutMapping("/{id}")
++    @PreAuthorize(SOMENTE_ADMIN)
+     public Produto atualizar(@PathVariable Long id, @Valid @RequestBody ProdutoRequest request) {
+         return service.atualizar(id, request.toEntity());
+     }
+ 
+     @DeleteMapping("/{id}")
++    @PreAuthorize(SOMENTE_ADMIN)
+     @ResponseStatus(HttpStatus.NO_CONTENT)
+     public void remover(@PathVariable Long id) {
+         service.remover(id);
+diff --git a/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java b/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java
+index c3e20e1839ab6d8045470e6b472751ea300c95e8..93fe281fdb858f298d6bfccab32f1008cf3273e7 100644
+--- a/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java
++++ b/projeto-final/src/main/java/com/example/projeto/web/ProdutoWebController.java
+@@ -3,6 +3,7 @@ package com.example.projeto.web;
+ import com.example.projeto.domain.service.ProdutoService;
+ import jakarta.validation.Valid;
+ import lombok.RequiredArgsConstructor;
++import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.stereotype.Controller;
+ import org.springframework.ui.Model;
+ import org.springframework.validation.BindingResult;
+@@ -35,6 +36,7 @@ public class ProdutoWebController {
+     }
+ 
+     @GetMapping("/novo")
++    @PreAuthorize("hasRole('ADMIN')")
+     public String novo(Model model) {
+         model.addAttribute("form", new ProdutoForm());
+         return VIEW_FORM;
+@@ -42,6 +44,7 @@ public class ProdutoWebController {
+ 
+     /** PRG (Post/Redirect/Get): apos salvar redireciona, evitando reenvio com F5. */
+     @PostMapping("/cadastrar")
++    @PreAuthorize("hasRole('ADMIN')")
+     public String cadastrar(@Valid @ModelAttribute("form") ProdutoForm form, BindingResult result) {
+         if (result.hasErrors()) {
+             return VIEW_FORM;
+diff --git a/projeto-final/src/main/resources/application-dev.yml b/projeto-final/src/main/resources/application-dev.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..8efa2fcc7eb9e0d995c9ff70c2676978c791b11b
+--- /dev/null
++++ b/projeto-final/src/main/resources/application-dev.yml
+@@ -0,0 +1,13 @@
++# Perfil de DESENVOLVIMENTO (padrao local e dos testes - spring.profiles.default=dev).
++# Os valores abaixo sao defaults SOMENTE para dev/teste; podem ser sobrescritos pelas
++# mesmas variaveis de ambiente usadas em producao. Nunca use estes valores em producao.
++app:
++  jwt:
++    secret: ${JWT_SECRET:dev-somente-local-chave-jwt-de-desenvolvimento-nao-usar-em-producao}
++  security:
++    admin:
++      # hash BCrypt (custo 10) da senha de desenvolvimento "admin-dev-2026" (ver docs/auth-guide.md)
++      password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$pr2BhwODNoHf9UP7yeSjT.exNR7rC3YcVi7baUDcTRSCxtx28bpOm}
++    cliente:
++      # hash BCrypt (custo 10) da senha de desenvolvimento "cliente-dev-2026"
++      password-hash: ${CLIENTE_PASSWORD_HASH:$2a$10$yDAQQcaj2e6gOL.wFZdRHO6HVPfl0fAQBXTkf7EBFmrd3KiW7V7Ca}
+diff --git a/projeto-final/src/main/resources/application.yml b/projeto-final/src/main/resources/application.yml
+index 9c1aafd5f40424219f17c30f527c1a6f64ec7e7f..3a21a29bd5d1dfdce7fad6b39f33fb631ed9b186 100644
+--- a/projeto-final/src/main/resources/application.yml
++++ b/projeto-final/src/main/resources/application.yml
+@@ -1,6 +1,9 @@
+ spring:
+   application:
+     name: projeto-final
++  profiles:
++    # Sem perfil explicito usa "dev" (local e testes). Producao: SPRING_PROFILES_ACTIVE=prod
++    default: dev
+   datasource:
+     url: jdbc:h2:mem:produtos;DB_CLOSE_DELAY=-1
+     username: sa
+@@ -11,7 +14,9 @@ spring:
+     open-in-view: false
+   h2:
+     console:
+-      enabled: true
++      # Desligado a partir da aula 18: com Spring Security o console exigiria liberar
++      # frames e CSRF; use o Swagger/API para inspecionar dados.
++      enabled: false
+ 
+ app:
+   frete:
+@@ -20,6 +25,19 @@ app:
+   viacep:
+     url: https://viacep.com.br/ws
+     timeout: 3s
++  jwt:
++    # Obrigatorio fora do perfil dev: variavel de ambiente JWT_SECRET (>= 32 bytes)
++    secret: ${JWT_SECRET:}
++    issuer: projeto-final
++    access-expiration: 15m
++    refresh-expiration: 7d
++  security:
++    admin:
++      username: ${ADMIN_USERNAME:admin}
++      password-hash: ${ADMIN_PASSWORD_HASH:}
++    cliente:
++      username: ${CLIENTE_USERNAME:cliente}
++      password-hash: ${CLIENTE_PASSWORD_HASH:}
+ 
+ springdoc:
+   swagger-ui:
+diff --git a/projeto-final/src/main/resources/templates/fragments/cabecalho.html b/projeto-final/src/main/resources/templates/fragments/cabecalho.html
+index 1e171b3d4bf9ce54dfdab0d054ce45686dea3028..f67c9c58378764a453117ee74bf0ef64140dbf02 100644
+--- a/projeto-final/src/main/resources/templates/fragments/cabecalho.html
++++ b/projeto-final/src/main/resources/templates/fragments/cabecalho.html
+@@ -1,10 +1,17 @@
+ <!DOCTYPE html>
+-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+ <body>
+ <header th:fragment="cabecalho">
+     <a th:href="@{/produtos}">Produtos</a>
+     <a th:href="@{/cep}">Consulta CEP</a>
+     <a th:href="@{/swagger-ui.html}">API (Swagger)</a>
++    <span class="usuario" sec:authorize="isAuthenticated()">
++        <span sec:authentication="name">usuario</span>
++        (<span sec:authorize="hasRole('ADMIN')">admin</span><span sec:authorize="!hasRole('ADMIN')">cliente</span>)
++        <form th:action="@{/logout}" method="post" style="display:inline">
++            <button class="botao secundario" type="submit">Sair</button>
++        </form>
++    </span>
+ </header>
+ </body>
+ </html>
+diff --git a/projeto-final/src/main/resources/templates/produtos/lista.html b/projeto-final/src/main/resources/templates/produtos/lista.html
+index 314891dc131b05d478c7d491ac9ff2decb340475..70fdcc345879590c8bcc7e77c72d34f8309b3c54 100644
+--- a/projeto-final/src/main/resources/templates/produtos/lista.html
++++ b/projeto-final/src/main/resources/templates/produtos/lista.html
+@@ -1,5 +1,5 @@
+ <!DOCTYPE html>
+-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
++<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+@@ -12,7 +12,7 @@
+     <h1>Produtos</h1>
+ 
+     <div class="acoes">
+-        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto">Novo produto</a>
++        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto" sec:authorize="hasRole('ADMIN')">Novo produto</a>
+         <button type="button" class="botao secundario" id="recarregar">Atualizar via API (AJAX)</button>
+         <span class="spinner" id="carregando" role="status" aria-label="Carregando"></span>
+         <span id="status-ajax"></span>
+diff --git a/projeto-final/src/test/java/com/example/projeto/auth/AuthControllerIT.java b/projeto-final/src/test/java/com/example/projeto/auth/AuthControllerIT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e6c841df47be7bb06e6e5914f35c6af6d765ee07
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/auth/AuthControllerIT.java
+@@ -0,0 +1,158 @@
++package com.example.projeto.auth;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.transaction.annotation.Transactional;
++
++import static org.hamcrest.Matchers.is;
++import static org.hamcrest.Matchers.notNullValue;
++import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
++import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * Fluxo JWT completo (aula 18): login, acesso a recurso protegido, papeis, refresh token.
++ * Usa os usuarios de desenvolvimento do perfil {@code dev} (senhas em docs/auth-guide.md).
++ */
++@SpringBootTest
++@AutoConfigureMockMvc
++@Transactional
++class AuthControllerIT {
++
++    private static final String SENHA_ADMIN_DEV = "admin-dev-2026";
++    private static final String SENHA_CLIENTE_DEV = "cliente-dev-2026";
++
++    @Autowired
++    MockMvc mockMvc;
++
++    @Autowired
++    ObjectMapper objectMapper;
++
++    private JsonNode login(String usuario, String senha) throws Exception {
++        String corpo = mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"username\":\"%s\",\"password\":\"%s\"}".formatted(usuario, senha)))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.tokenType", is("Bearer")))
++                .andExpect(jsonPath("$.accessToken", notNullValue()))
++                .andExpect(jsonPath("$.refreshToken", notNullValue()))
++                .andExpect(jsonPath("$.expiresIn", is(900)))
++                .andReturn().getResponse().getContentAsString();
++        return objectMapper.readTree(corpo);
++    }
++
++    private static String bearer(JsonNode tokens) {
++        return "Bearer " + tokens.get("accessToken").asText();
++    }
++
++    @Test
++    void loginGeraJwtQueDaAcessoAoRecursoProtegido() throws Exception {
++        JsonNode tokens = login("admin", SENHA_ADMIN_DEV);
++
++        mockMvc.perform(get("/api/produtos").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
++                .andExpect(status().isOk());
++    }
++
++    @Test
++    void semTokenRetorna401EmJson() throws Exception {
++        mockMvc.perform(get("/api/produtos"))
++                .andExpect(status().isUnauthorized())
++                .andExpect(jsonPath("$.title", is("Nao autenticado")));
++    }
++
++    @Test
++    void tokenInvalidoRetorna401() throws Exception {
++        mockMvc.perform(get("/api/produtos").header(HttpHeaders.AUTHORIZATION, "Bearer abc.def.ghi"))
++                .andExpect(status().isUnauthorized());
++    }
++
++    @Test
++    void senhaErradaRetorna401() throws Exception {
++        mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"username\":\"admin\",\"password\":\"123456\"}"))
++                .andExpect(status().isUnauthorized())
++                .andExpect(jsonPath("$.detail", is("Usuario ou senha invalidos")));
++    }
++
++    @Test
++    void clienteLeMasNaoAlteraCatalogo() throws Exception {
++        JsonNode tokens = login("cliente", SENHA_CLIENTE_DEV);
++
++        mockMvc.perform(get("/api/produtos").header(HttpHeaders.AUTHORIZATION, bearer(tokens)))
++                .andExpect(status().isOk());
++        mockMvc.perform(post("/api/produtos").header(HttpHeaders.AUTHORIZATION, bearer(tokens))
++                        .contentType(MediaType.APPLICATION_JSON).content("{\"nome\":\"X\",\"preco\":1.00}"))
++                .andExpect(status().isForbidden())
++                .andExpect(jsonPath("$.title", is("Acesso negado")));
++    }
++
++    @Test
++    void refreshTokenGeraNovoAccessToken() throws Exception {
++        JsonNode tokens = login("cliente", SENHA_CLIENTE_DEV);
++
++        String corpo = mockMvc.perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"refreshToken\":\"%s\"}".formatted(tokens.get("refreshToken").asText())))
++                .andExpect(status().isOk())
++                .andReturn().getResponse().getContentAsString();
++
++        mockMvc.perform(get("/api/produtos")
++                        .header(HttpHeaders.AUTHORIZATION, bearer(objectMapper.readTree(corpo))))
++                .andExpect(status().isOk());
++    }
++
++    @Test
++    void accessTokenNaoServeComoRefreshToken() throws Exception {
++        JsonNode tokens = login("cliente", SENHA_CLIENTE_DEV);
++
++        mockMvc.perform(post("/auth/refresh").contentType(MediaType.APPLICATION_JSON)
++                        .content("{\"refreshToken\":\"%s\"}".formatted(tokens.get("accessToken").asText())))
++                .andExpect(status().isUnauthorized());
++    }
++
++    @Test
++    void refreshTokenNaoServeComoAccessToken() throws Exception {
++        JsonNode tokens = login("cliente", SENHA_CLIENTE_DEV);
++
++        mockMvc.perform(get("/api/produtos")
++                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.get("refreshToken").asText()))
++                .andExpect(status().isUnauthorized());
++    }
++
++    @Test
++    void sessaoWebSemTokenPrecisaDeCsrfParaAlterarApi() throws Exception {
++        // AJAX da pagina (sessao) pode ler a API...
++        mockMvc.perform(get("/api/produtos").with(user("admin").roles("ADMIN", "USER")))
++                .andExpect(status().isOk());
++        // ...mas escrita por sessao sem token CSRF e bloqueada (protecao CSRF mantida)
++        mockMvc.perform(post("/api/produtos").with(user("admin").roles("ADMIN", "USER"))
++                        .contentType(MediaType.APPLICATION_JSON).content("{\"nome\":\"X\",\"preco\":1.00}"))
++                .andExpect(status().isForbidden());
++        mockMvc.perform(post("/api/produtos").with(user("admin").roles("ADMIN", "USER")).with(csrf())
++                        .contentType(MediaType.APPLICATION_JSON).content("{\"nome\":\"X\",\"preco\":1.00}"))
++                .andExpect(status().isCreated());
++    }
++
++    @Test
++    void paginasWebExigemLoginESwaggerEPublico() throws Exception {
++        mockMvc.perform(get("/produtos"))
++                .andExpect(status().is3xxRedirection())
++                .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/login"));
++        mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
++    }
++
++    @Test
++    void clienteNaoAcessaFormularioDeCadastroWeb() throws Exception {
++        mockMvc.perform(get("/produtos/novo").with(user("cliente").roles("USER")))
++                .andExpect(status().isForbidden());
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/auth/JwtServiceTest.java b/projeto-final/src/test/java/com/example/projeto/auth/JwtServiceTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..5fac738db70c82e62ad0b6588fb52b2962861fd7
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/auth/JwtServiceTest.java
+@@ -0,0 +1,82 @@
++package com.example.projeto.auth;
++
++import io.jsonwebtoken.Claims;
++import org.junit.jupiter.api.Test;
++import org.springframework.security.core.authority.SimpleGrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++
++import java.time.Clock;
++import java.time.Duration;
++import java.time.Instant;
++import java.time.ZoneOffset;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++class JwtServiceTest {
++
++    private static final String CHAVE_TESTE = "chave-de-teste-unitario-com-mais-de-32-bytes!!";
++    private static final String HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5BWX4Z3TcuY3m3xR8iZ5uOQ8E8b6G";
++
++    private final JwtProperties props =
++            new JwtProperties(CHAVE_TESTE, "projeto-final", Duration.ofMinutes(15), Duration.ofDays(7));
++    private final UserDetails admin = UsuarioFactory.criarAdmin("admin", HASH);
++
++    @Test
++    void deveGerarEValidarAccessTokenComRoles() {
++        JwtService service = new JwtService(props);
++
++        Claims claims = service.validar(service.gerarAccessToken(admin), JwtService.TIPO_ACCESS);
++
++        assertThat(service.extrairUsername(claims)).isEqualTo("admin");
++        assertThat(service.extrairRoles(claims)).containsExactlyInAnyOrder(
++                new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
++        assertThat(service.validadeAccessToken()).isEqualTo(Duration.ofMinutes(15));
++    }
++
++    @Test
++    void refreshTokenNaoCarregaRolesENaoServeComoAccessToken() {
++        JwtService service = new JwtService(props);
++        String refresh = service.gerarRefreshToken(admin);
++
++        assertThat(service.extrairRoles(service.validar(refresh, JwtService.TIPO_REFRESH))).isEmpty();
++        assertThatThrownBy(() -> service.validar(refresh, JwtService.TIPO_ACCESS))
++                .isInstanceOf(TokenInvalidoException.class);
++    }
++
++    @Test
++    void deveRejeitarTokenExpirado() {
++        Clock passado = Clock.fixed(Instant.now().minus(Duration.ofHours(2)), ZoneOffset.UTC);
++        String token = new JwtService(props, passado).gerarAccessToken(admin);
++
++        assertThatThrownBy(() -> new JwtService(props).validar(token, JwtService.TIPO_ACCESS))
++                .isInstanceOf(TokenInvalidoException.class)
++                .hasMessageContaining("expirado");
++    }
++
++    @Test
++    void deveRejeitarTokenAssinadoComOutraChave() {
++        JwtService outra = new JwtService(new JwtProperties("outra-chave-qualquer-com-mais-de-32-bytes!!",
++                "projeto-final", Duration.ofMinutes(15), Duration.ofDays(7)));
++        String token = outra.gerarAccessToken(admin);
++
++        assertThatThrownBy(() -> new JwtService(props).validar(token, JwtService.TIPO_ACCESS))
++                .isInstanceOf(TokenInvalidoException.class);
++    }
++
++    @Test
++    void deveRejeitarTokenMalFormado() {
++        JwtService service = new JwtService(props);
++        assertThatThrownBy(() -> service.validar("nao-e-um-jwt", JwtService.TIPO_ACCESS))
++                .isInstanceOf(TokenInvalidoException.class);
++    }
++
++    @Test
++    void deveExigirChaveDeNoMinimo32Bytes() {
++        JwtProperties fraca = new JwtProperties("mySecretKey123!", "projeto-final",
++                Duration.ofMinutes(15), Duration.ofDays(7));
++        assertThatThrownBy(() -> new JwtService(fraca))
++                .isInstanceOf(IllegalStateException.class)
++                .hasMessageContaining("32 bytes");
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/auth/UsuarioFactoryTest.java b/projeto-final/src/test/java/com/example/projeto/auth/UsuarioFactoryTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fb7f463534a0b2d9ea6576d99f6cf320b7945829
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/auth/UsuarioFactoryTest.java
+@@ -0,0 +1,36 @@
++package com.example.projeto.auth;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.security.core.GrantedAuthority;
++import org.springframework.security.core.userdetails.UserDetails;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++class UsuarioFactoryTest {
++
++    private static final String HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5BWX4Z3TcuY3m3xR8iZ5uOQ8E8b6G";
++
++    @Test
++    void adminRecebeAdminEUser() {
++        UserDetails admin = UsuarioFactory.criarAdmin("admin", HASH);
++        assertThat(admin.getAuthorities()).extracting(GrantedAuthority::getAuthority)
++                .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER");
++        assertThat(admin.getPassword()).startsWith("{bcrypt}$2");
++    }
++
++    @Test
++    void clienteRecebeSomenteUser() {
++        assertThat(UsuarioFactory.criarCliente("cliente", HASH).getAuthorities())
++                .extracting(GrantedAuthority::getAuthority).containsExactly("ROLE_USER");
++    }
++
++    @Test
++    void naoAceitaSenhaEmTextoPuro() {
++        assertThatThrownBy(() -> UsuarioFactory.criarAdmin("admin", "123456"))
++                .isInstanceOf(IllegalArgumentException.class)
++                .hasMessageContaining("BCrypt");
++        assertThatThrownBy(() -> UsuarioFactory.criarCliente("c", null))
++                .isInstanceOf(IllegalArgumentException.class);
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+index c388a3449be870956ba4256e808158fd8655d690..dac4fe5cfa4072bbac3058d971026844ef922e4e 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/PedidoControllerIT.java
+@@ -2,12 +2,15 @@ package com.example.projeto.interfaces.rest;
+ 
+ import com.example.projeto.domain.model.Produto;
+ import com.example.projeto.domain.repository.ProdutoRepository;
++import com.example.projeto.support.MockMvcComJwt;
++import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.http.MediaType;
+ import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.context.WebApplicationContext;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.math.BigDecimal;
+@@ -28,8 +31,16 @@ class PedidoControllerIT {
+     private static final String URL = "/api/pedidos/total";
+ 
+     @Autowired
++    WebApplicationContext contexto;
++
++    /** Requisicoes autenticadas com um access token JWT real do usuario admin (aula 18). */
+     MockMvc mockMvc;
+ 
++    @BeforeEach
++    void autenticarComoAdmin() {
++        mockMvc = MockMvcComJwt.criar(contexto, "admin");
++    }
++
+     @Autowired
+     ProdutoRepository repository;
+ 
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+index d7e0f935b67984bc610e01e5f6720abcf91de0a2..a429c1261f32dab84bb569f0017a8c15ee3fbe6a 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoControllerIT.java
+@@ -2,6 +2,8 @@ package com.example.projeto.interfaces.rest;
+ 
+ import com.example.projeto.domain.model.Produto;
+ import com.example.projeto.domain.repository.ProdutoRepository;
++import com.example.projeto.support.MockMvcComJwt;
++import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.params.ParameterizedTest;
+ import org.junit.jupiter.params.provider.CsvSource;
+@@ -10,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.http.MediaType;
+ import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.context.WebApplicationContext;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.math.BigDecimal;
+@@ -37,8 +40,16 @@ class ProdutoControllerIT {
+     private static final String URL = "/api/produtos";
+ 
+     @Autowired
++    WebApplicationContext contexto;
++
++    /** Requisicoes autenticadas com um access token JWT real do usuario admin (aula 18). */
+     MockMvc mockMvc;
+ 
++    @BeforeEach
++    void autenticarComoAdmin() {
++        mockMvc = MockMvcComJwt.criar(contexto, "admin");
++    }
++
+     @Autowired
+     ProdutoRepository repository;
+ 
+diff --git a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+index 3db230cb6722625d31424391df4b826d77424190..f892abe71c1979e863357db4929e3411616889b5 100644
+--- a/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/interfaces/rest/ProdutoPostgresIT.java
+@@ -2,6 +2,8 @@ package com.example.projeto.interfaces.rest;
+ 
+ import com.example.projeto.domain.model.Produto;
+ import com.example.projeto.domain.repository.ProdutoRepository;
++import com.example.projeto.support.MockMvcComJwt;
++import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+@@ -9,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.test.context.DynamicPropertyRegistry;
+ import org.springframework.test.context.DynamicPropertySource;
+ import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.context.WebApplicationContext;
+ import org.testcontainers.containers.PostgreSQLContainer;
+ import org.testcontainers.junit.jupiter.Container;
+ import org.testcontainers.junit.jupiter.Testcontainers;
+@@ -49,8 +52,16 @@ class ProdutoPostgresIT {
+     ProdutoRepository repository;
+ 
+     @Autowired
++    WebApplicationContext contexto;
++
++    /** Requisicoes autenticadas com um access token JWT real do usuario admin (aula 18). */
+     MockMvc mockMvc;
+ 
++    @BeforeEach
++    void autenticarComoAdmin() {
++        mockMvc = MockMvcComJwt.criar(contexto, "admin");
++    }
++
+     @Test
+     void devePersistirProdutoNoBancoReal() throws Exception {
+         Produto salvo = repository.save(new Produto("Smartphone Xiaomi", new BigDecimal("1999.90")));
+diff --git a/projeto-final/src/test/java/com/example/projeto/support/MockMvcComJwt.java b/projeto-final/src/test/java/com/example/projeto/support/MockMvcComJwt.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..fb6350732db417726d11fab0c5173b9f0e264532
+--- /dev/null
++++ b/projeto-final/src/test/java/com/example/projeto/support/MockMvcComJwt.java
+@@ -0,0 +1,32 @@
++package com.example.projeto.support;
++
++import com.example.projeto.auth.JwtService;
++import org.springframework.http.HttpHeaders;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.test.web.servlet.setup.MockMvcBuilders;
++import org.springframework.web.context.WebApplicationContext;
++
++import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++
++/**
++ * Cria um {@link MockMvc} que envia, em toda requisicao, um access token JWT REAL do
++ * usuario informado - os testes da API passam pela cadeia de seguranca de verdade
++ * (filtro JWT + {@code @PreAuthorize}), sem atalhos como {@code @WithMockUser}.
++ */
++public final class MockMvcComJwt {
++
++    private MockMvcComJwt() {
++    }
++
++    public static MockMvc criar(WebApplicationContext contexto, String username) {
++        JwtService jwtService = contexto.getBean(JwtService.class);
++        UserDetailsService usuarios = contexto.getBean(UserDetailsService.class);
++        String token = jwtService.gerarAccessToken(usuarios.loadUserByUsername(username));
++        return MockMvcBuilders.webAppContextSetup(contexto)
++                .apply(springSecurity())
++                .defaultRequest(get("/").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
++                .build();
++    }
++}
+diff --git a/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java b/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java
+index daaa313d9e1664e2baf4fc3a285d2a3b7e57be5d..ce961c6ff5823c6c071a5a342e6c53029725155f 100644
+--- a/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/web/CepWebControllerIT.java
+@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.security.test.context.support.WithMockUser;
+ import org.springframework.test.web.servlet.MockMvc;
+ import org.springframework.web.client.ResourceAccessException;
+ 
+@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
+  */
+ @SpringBootTest
+ @AutoConfigureMockMvc
++@WithMockUser(username = "cliente", roles = "USER")
+ class CepWebControllerIT {
+ 
+     @Autowired
+diff --git a/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java b/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java
+index c0aeb53f08ec8c1b97a7aa3fc3ade8c397b72674..045c3d00ca7d1a4a934c7ba38922c4e0666735a7 100644
+--- a/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java
++++ b/projeto-final/src/test/java/com/example/projeto/web/ProdutoWebControllerIT.java
+@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+ import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.security.test.context.support.WithMockUser;
+ import org.springframework.test.web.servlet.MockMvc;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+@@ -14,6 +15,8 @@ import java.math.BigDecimal;
+ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.hamcrest.Matchers.containsString;
+ import static org.hamcrest.Matchers.hasSize;
++import static org.hamcrest.Matchers.not;
++import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+@@ -28,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
+ @SpringBootTest
+ @AutoConfigureMockMvc
+ @Transactional
++@WithMockUser(username = "admin", roles = {"ADMIN", "USER"})
+ class ProdutoWebControllerIT {
+ 
+     @Autowired
+@@ -45,7 +49,9 @@ class ProdutoWebControllerIT {
+                 .andExpect(view().name("produtos/lista"))
+                 .andExpect(model().attribute("produtos", hasSize(1)))
+                 .andExpect(content().string(containsString("Teclado Mecanico")))
+-                .andExpect(content().string(containsString("R$ 349,90")));
++                .andExpect(content().string(containsString("R$ 349,90")))
++                .andExpect(content().string(containsString("Novo produto")))
++                .andExpect(content().string(containsString("Sair")));
+     }
+ 
+     @Test
+@@ -58,7 +64,7 @@ class ProdutoWebControllerIT {
+ 
+     @Test
+     void deveCadastrarERedirecionar() throws Exception {
+-        mockMvc.perform(post("/produtos/cadastrar").param("nome", "Webcam").param("preco", "199.90"))
++        mockMvc.perform(post("/produtos/cadastrar").with(csrf()).param("nome", "Webcam").param("preco", "199.90"))
+                 .andExpect(status().is3xxRedirection())
+                 .andExpect(redirectedUrl("/produtos"));
+ 
+@@ -67,7 +73,7 @@ class ProdutoWebControllerIT {
+ 
+     @Test
+     void deveReexibirFormularioComErrosDeValidacao() throws Exception {
+-        mockMvc.perform(post("/produtos/cadastrar").param("nome", "").param("preco", "-1"))
++        mockMvc.perform(post("/produtos/cadastrar").with(csrf()).param("nome", "").param("preco", "-1"))
+                 .andExpect(status().isOk())
+                 .andExpect(view().name("produtos/form"))
+                 .andExpect(model().attributeHasFieldErrors("form", "nome", "preco"))
+@@ -75,8 +81,16 @@ class ProdutoWebControllerIT {
+     }
+ 
+     @Test
+-    void raizRedirecionaParaProdutos() throws Exception {
+-        mockMvc.perform(get("/"))
++    @WithMockUser(username = "cliente", roles = "USER")
++    void clienteNaoVeBotaoDeCadastro() throws Exception {
++        mockMvc.perform(get("/produtos"))
++                .andExpect(status().isOk())
++                .andExpect(content().string(not(containsString("Novo produto"))))
++                .andExpect(content().string(containsString("cliente")));
++    }
++
++    @Test
++    void raizRedirecionaParaProdutos() throws Exception {        mockMvc.perform(get("/"))
+                 .andExpect(redirectedUrl("/produtos"));
+     }
+ }
