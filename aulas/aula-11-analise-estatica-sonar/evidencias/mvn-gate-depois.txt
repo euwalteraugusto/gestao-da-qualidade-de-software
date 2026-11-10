@@ -1,0 +1,29 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------< br.gqs:aula-11-analise-estatica-sonar >----------------
+[INFO] Building Aula 11 - An�lise Est�tica e Qualidade de C�digo 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> pmd:3.28.0:check (default-cli) > :pmd @ aula-11-analise-estatica-sonar >>>
+[INFO] 
+[INFO] --- pmd:3.28.0:pmd (pmd) @ aula-11-analise-estatica-sonar ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.17.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO] 
+[INFO] <<< pmd:3.28.0:check (default-cli) < :pmd @ aula-11-analise-estatica-sonar <<<
+[INFO] 
+[INFO] 
+[INFO] --- pmd:3.28.0:check (default-cli) @ aula-11-analise-estatica-sonar ---
+[INFO] 
+[INFO] --- checkstyle:3.4.0:check (default-cli) @ aula-11-analise-estatica-sonar ---
+[INFO] Iniciando a auditoria...
+Auditoria completa.
+[INFO] You have 0 Checkstyle violations.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:13 min
+[INFO] Finished at: 2026-11-10T16:17:50-03:00
+[INFO] ------------------------------------------------------------------------

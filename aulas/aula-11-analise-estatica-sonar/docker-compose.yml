@@ -1,0 +1,32 @@
+# SonarQube Community local (alternativa ao "docker run" do slide, com banco PostgreSQL persistente).
+# NÃO executado nesta máquina (sem Docker). Uso:  docker compose up -d   ->  http://localhost:9000
+# No Linux/WSL2 pode ser preciso: sudo sysctl -w vm.max_map_count=524288
+services:
+  sonarqube:
+    image: sonarqube:community
+    depends_on:
+      - db
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar_local_somente_dev
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar_local_somente_dev
+      POSTGRES_DB: sonar
+    volumes:
+      - sonar_db:/var/lib/postgresql/data
+
+volumes:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:
+  sonar_db:

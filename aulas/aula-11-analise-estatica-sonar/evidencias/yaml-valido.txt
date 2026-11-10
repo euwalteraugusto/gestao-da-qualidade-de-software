@@ -1,0 +1,2 @@
+﻿OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\.github\workflows\aula-11-sonar.yml (chaves: [name, true, permissions, defaults, jobs])
+OK  C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\docker-compose.yml (chaves: [services, volumes])

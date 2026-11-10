@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="10.17.0">
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\FinanceUtils.java">
+<error line="17" column="19" severity="warning" message="A variável &apos;ultimoErro&apos; deveria ser privada e ter métodos acessores." source="com.puppycrawl.tools.checkstyle.checks.design.VisibilityModifierCheck"/>
+<error line="22" column="5" severity="warning" message="A complexidade ciclomática é de 9 (o máximo permitido é 5)." source="com.puppycrawl.tools.checkstyle.checks.metrics.CyclomaticComplexityCheck"/>
+<error line="22" column="5" severity="warning" message="O NCSS para este método é de 31 (o máximo permitido é 15)." source="com.puppycrawl.tools.checkstyle.checks.metrics.JavaNCSSCheck"/>
+<error line="22" column="5" severity="warning" message="O método calcularImposto tem 30 linhas (o máximo permitido é 25)." source="com.puppycrawl.tools.checkstyle.checks.sizes.MethodLengthCheck"/>
+<error line="23" column="9" severity="warning" message="A estrutura &apos;if&apos; deve utilizar &apos;{}&apos;s." source="com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck"/>
+<error line="33" column="59" severity="warning" message="A String &quot;0.05&quot; aparece 2 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\RelatorioVendas.java">
+<error line="13" column="5" severity="warning" message="A complexidade ciclomática é de 10 (o máximo permitido é 5)." source="com.puppycrawl.tools.checkstyle.checks.metrics.CyclomaticComplexityCheck"/>
+<error line="13" column="5" severity="warning" message="O NCSS para este método é de 25 (o máximo permitido é 15)." source="com.puppycrawl.tools.checkstyle.checks.metrics.JavaNCSSCheck"/>
+<error line="13" column="5" severity="warning" message="A complexidade NPath é de 28 (o máximo permitido é 20)." source="com.puppycrawl.tools.checkstyle.checks.metrics.NPathComplexityCheck"/>
+<error line="13" column="5" severity="warning" message="O método gerar tem 27 linhas (o máximo permitido é 25)." source="com.puppycrawl.tools.checkstyle.checks.sizes.MethodLengthCheck"/>
+<error line="20" column="21" severity="warning" message="A profundidade de aninhamento do &quot;if-else&quot; é 2 (o máximo permitido é 1)." source="com.puppycrawl.tools.checkstyle.checks.coding.NestedIfDepthCheck"/>
+<error line="20" column="40" severity="warning" message="A String &quot;CSV&quot; aparece 2 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+<error line="21" column="79" severity="warning" message="A String &quot;\n&quot; aparece 4 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+<error line="22" column="47" severity="warning" message="A String &quot;TXT&quot; aparece 2 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+<error line="24" column="47" severity="warning" message="A String &quot;HTML&quot; aparece 2 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+<error line="25" column="100" severity="warning" message="A String &quot;&lt;/td&gt;&lt;/tr&gt;\n&quot; aparece 2 vezes no arquivo." source="com.puppycrawl.tools.checkstyle.checks.coding.MultipleStringLiteralsCheck"/>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\Venda.java">
+</file>
+</checkstyle>

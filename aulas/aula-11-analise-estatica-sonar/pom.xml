@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>br.gqs</groupId>
+  <artifactId>aula-11-analise-estatica-sonar</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>Aula 11 - Análise Estática e Qualidade de Código</name>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <junit.version>5.10.2</junit.version>
+
+    <!-- Alvo e regras das análises locais (substitutas do SonarQube). Padrão = código refatorado ("depois").
+         Para medir o "antes": -Dpmd.alvo=**/antes/**/*.java -Dcheckstyle.alvo=**/antes/**/*.java -->
+    <pmd.alvo>**/depois/**/*.java</pmd.alvo>
+    <pmd.regras>config/pmd-qualidade.xml</pmd.regras>
+    <checkstyle.alvo>**/depois/**/*.java</checkstyle.alvo>
+    <checkstyle.config>config/checkstyle-qualidade.xml</checkstyle.config>
+
+    <!-- Propriedades lidas pelo sonar-maven-plugin (mvn sonar:sonar) -->
+    <sonar.projectKey>gqs-aula-11-analise-estatica</sonar.projectKey>
+    <sonar.projectName>GQS Aula 11 - Análise Estática</sonar.projectName>
+    <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.4.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>10.17.0</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>${checkstyle.config}</configLocation>
+          <includes>${checkstyle.alvo}</includes>
+          <consoleOutput>true</consoleOutput>
+          <violationSeverity>warning</violationSeverity>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.28.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>${pmd.regras}</ruleset>
+          </rulesets>
+          <includes>
+            <include>${pmd.alvo}</include>
+          </includes>
+          <printFailingErrors>true</printFailingErrors>
+          <targetJdk>17</targetJdk>
+        </configuration>
+      </plugin>
+      <!-- Versão do slide (3.9.1.2184) é de 2022; usar a atual. Requer servidor SonarQube/SonarCloud. -->
+      <plugin>
+        <groupId>org.sonarsource.scanner.maven</groupId>
+        <artifactId>sonar-maven-plugin</artifactId>
+        <version>5.8.0.7211</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>

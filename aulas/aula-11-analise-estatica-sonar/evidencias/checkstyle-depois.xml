@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="10.17.0">
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\AliquotaFixaStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\AliquotaPorFaixaStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\CofinsStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\FinanceUtils.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\FormatoRelatorio.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IcmsStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\ImpostoStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IpiStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IssStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\PisStrategy.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\RelatorioVendas.java">
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\Venda.java">
+</file>
+</checkstyle>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Code smells (substituto local do SonarQube)"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>Regras PMD 7 equivalentes às regras Sonar mais comuns para Java (bugs e code smells).</description>
+
+  <!-- Bugs / robustez -->
+  <rule ref="category/java/bestpractices.xml/LiteralsFirstInComparisons"/>   <!-- Sonar S1132 -->
+  <rule ref="category/java/errorprone.xml/NullAssignment"/>
+  <rule ref="category/java/errorprone.xml/AvoidDuplicateLiterals">          <!-- Sonar S1192 -->
+    <properties>
+      <property name="maxDuplicateLiterals" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/AvoidThrowingNullPointerException"/>
+
+  <!-- Code smells -->
+  <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>           <!-- Sonar S1068 -->
+  <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>          <!-- Sonar S1481 -->
+  <rule ref="category/java/bestpractices.xml/UnusedFormalParameter"/>
+  <rule ref="category/java/bestpractices.xml/SystemPrintln"/>                <!-- Sonar S106 -->
+  <rule ref="category/java/bestpractices.xml/ForLoopCanBeForeach"/>
+  <rule ref="category/java/bestpractices.xml/AvoidReassigningParameters"/>
+  <rule ref="category/java/codestyle.xml/UnnecessaryImport"/>                <!-- Sonar S1128 -->
+  <rule ref="category/java/codestyle.xml/ControlStatementBraces"/>           <!-- Sonar S121 -->
+  <rule ref="category/java/performance.xml/UseStringBufferForStringAppends"/> <!-- Sonar S1643 -->
+  <rule ref="category/java/design.xml/AvoidDeeplyNestedIfStmts">
+    <properties>
+      <property name="problemDepth" value="3"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/SimplifyBooleanReturns"/>
+  <rule ref="category/java/design.xml/DataClass"/>
+
+  <!-- Complexidade (limiares do Sonar: ciclomática 10 por método e cognitiva 15; usamos 6 e 10 p/ aula) -->
+  <rule ref="category/java/design.xml/CyclomaticComplexity">
+    <properties>
+      <property name="methodReportLevel" value="6"/>
+      <property name="classReportLevel" value="40"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/CognitiveComplexity">
+    <properties>
+      <property name="reportLevel" value="10"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/NPathComplexity">
+    <properties>
+      <property name="reportLevel" value="50"/>
+    </properties>
+  </rule>
+</ruleset>

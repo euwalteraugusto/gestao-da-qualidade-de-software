@@ -1,0 +1,84 @@
+# Aula 11 - Análise estática: (1) PMD + Checkstyle sempre; (2) SonarQube/SonarCloud quando houver secrets.
+# Correções em relação ao slide: sonar-maven-plugin 3.9.1.2184 (2022) -> 5.x; "-Dsonar.login" (removido nas
+# versões novas) -> "-Dsonar.token"; token e URL vêm de secrets (nunca no comando).
+# Secrets: SONAR_TOKEN, SONAR_HOST_URL (SonarQube: http(s)://seu-servidor; SonarCloud: https://sonarcloud.io)
+# e, só no SonarCloud, a variável de repositório SONAR_ORGANIZATION.
+name: Aula 11 - Análise Estática
+
+on:
+  push:
+    paths:
+      - 'aulas/aula-11-analise-estatica-sonar/**'
+      - '.github/workflows/aula-11-sonar.yml'
+  pull_request:
+    paths:
+      - 'aulas/aula-11-analise-estatica-sonar/**'
+      - '.github/workflows/aula-11-sonar.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: aulas/aula-11-analise-estatica-sonar
+
+jobs:
+  analise-local:
+    name: PMD e Checkstyle (substitutos locais do Sonar)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Testes e cobertura
+        run: mvn -B -ntp clean verify
+      # Gate nas classes refatoradas ("depois"): qualquer violação PMD/Checkstyle quebra o build
+      - name: PMD e Checkstyle (pacote depois)
+        run: mvn -B -ntp pmd:check checkstyle:check
+      - name: Relatórios do "antes" (apenas informativo)
+        run: >
+          mvn -B -ntp pmd:pmd checkstyle:checkstyle
+          "-Dpmd.alvo=**/antes/**/*.java" "-Dcheckstyle.alvo=**/antes/**/*.java"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aula-11-relatorios
+          path: |
+            aulas/aula-11-analise-estatica-sonar/target/pmd.xml
+            aulas/aula-11-analise-estatica-sonar/target/checkstyle-result.xml
+            aulas/aula-11-analise-estatica-sonar/target/site/jacoco
+          if-no-files-found: ignore
+
+  sonar:
+    name: SonarQube / SonarCloud
+    needs: analise-local
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Aviso quando os segredos não existem
+        if: env.SONAR_TOKEN == '' || env.SONAR_HOST_URL == ''
+        run: echo "::warning title=Sonar pulado::Defina SONAR_TOKEN e SONAR_HOST_URL para executar a análise."
+      - name: Analisar com Sonar
+        if: env.SONAR_TOKEN != '' && env.SONAR_HOST_URL != ''
+        run: >
+          mvn -B -ntp clean verify sonar:sonar
+          -Dsonar.token="$SONAR_TOKEN"
+          -Dsonar.host.url="$SONAR_HOST_URL"
+          -Dsonar.organization="$SONAR_ORGANIZATION"
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.exclusions="**/antes/**"

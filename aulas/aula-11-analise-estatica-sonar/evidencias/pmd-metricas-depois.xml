@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd xmlns="http://pmd.sourceforge.net/report/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 https://pmd.github.io/schema/report_2_0_0.xsd" version="7.17.0" timestamp="2026-11-10T16:15:15.425">
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\AliquotaFixaStrategy.java">
+<violation beginline="7" endline="7" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'AliquotaFixaStrategy' has a NCSS line count of 6 (Highest = 2).
+</violation>
+<violation beginline="7" endline="7" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'AliquotaFixaStrategy' has a total cyclomatic complexity of 2 (highest 1).
+</violation>
+<violation beginline="16" endline="16" begincolumn="12" endcolumn="32" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="AliquotaFixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'AliquotaFixaStrategy(String)' has a NCSS line count of 2.
+</violation>
+<violation beginline="16" endline="16" begincolumn="12" endcolumn="32" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="AliquotaFixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'AliquotaFixaStrategy(String)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="16" endline="16" begincolumn="12" endcolumn="32" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="AliquotaFixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'AliquotaFixaStrategy(String)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="21" endline="21" begincolumn="23" endcolumn="31" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'calcular(BigDecimal)' has a NCSS line count of 2.
+</violation>
+<violation beginline="21" endline="21" begincolumn="23" endcolumn="31" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="21" endline="21" begincolumn="23" endcolumn="31" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaFixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\AliquotaPorFaixaStrategy.java">
+<violation beginline="7" endline="7" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'AliquotaPorFaixaStrategy' has a NCSS line count of 11 (Highest = 4).
+</violation>
+<violation beginline="7" endline="7" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'AliquotaPorFaixaStrategy' has a total cyclomatic complexity of 3 (highest 2).
+</violation>
+<violation beginline="20" endline="20" begincolumn="12" endcolumn="36" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="AliquotaPorFaixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'AliquotaPorFaixaStrategy(String, String, String)' has a NCSS line count of 4.
+</violation>
+<violation beginline="20" endline="20" begincolumn="12" endcolumn="36" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="AliquotaPorFaixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'AliquotaPorFaixaStrategy(String, String, String)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="20" endline="20" begincolumn="12" endcolumn="36" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="AliquotaPorFaixaStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'AliquotaPorFaixaStrategy(String, String, String)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="27" endline="27" begincolumn="23" endcolumn="31" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'calcular(BigDecimal)' has a NCSS line count of 3.
+</violation>
+<violation beginline="27" endline="27" begincolumn="23" endcolumn="31" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'calcular(BigDecimal)' has a cognitive complexity of 1, current threshold is 1
+</violation>
+<violation beginline="27" endline="27" begincolumn="23" endcolumn="31" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has a cyclomatic complexity of 2.
+</violation>
+<violation beginline="27" endline="27" begincolumn="23" endcolumn="31" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="AliquotaPorFaixaStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has an NPath complexity of 2, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\CofinsStrategy.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="CofinsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'CofinsStrategy' has a NCSS line count of 3 (Highest = 2).
+</violation>
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="CofinsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'CofinsStrategy' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="26" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="CofinsStrategy" method="CofinsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'CofinsStrategy()' has a NCSS line count of 2.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="26" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="CofinsStrategy" method="CofinsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'CofinsStrategy()' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="26" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="CofinsStrategy" method="CofinsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'CofinsStrategy()' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\FinanceUtils.java">
+<violation beginline="13" endline="13" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'FinanceUtils' has a NCSS line count of 7 (Highest = 5).
+</violation>
+<violation beginline="13" endline="13" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'FinanceUtils' has a total cyclomatic complexity of 4 (highest 4).
+</violation>
+<violation beginline="29" endline="29" begincolumn="23" endcolumn="38" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has a NCSS line count of 5.
+</violation>
+<violation beginline="29" endline="29" begincolumn="23" endcolumn="38" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has a cognitive complexity of 3, current threshold is 1
+</violation>
+<violation beginline="29" endline="29" begincolumn="23" endcolumn="38" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has a cyclomatic complexity of 4.
+</violation>
+<violation beginline="29" endline="29" begincolumn="23" endcolumn="38" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has an NPath complexity of 6, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\FormatoRelatorio.java">
+<violation beginline="6" endline="6" begincolumn="8" endcolumn="12" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The enum 'FormatoRelatorio' has a NCSS line count of 23 (Highest = 6).
+</violation>
+<violation beginline="6" endline="6" begincolumn="8" endcolumn="12" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The enum 'FormatoRelatorio' has a total cyclomatic complexity of 7 (highest 5).
+</violation>
+<violation beginline="9" endline="19" begincolumn="9" endcolumn="6" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class '' has a NCSS line count of 4 (Highest = 2).
+</violation>
+<violation beginline="9" endline="19" begincolumn="9" endcolumn="6" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class '' has a total cyclomatic complexity of 2 (highest 1).
+</violation>
+<violation beginline="11" endline="11" begincolumn="16" endcolumn="21" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'linha(Venda)' has a NCSS line count of 2.
+</violation>
+<violation beginline="11" endline="11" begincolumn="16" endcolumn="21" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'linha(Venda)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="11" endline="11" begincolumn="16" endcolumn="21" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'linha(Venda)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="16" endline="16" begincolumn="16" endcolumn="22" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'rodape(BigDecimal)' has a NCSS line count of 2.
+</violation>
+<violation beginline="16" endline="16" begincolumn="16" endcolumn="22" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="16" endline="16" begincolumn="16" endcolumn="22" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="22" endline="32" begincolumn="9" endcolumn="6" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class '' has a NCSS line count of 4 (Highest = 2).
+</violation>
+<violation beginline="22" endline="32" begincolumn="9" endcolumn="6" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class '' has a total cyclomatic complexity of 2 (highest 1).
+</violation>
+<violation beginline="24" endline="24" begincolumn="16" endcolumn="21" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'linha(Venda)' has a NCSS line count of 2.
+</violation>
+<violation beginline="24" endline="24" begincolumn="16" endcolumn="21" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'linha(Venda)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="24" endline="24" begincolumn="16" endcolumn="21" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'linha(Venda)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="29" endline="29" begincolumn="16" endcolumn="22" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'rodape(BigDecimal)' has a NCSS line count of 2.
+</violation>
+<violation beginline="29" endline="29" begincolumn="16" endcolumn="22" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="29" endline="29" begincolumn="16" endcolumn="22" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="35" endline="45" begincolumn="10" endcolumn="6" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class '' has a NCSS line count of 4 (Highest = 2).
+</violation>
+<violation beginline="35" endline="45" begincolumn="10" endcolumn="6" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class '' has a total cyclomatic complexity of 2 (highest 1).
+</violation>
+<violation beginline="37" endline="37" begincolumn="16" endcolumn="21" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'linha(Venda)' has a NCSS line count of 2.
+</violation>
+<violation beginline="37" endline="37" begincolumn="16" endcolumn="21" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'linha(Venda)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="37" endline="37" begincolumn="16" endcolumn="21" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'linha(Venda)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="42" endline="42" begincolumn="16" endcolumn="22" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'rodape(BigDecimal)' has a NCSS line count of 2.
+</violation>
+<violation beginline="42" endline="42" begincolumn="16" endcolumn="22" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="42" endline="42" begincolumn="16" endcolumn="22" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="50" endline="50" begincolumn="21" endcolumn="26" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'linha(Venda)' has a NCSS line count of 1.
+</violation>
+<violation beginline="50" endline="50" begincolumn="21" endcolumn="26" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'linha(Venda)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="50" endline="50" begincolumn="21" endcolumn="26" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="linha" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'linha(Venda)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="52" endline="52" begincolumn="21" endcolumn="27" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'rodape(BigDecimal)' has a NCSS line count of 1.
+</violation>
+<violation beginline="52" endline="52" begincolumn="21" endcolumn="27" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="52" endline="52" begincolumn="21" endcolumn="27" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="rodape" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'rodape(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+<violation beginline="61" endline="61" begincolumn="36" endcolumn="38" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="de" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'de(String)' has a NCSS line count of 6.
+</violation>
+<violation beginline="61" endline="61" begincolumn="36" endcolumn="38" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="de" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'de(String)' has a cognitive complexity of 2, current threshold is 1
+</violation>
+<violation beginline="61" endline="61" begincolumn="36" endcolumn="38" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="de" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'de(String)' has a cyclomatic complexity of 5.
+</violation>
+<violation beginline="61" endline="61" begincolumn="36" endcolumn="38" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="FormatoRelatorio" method="de" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'de(String)' has an NPath complexity of 2, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IcmsStrategy.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IcmsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'IcmsStrategy' has a NCSS line count of 3 (Highest = 2).
+</violation>
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IcmsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'IcmsStrategy' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="24" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IcmsStrategy" method="IcmsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'IcmsStrategy()' has a NCSS line count of 2.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="24" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IcmsStrategy" method="IcmsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'IcmsStrategy()' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="24" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IcmsStrategy" method="IcmsStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'IcmsStrategy()' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\ImpostoStrategy.java">
+<violation beginline="6" endline="6" begincolumn="8" endcolumn="17" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="ImpostoStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The interface 'ImpostoStrategy' has a NCSS line count of 2 (Highest = 1).
+</violation>
+<violation beginline="14" endline="14" begincolumn="16" endcolumn="24" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="ImpostoStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'calcular(BigDecimal)' has a NCSS line count of 1.
+</violation>
+<violation beginline="14" endline="14" begincolumn="16" endcolumn="24" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="ImpostoStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="14" endline="14" begincolumn="16" endcolumn="24" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="ImpostoStrategy" method="calcular" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'calcular(BigDecimal)' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IpiStrategy.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IpiStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'IpiStrategy' has a NCSS line count of 3 (Highest = 2).
+</violation>
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IpiStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'IpiStrategy' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IpiStrategy" method="IpiStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'IpiStrategy()' has a NCSS line count of 2.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IpiStrategy" method="IpiStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'IpiStrategy()' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IpiStrategy" method="IpiStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'IpiStrategy()' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\IssStrategy.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IssStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'IssStrategy' has a NCSS line count of 3 (Highest = 2).
+</violation>
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IssStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'IssStrategy' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="IssStrategy" method="IssStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'IssStrategy()' has a NCSS line count of 2.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IssStrategy" method="IssStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'IssStrategy()' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="IssStrategy" method="IssStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'IssStrategy()' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\PisStrategy.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="PisStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'PisStrategy' has a NCSS line count of 3 (Highest = 2).
+</violation>
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="PisStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'PisStrategy' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="PisStrategy" method="PisStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The constructor 'PisStrategy()' has a NCSS line count of 2.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="PisStrategy" method="PisStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The constructor 'PisStrategy()' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="7" endline="7" begincolumn="12" endcolumn="23" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="PisStrategy" method="PisStrategy" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The constructor 'PisStrategy()' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\depois\RelatorioVendas.java">
+<violation beginline="14" endline="14" begincolumn="8" endcolumn="13" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="RelatorioVendas" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The class 'RelatorioVendas' has a NCSS line count of 8 (Highest = 7).
+</violation>
+<violation beginline="14" endline="14" begincolumn="8" endcolumn="13" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="RelatorioVendas" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The class 'RelatorioVendas' has a total cyclomatic complexity of 1 (highest 1).
+</violation>
+<violation beginline="24" endline="24" begincolumn="19" endcolumn="24" rule="NcssCount" ruleset="Design" package="br.gqs.aula11.depois" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#ncsscount" priority="3">
+The method 'gerar(List&lt;Venda&gt;, String)' has a NCSS line count of 7.
+</violation>
+<violation beginline="24" endline="24" begincolumn="19" endcolumn="24" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'gerar(List&lt;Venda&gt;, String)' has a cyclomatic complexity of 1.
+</violation>
+<violation beginline="24" endline="24" begincolumn="19" endcolumn="24" rule="NPathComplexity" ruleset="Design" package="br.gqs.aula11.depois" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#npathcomplexity" priority="3">
+The method 'gerar(List&lt;Venda&gt;, String)' has an NPath complexity of 1, current threshold is 1
+</violation>
+</file>
+</pmd>

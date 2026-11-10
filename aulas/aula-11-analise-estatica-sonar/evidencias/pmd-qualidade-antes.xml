@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd xmlns="http://pmd.sourceforge.net/report/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 https://pmd.github.io/schema/report_2_0_0.xsd" version="7.17.0" timestamp="2026-11-10T16:11:37.184">
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\FinanceUtils.java">
+<violation beginline="19" endline="19" begincolumn="17" endcolumn="25" rule="UnusedPrivateField" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" variable="contador" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#unusedprivatefield" priority="3">
+Avoid unused private fields such as 'contador'.
+</violation>
+<violation beginline="22" endline="22" begincolumn="23" endcolumn="38" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has a cognitive complexity of 16, current threshold is 10
+</violation>
+<violation beginline="22" endline="22" begincolumn="23" endcolumn="38" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'calcularImposto(BigDecimal, String)' has a cyclomatic complexity of 9.
+</violation>
+<violation beginline="23" endline="23" begincolumn="28" endcolumn="51" rule="ControlStatementBraces" ruleset="Code Style" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_codestyle.html#controlstatementbraces" priority="3">
+This statement should have braces
+</violation>
+<violation beginline="25" endline="25" begincolumn="13" endcolumn="23" rule="UnusedLocalVariable" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" variable="tentativas" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#unusedlocalvariable" priority="3">
+Avoid unused local variables such as 'tentativas'.
+</violation>
+<violation beginline="26" endline="26" begincolumn="22" endcolumn="31" rule="UnusedLocalVariable" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" variable="historico" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#unusedlocalvariable" priority="3">
+Avoid unused local variables such as 'historico'.
+</violation>
+<violation beginline="27" endline="27" begincolumn="13" endcolumn="32" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="29" endline="29" begincolumn="20" endcolumn="38" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="33" endline="33" begincolumn="59" endcolumn="65" rule="AvoidDuplicateLiterals" ruleset="Error Prone" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_errorprone.html#avoidduplicateliterals" priority="3">
+The String literal "0.05" appears 2 times in this file; the first occurrence is on line 33
+</violation>
+<violation beginline="35" endline="35" begincolumn="20" endcolumn="38" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="37" endline="37" begincolumn="20" endcolumn="38" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="39" endline="39" begincolumn="20" endcolumn="41" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="47" endline="47" begincolumn="13" endcolumn="19" rule="SystemPrintln" ruleset="Best Practices" package="br.gqs.aula11.antes" class="FinanceUtils" method="calcularImposto" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#systemprintln" priority="2">
+Usage of System.out/err
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\RelatorioVendas.java">
+<violation beginline="13" endline="13" begincolumn="19" endcolumn="24" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'gerar(List&lt;Venda&gt;, String)' has a cognitive complexity of 15, current threshold is 10
+</violation>
+<violation beginline="13" endline="13" begincolumn="19" endcolumn="24" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'gerar(List&lt;Venda&gt;, String)' has a cyclomatic complexity of 10.
+</violation>
+<violation beginline="16" endline="30" begincolumn="9" endcolumn="10" rule="ForLoopCanBeForeach" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#forloopcanbeforeach" priority="3">
+This for loop can be replaced by a foreach loop
+</violation>
+<violation beginline="20" endline="20" begincolumn="25" endcolumn="46" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="20" endline="20" begincolumn="40" endcolumn="45" rule="AvoidDuplicateLiterals" ruleset="Error Prone" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_errorprone.html#avoidduplicateliterals" priority="3">
+The String literal "CSV" appears 2 times in this file; the first occurrence is on line 20
+</violation>
+<violation beginline="21" endline="21" begincolumn="25" endcolumn="30" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+<violation beginline="22" endline="22" begincolumn="32" endcolumn="53" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="22" endline="22" begincolumn="47" endcolumn="52" rule="AvoidDuplicateLiterals" ruleset="Error Prone" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_errorprone.html#avoidduplicateliterals" priority="3">
+The String literal "TXT" appears 2 times in this file; the first occurrence is on line 22
+</violation>
+<violation beginline="23" endline="23" begincolumn="25" endcolumn="30" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+<violation beginline="24" endline="26" begincolumn="28" endcolumn="22" rule="AvoidDeeplyNestedIfStmts" ruleset="Design" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#avoiddeeplynestedifstmts" priority="3">
+Deeply nested if..then statements are hard to read
+</violation>
+<violation beginline="24" endline="24" begincolumn="32" endcolumn="54" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="24" endline="24" begincolumn="47" endcolumn="53" rule="AvoidDuplicateLiterals" ruleset="Error Prone" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_errorprone.html#avoidduplicateliterals" priority="3">
+The String literal "HTML" appears 2 times in this file; the first occurrence is on line 24
+</violation>
+<violation beginline="25" endline="25" begincolumn="25" endcolumn="30" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+<violation beginline="25" endline="25" begincolumn="100" endcolumn="114" rule="AvoidDuplicateLiterals" ruleset="Error Prone" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_errorprone.html#avoidduplicateliterals" priority="3">
+The String literal "&lt;/td&gt;&lt;/tr&gt;\n" appears 2 times in this file; the first occurrence is on line 25
+</violation>
+<violation beginline="31" endline="31" begincolumn="13" endcolumn="34" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="32" endline="32" begincolumn="13" endcolumn="18" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+<violation beginline="33" endline="33" begincolumn="20" endcolumn="41" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="34" endline="34" begincolumn="13" endcolumn="18" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+<violation beginline="35" endline="35" begincolumn="20" endcolumn="42" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="36" endline="36" begincolumn="13" endcolumn="18" rule="UseStringBufferForStringAppends" ruleset="Performance" package="br.gqs.aula11.antes" class="RelatorioVendas" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_performance.html#usestringbufferforstringappends" priority="3">
+Prefer StringBuilder (non-synchronized) or StringBuffer (synchronized) over += for concatenating strings
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-11-analise-estatica-sonar\src\main\java\br\gqs\aula11\antes\Venda.java">
+<violation beginline="4" endline="4" begincolumn="8" endcolumn="13" rule="DataClass" ruleset="Design" package="br.gqs.aula11.antes" class="Venda" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.17.0/pmd_rules_java_design.html#dataclass" priority="3">
+The class 'Venda' is suspected to be a Data Class (WOC=0.000%, NOPA=0, NOAM=4, WMC=5)
+</violation>
+</file>
+</pmd>
