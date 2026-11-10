@@ -1,0 +1,12 @@
+﻿target/
+*.class
+*.log
+.idea/
+.vscode/
+*.iml
+.m2/
+node_modules/
+.env
+logs/
+jacoco.exec
+*.exec
