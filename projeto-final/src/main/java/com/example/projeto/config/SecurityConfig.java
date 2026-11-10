@@ -40,7 +40,7 @@ import java.io.IOException;
  * <p>
  * Duas cadeias:
  * <ol>
- *   <li><b>API</b> ({@code /api/**}, {@code /auth/**}): JWT Bearer, sem criar sessao,
+ *   <li><b>API</b> ({@code /api/**}, {@code /auth/**}, {@code /actuator/**}): JWT Bearer, sem criar sessao,
  *   respostas 401/403 em JSON. CSRF e ignorado apenas para {@code /auth/**} e para
  *   requisicoes com {@code Authorization: Bearer} (tokens nao sao enviados
  *   automaticamente pelo navegador, logo nao ha CSRF). Requisicoes autenticadas por
@@ -72,12 +72,15 @@ public class SecurityConfig {
                         "Seu perfil nao tem permissao para esta operacao");
 
         http
-                .securityMatcher("/api/**", "/auth/**")
+                .securityMatcher("/api/**", "/auth/**", "/actuator/**")
                 .csrf(csrf -> csrf.ignoringRequestMatchers(requisicaoComBearer(), req ->
                         req.getRequestURI().startsWith(req.getContextPath() + "/auth/")))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.NEVER))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        // Actuator (aula 19): health/info publicos (health de Heroku/load balancer), resto so ADMIN
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").hasRole(UsuarioFactory.ROLE_ADMIN)
                         .anyRequest().authenticated())
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())

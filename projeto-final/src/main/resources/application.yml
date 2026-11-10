@@ -25,6 +25,10 @@ app:
   viacep:
     url: https://viacep.com.br/ws
     timeout: 3s
+  health:
+    # CEP consultado pelo ApiExternaHealthIndicator
+    # entre aspas: sem elas o YAML 1.1 leria 01001000 como numero octal
+    cep-referencia: '01001000'
   jwt:
     # Obrigatorio fora do perfil dev: variavel de ambiente JWT_SECRET (>= 32 bytes)
     secret: ${JWT_SECRET:}
@@ -38,6 +42,26 @@ app:
     cliente:
       username: ${CLIENTE_USERNAME:cliente}
       password-hash: ${CLIENTE_PASSWORD_HASH:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      # dev: detalhes sempre visiveis (slide). Em prod: when-authorized + ADMIN (application-prod.yml)
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: '@project.artifactId@'
+    version: '@project.version@'
+    description: API de Produtos - Projeto Final IQS
+    java: '@java.version@'
 
 springdoc:
   swagger-ui:

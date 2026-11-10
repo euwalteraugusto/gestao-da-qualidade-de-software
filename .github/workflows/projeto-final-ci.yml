@@ -86,4 +86,17 @@ jobs:
         run: |
           command -v heroku >/dev/null || curl -fsSL https://cli-assets.heroku.com/install.sh | sh
           heroku plugins:install java
+          # perfil prod via config var SPRING_PROFILES_ACTIVE=prod no Heroku (porta lida de $PORT)
           heroku deploy:jar dist/projeto-final.jar --app "$HEROKU_APP_NAME" --jdk 17
+
+      # Aula 19: smoke test do deploy via Actuator (so se a variable HEROKU_APP_URL existir)
+      - name: Smoke test /actuator/health
+        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != '' && vars.HEROKU_APP_URL != ''
+        env:
+          APP_URL: ${{ vars.HEROKU_APP_URL }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$APP_URL/actuator/health" | grep -q '"status":"UP"'; then echo "App UP"; exit 0; fi
+            sleep 20
+          done
+          echo "::error::Health check falhou em $APP_URL/actuator/health"; exit 1

@@ -1,0 +1,35 @@
+# Perfil de PRODUCAO (Heroku/AWS): SPRING_PROFILES_ACTIVE=prod (o Procfile ja passa o perfil).
+# Nao ha defaults para segredos: sem JWT_SECRET, ADMIN_PASSWORD_HASH e CLIENTE_PASSWORD_HASH
+# a aplicacao NAO sobe (falha rapida em vez de rodar com credenciais de desenvolvimento).
+spring:
+  datasource:
+    # Heroku Postgres: o buildpack Java exporta JDBC_DATABASE_URL/USERNAME/PASSWORD.
+    # Sem banco provisionado cai para H2 em memoria (somente demonstracao - dados se perdem no restart).
+    url: ${JDBC_DATABASE_URL:jdbc:h2:mem:produtos;DB_CLOSE_DELAY=-1}
+    username: ${JDBC_DATABASE_USERNAME:sa}
+    password: ${JDBC_DATABASE_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  # Heroku informa a porta em $PORT
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoint:
+    health:
+      # Em producao detalhes (componentes, erros) so para ADMIN autenticado
+      show-details: when-authorized
+      roles: ADMIN
+
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+
+logging:
+  level:
+    root: INFO

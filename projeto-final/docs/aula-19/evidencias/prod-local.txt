@@ -1,0 +1,40 @@
+# Perfil prod local simulando Heroku: PORT=18092, SPRING profile via linha de comando do Procfile,
+# JWT_SECRET aleatorio gerado na hora (48 bytes), hashes BCrypt por variavel de ambiente.
+$ java -Dserver.port=$PORT -jar target/projeto-final.jar --spring.profiles.active=prod
+
+2026-11-10T16:39:59.783-03:00  INFO 5376 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : The following 1 profile is active: "prod"
+2026-11-10T16:40:40.408-03:00  INFO 5376 --- [projeto-final] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 18092 (http) with context path '/'
+2026-11-10T16:40:40.506-03:00  INFO 5376 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 44.136 seconds (process running for 47.297)
+
+## GET /actuator/health anonimo (prod: show-details=when-authorized -> so o status)
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/vnd.spring-boot.actuator.v3+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:40:43 GMT
+
+{"status":"UP"}
+
+## POST /auth/login (admin) -> token obtido: sim
+
+## GET /actuator/health com token ADMIN (prod: detalhes visiveis so para ADMIN)
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/vnd.spring-boot.actuator.v3+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:40:44 GMT
+
+{"status":"UP","components":{"apiExterna":{"status":"UP","details":{"api":"ViaCEP","cepReferencia":"01001-000","tempoRespostaMs":121}},"db":{"status":"UP","details":{"database":"H2","validationQuery":"SELECT 1","result":1}},"diskSpace":{"status":"UP","details":{"total":255457226752,"free":206625742848,"threshold":10485760,"path":"<diretorio-do-projeto>","exists":true}},"ping":{"status":"UP"}}}
+
+## GET /v3/api-docs (Swagger desligado em prod por padrao: SWAGGER_ENABLED=false)
+HTTP/1.1 404 

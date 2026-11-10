@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.6.0</version>
+    <version>1.0.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 
@@ -60,6 +60,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <!-- Monitoramento: /actuator/health, info, metrics (aula 19) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- Driver PostgreSQL: producao (Heroku Postgres/RDS) e Testcontainers -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <!-- Bean Validation (US-002) -->
         <dependency>
@@ -113,11 +124,6 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>

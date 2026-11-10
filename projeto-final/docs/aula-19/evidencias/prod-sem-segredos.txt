@@ -1,0 +1,23 @@
+﻿# Comando (simulando o Procfile, SEM as variaveis JWT_SECRET/ADMIN_PASSWORD_HASH/CLIENTE_PASSWORD_HASH):
+$ java -Dserver.port=$PORT -jar target/projeto-final.jar --spring.profiles.active=prod
+# exit code do processo: 1
+
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Binding to target com.example.projeto.auth.UsuariosProperties failed:
+
+    Property: app.security.admin.passwordHash
+    Value: ""
+    Origin: class path resource [application.yml] from projeto-final.jar - 41:22
+    Reason: não deve estar em branco
+
+
+Action:
+
+Update your application's configuration
+
