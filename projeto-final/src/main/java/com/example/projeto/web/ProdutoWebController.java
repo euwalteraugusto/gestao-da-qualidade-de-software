@@ -3,6 +3,7 @@ package com.example.projeto.web;
 import com.example.projeto.domain.service.ProdutoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,6 +36,7 @@ public class ProdutoWebController {
     }
 
     @GetMapping("/novo")
+    @PreAuthorize("hasRole('ADMIN')")
     public String novo(Model model) {
         model.addAttribute("form", new ProdutoForm());
         return VIEW_FORM;
@@ -42,6 +44,7 @@ public class ProdutoWebController {
 
     /** PRG (Post/Redirect/Get): apos salvar redireciona, evitando reenvio com F5. */
     @PostMapping("/cadastrar")
+    @PreAuthorize("hasRole('ADMIN')")
     public String cadastrar(@Valid @ModelAttribute("form") ProdutoForm form, BindingResult result) {
         if (result.hasErrors()) {
             return VIEW_FORM;

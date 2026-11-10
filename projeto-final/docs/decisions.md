@@ -38,3 +38,17 @@ por ambiente, mas aqui a escolha depende do cliente **em cada requisicao**, por 
 (o servico calculava `preco * quantidade` de cada item -> `ItemPedido#subtotal()`), numeros magicos
 `100` e `15` -> propriedades `app.frete.*`.
 **Arquivos:** `domain/pedido/TipoCliente.java`, `ItemPedido.java`, `Pedido.java`, `ResumoPedido.java`
+
+## Decisao 2026-11-10 (aula 18) - Factory Method para usuarios
+
+**Padrao:** Factory Method (tarefa pos-aula 16: "Factory Method para criacao de usuarios")
+**Motivo:** a criacao de `UserDetails` com os papeis corretos (`criarAdmin` -> ADMIN+USER,
+`criarCliente` -> USER) fica num unico lugar, que tambem recusa senhas que nao sejam hash BCrypt.
+**Arquivos:** `auth/UsuarioFactory.java`, `config/SecurityConfig.java`
+
+## Decisao 2026-11-10 (aula 18) - Duas cadeias de seguranca
+
+**Decisao:** `SecurityFilterChain` da API (JWT, sem sessao, 401/403 em JSON) separada da cadeia Web
+(form login, sessao, CSRF). **Motivo:** a aula 17 introduziu paginas Thymeleaf; uma cadeia unica
+stateless com CSRF desligado (slide) deixaria as paginas sem login ou sem protecao CSRF.
+**Arquivos:** `config/SecurityConfig.java`, `auth/JwtAuthFilter.java`

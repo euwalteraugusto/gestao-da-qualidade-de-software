@@ -5,6 +5,7 @@ import com.example.projeto.domain.service.ProdutoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProdutoController {
 
+    /** Escrita no catalogo apenas para ADMIN (aula 18 - dica: @PreAuthorize). */
+    static final String SOMENTE_ADMIN = "hasRole('ADMIN')";
+
     private final ProdutoService service;
 
     @GetMapping
@@ -49,16 +53,19 @@ public class ProdutoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize(SOMENTE_ADMIN)
     public Produto criar(@Valid @RequestBody ProdutoRequest request) {
         return service.cadastrar(request.toEntity());
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(SOMENTE_ADMIN)
     public Produto atualizar(@PathVariable Long id, @Valid @RequestBody ProdutoRequest request) {
         return service.atualizar(id, request.toEntity());
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(SOMENTE_ADMIN)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remover(@PathVariable Long id) {
         service.remover(id);

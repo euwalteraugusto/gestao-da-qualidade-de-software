@@ -1,6 +1,9 @@
 spring:
   application:
     name: projeto-final
+  profiles:
+    # Sem perfil explicito usa "dev" (local e testes). Producao: SPRING_PROFILES_ACTIVE=prod
+    default: dev
   datasource:
     url: jdbc:h2:mem:produtos;DB_CLOSE_DELAY=-1
     username: sa
@@ -11,7 +14,9 @@ spring:
     open-in-view: false
   h2:
     console:
-      enabled: true
+      # Desligado a partir da aula 18: com Spring Security o console exigiria liberar
+      # frames e CSRF; use o Swagger/API para inspecionar dados.
+      enabled: false
 
 app:
   frete:
@@ -20,6 +25,19 @@ app:
   viacep:
     url: https://viacep.com.br/ws
     timeout: 3s
+  jwt:
+    # Obrigatorio fora do perfil dev: variavel de ambiente JWT_SECRET (>= 32 bytes)
+    secret: ${JWT_SECRET:}
+    issuer: projeto-final
+    access-expiration: 15m
+    refresh-expiration: 7d
+  security:
+    admin:
+      username: ${ADMIN_USERNAME:admin}
+      password-hash: ${ADMIN_PASSWORD_HASH:}
+    cliente:
+      username: ${CLIENTE_USERNAME:cliente}
+      password-hash: ${CLIENTE_PASSWORD_HASH:}
 
 springdoc:
   swagger-ui:

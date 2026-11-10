@@ -1,0 +1,13 @@
+# Perfil de DESENVOLVIMENTO (padrao local e dos testes - spring.profiles.default=dev).
+# Os valores abaixo sao defaults SOMENTE para dev/teste; podem ser sobrescritos pelas
+# mesmas variaveis de ambiente usadas em producao. Nunca use estes valores em producao.
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-somente-local-chave-jwt-de-desenvolvimento-nao-usar-em-producao}
+  security:
+    admin:
+      # hash BCrypt (custo 10) da senha de desenvolvimento "admin-dev-2026" (ver docs/auth-guide.md)
+      password-hash: ${ADMIN_PASSWORD_HASH:$2a$10$pr2BhwODNoHf9UP7yeSjT.exNR7rC3YcVi7baUDcTRSCxtx28bpOm}
+    cliente:
+      # hash BCrypt (custo 10) da senha de desenvolvimento "cliente-dev-2026"
+      password-hash: ${CLIENTE_PASSWORD_HASH:$2a$10$yDAQQcaj2e6gOL.wFZdRHO6HVPfl0fAQBXTkf7EBFmrd3KiW7V7Ca}

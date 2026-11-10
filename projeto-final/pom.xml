@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 
@@ -23,6 +23,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jacoco.version>0.8.12</jacoco.version>
         <springdoc.version>2.6.0</springdoc.version>
+        <jjwt.version>0.12.6</jjwt.version>
         <!-- SonarQube/SonarCloud: token e URL vem de variaveis de ambiente/secrets, nunca do pom -->
         <sonar.projectKey>gqs-projeto-final</sonar.projectKey>
         <sonar.projectName>IQS - Projeto Final (Produtos)</sonar.projectName>
@@ -66,9 +67,42 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Seguranca + JWT (aula 18). O slide trazia so o jjwt-api, que contem apenas
+             interfaces: sem jjwt-impl e jjwt-jackson a geracao do token falha em runtime. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Testcontainers + PostgreSQL real nos testes de integracao (rodam no CI, que tem Docker) -->

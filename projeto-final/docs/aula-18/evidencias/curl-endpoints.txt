@@ -1,0 +1,236 @@
+﻿# Evidencias de execucao - aula 18 (2026-11-10 16:33:03)
+# App: java -jar target/projeto-final.jar --server.port=18089 
+2026-11-10T16:33:01.754-03:00  INFO 4732 --- [projeto-final] [           main] com.example.projeto.ProjetoApplication   : Started ProjetoApplication in 19.102 seconds (process running for 20.596)
+
+## 1. Sem token -> 401 (JSON)
+$ curl http://localhost:18089/api/produtos
+HTTP/1.1 401 
+Set-Cookie: JSESSIONID=E35499E9551275BDF4BDF358FA3A21D0; Path=/; HttpOnly
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Content-Length: 108
+Date: Tue, 10 Nov 2026 19:33:04 GMT
+
+{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
+
+## 2. Senha errada -> 401
+$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"123456"}'
+HTTP/1.1 401 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:04 GMT
+
+{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Usuario ou senha invalidos","instance":"/auth/login"}
+
+## 3. Login admin -> access + refresh token
+$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin-dev-2026"}'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:05 GMT
+
+{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(287 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(241 chars)","tokenType":"Bearer","expiresIn":900}
+
+# claims do access token (payload base64url decodificado): {"jti":"a8f6168b-f77c-437a-a0a9-e34f81baadbe","iss":"projeto-final","sub":"admin","iat":1794339184,"exp":1794340084,"typ":"access","roles":["ROLE_ADMIN","ROLE_USER"]}
+
+## 4. Admin cria produto com token -> 201
+$ curl -X POST http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>' -H 'Content-Type: application/json' -d '{"nome":"Smartphone Xiaomi","preco":1999.90}'
+HTTP/1.1 201 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:05 GMT
+
+{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}
+
+## 5. Admin lista com token -> 200
+$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:06 GMT
+
+[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
+
+## 6. Login cliente
+$ curl -X POST http://localhost:18089/auth/login -H 'Content-Type: application/json' -d '{"username":"cliente","password":"cliente-dev-2026"}'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:06 GMT
+
+{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(272 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(244 chars)","tokenType":"Bearer","expiresIn":900}
+
+## 7. Cliente lista -> 200
+$ curl http://localhost:18089/api/produtos/buscar?nome=xiaomi -H 'Authorization: Bearer <accessToken cliente>'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:06 GMT
+
+[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
+
+## 8. Cliente tenta criar -> 403
+$ curl -X POST http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken cliente>' -H 'Content-Type: application/json' -d '{"nome":"X","preco":1.00}'
+HTTP/1.1 403 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Content-Length: 118
+Date: Tue, 10 Nov 2026 19:33:06 GMT
+
+{"type":"about:blank","title":"Acesso negado","status":403,"detail":"Seu perfil nao tem permissao para esta operacao"}
+
+## 9. Cliente calcula pedido -> 200
+$ curl -X POST http://localhost:18089/api/pedidos/total -H 'Authorization: Bearer <accessToken cliente>' -H 'Content-Type: application/json' -d '{"tipoCliente":"VIP","itens":[{"produtoId":1,"quantidade":1}]}'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+{"tipoCliente":"VIP","subtotal":1999.90,"desconto":199.99,"frete":0.00,"total":1799.91}
+
+## 10. Refresh token -> novo par
+$ curl -X POST http://localhost:18089/auth/refresh -H 'Content-Type: application/json' -d '{"refreshToken":"<refreshToken cliente>"}'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(272 chars)","refreshToken":"eyJhbGciOiJIUzI1NiJ9.eyJqdGkiO...(244 chars)","tokenType":"Bearer","expiresIn":900}
+
+## 11. Novo access token funciona -> 200
+$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <novo accessToken>'
+HTTP/1.1 200 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+[{"id":1,"nome":"Smartphone Xiaomi","preco":1999.90}]
+
+## 12. Access token usado como refresh -> 401
+$ curl -X POST http://localhost:18089/auth/refresh -H 'Content-Type: application/json' -d '{"refreshToken":"<accessToken cliente>"}'
+HTTP/1.1 401 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Transfer-Encoding: chunked
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Tipo de token invalido: esperado refresh","instance":"/auth/refresh"}
+
+## 13. Refresh token usado como Bearer -> 401
+$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <refreshToken cliente>'
+HTTP/1.1 401 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Content-Length: 108
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
+
+## 14. Token adulterado -> 401
+$ curl http://localhost:18089/api/produtos -H 'Authorization: Bearer <accessToken admin>x'
+HTTP/1.1 401 
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Content-Type: application/problem+json
+Content-Length: 108
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+{"type":"about:blank","title":"Nao autenticado","status":401,"detail":"Token ausente, invalido ou expirado"}
+
+## 15. Pagina web sem login -> redireciona para /login
+$ curl http://localhost:18089/produtos
+HTTP/1.1 302 
+Set-Cookie: JSESSIONID=82D03CDC2C5C4C24FE42B4E3738D64F1; Path=/; HttpOnly
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+X-Frame-Options: DENY
+Location: http://localhost:18089/login
+Content-Length: 0
+Date: Tue, 10 Nov 2026 19:33:07 GMT
+
+## 16. OpenAPI publico com esquema bearerAuth
+$ curl http://localhost:18089/v3/api-docs
+HTTP/1.1 200 
+
+# trecho: "securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","bearerFormat":"JWT"}

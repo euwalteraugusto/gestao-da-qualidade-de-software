@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +12,7 @@
     <h1>Produtos</h1>
 
     <div class="acoes">
-        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto">Novo produto</a>
+        <a class="botao" th:href="@{/produtos/novo}" id="novo-produto" sec:authorize="hasRole('ADMIN')">Novo produto</a>
         <button type="button" class="botao secundario" id="recarregar">Atualizar via API (AJAX)</button>
         <span class="spinner" id="carregando" role="status" aria-label="Carregando"></span>
         <span id="status-ajax"></span>

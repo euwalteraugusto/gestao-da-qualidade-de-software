@@ -2,6 +2,8 @@ package com.example.projeto.interfaces.rest;
 
 import com.example.projeto.domain.model.Produto;
 import com.example.projeto.domain.repository.ProdutoRepository;
+import com.example.projeto.support.MockMvcComJwt;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -37,7 +40,15 @@ class ProdutoControllerIT {
     private static final String URL = "/api/produtos";
 
     @Autowired
+    WebApplicationContext contexto;
+
+    /** Requisicoes autenticadas com um access token JWT real do usuario admin (aula 18). */
     MockMvc mockMvc;
+
+    @BeforeEach
+    void autenticarComoAdmin() {
+        mockMvc = MockMvcComJwt.criar(contexto, "admin");
+    }
 
     @Autowired
     ProdutoRepository repository;
