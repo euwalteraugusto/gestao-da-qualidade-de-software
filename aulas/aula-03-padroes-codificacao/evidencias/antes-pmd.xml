@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd xmlns="http://pmd.sourceforge.net/report/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 https://pmd.github.io/schema/report_2_0_0.xsd" version="7.7.0" timestamp="2026-11-10T15:43:23.620">
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\src\main\java\br\gqs\aula03\antes\Geometria.java">
+<violation beginline="5" endline="5" begincolumn="25" endcolumn="26" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Geometria" method="calc" variable="x" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like x
+</violation>
+<violation beginline="5" endline="5" begincolumn="31" endcolumn="32" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Geometria" method="calc" variable="y" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like y
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\src\main\java\br\gqs\aula03\antes\Pagamento.java">
+<violation beginline="9" endline="9" begincolumn="10" endcolumn="19" rule="CognitiveComplexity" ruleset="Design" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_design.html#cognitivecomplexity" priority="3">
+The method 'processar(String, double)' has a cognitive complexity of 9, current threshold is 8
+</violation>
+<violation beginline="9" endline="9" begincolumn="10" endcolumn="19" rule="CyclomaticComplexity" ruleset="Design" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_design.html#cyclomaticcomplexity" priority="3">
+The method 'processar(String, double)' has a cyclomatic complexity of 9.
+</violation>
+<violation beginline="9" endline="9" begincolumn="27" endcolumn="28" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Pagamento" method="processar" variable="t" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like t
+</violation>
+<violation beginline="9" endline="9" begincolumn="37" endcolumn="38" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Pagamento" method="processar" variable="v" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like v
+</violation>
+<violation beginline="10" endline="10" begincolumn="12" endcolumn="31" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="16" endline="16" begincolumn="17" endcolumn="18" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Pagamento" method="processar" variable="p" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like p
+</violation>
+<violation beginline="23" endline="23" begincolumn="13" endcolumn="19" rule="SystemPrintln" ruleset="Best Practices" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_bestpractices.html#systemprintln" priority="2">
+Usage of System.out/err
+</violation>
+<violation beginline="25" endline="25" begincolumn="19" endcolumn="37" rule="LiteralsFirstInComparisons" ruleset="Best Practices" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_bestpractices.html#literalsfirstincomparisons" priority="3">
+Position literals first in String comparisons
+</violation>
+<violation beginline="30" endline="30" begincolumn="13" endcolumn="19" rule="SystemPrintln" ruleset="Best Practices" package="br.gqs.aula03.antes" class="Pagamento" method="processar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_bestpractices.html#systemprintln" priority="2">
+Usage of System.out/err
+</violation>
+</file>
+<file name="C:\Users\Walter\Desktop\Gestão de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\src\main\java\br\gqs\aula03\antes\Relatorio.java">
+<violation beginline="10" endline="10" begincolumn="37" endcolumn="38" rule="ShortVariable" ruleset="Code Style" package="br.gqs.aula03.antes" class="Relatorio" method="gerar" variable="c" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_codestyle.html#shortvariable" priority="3">
+Avoid variables with short names like c
+</violation>
+<violation beginline="13" endline="15" begincolumn="17" endcolumn="18" rule="AvoidDeeplyNestedIfStmts" ruleset="Design" package="br.gqs.aula03.antes" class="Relatorio" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_design.html#avoiddeeplynestedifstmts" priority="3">
+Deeply nested if..then statements are hard to read
+</violation>
+<violation beginline="14" endline="14" begincolumn="21" endcolumn="27" rule="SystemPrintln" ruleset="Best Practices" package="br.gqs.aula03.antes" class="Relatorio" method="gerar" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.7.0/pmd_rules_java_bestpractices.html#systemprintln" priority="2">
+Usage of System.out/err
+</violation>
+</file>
+</pmd>

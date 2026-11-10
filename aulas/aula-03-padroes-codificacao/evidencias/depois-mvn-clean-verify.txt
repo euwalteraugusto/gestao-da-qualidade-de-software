@@ -1,0 +1,72 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< br.gqs:aula-03-padroes-codificacao >-----------------
+[INFO] Building Aula 03 - Padroes de Codificacao (Checkstyle + PMD) 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] Parameter 'encoding' is unknown for plugin 'maven-checkstyle-plugin:3.6.0:check (checkstyle-gate)'
+[INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ aula-03-padroes-codificacao ---
+[INFO] Deleting C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ aula-03-padroes-codificacao ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ aula-03-padroes-codificacao ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 11 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ aula-03-padroes-codificacao ---
+[INFO] skip non existing resourceDirectory C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ aula-03-padroes-codificacao ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 5 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.2.5:test (default-test) @ aula-03-padroes-codificacao ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running br.gqs.aula03.antes.VersaoAntesTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.842 s -- in br.gqs.aula03.antes.VersaoAntesTest
+[INFO] Running br.gqs.aula03.depois.GeometriaTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.129 s -- in br.gqs.aula03.depois.GeometriaTest
+[INFO] Running br.gqs.aula03.depois.PagamentoServiceTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.138 s -- in br.gqs.aula03.depois.PagamentoServiceTest
+[INFO] Running br.gqs.aula03.depois.RelatorioClientesTest
+Gabi
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.187 s -- in br.gqs.aula03.depois.RelatorioClientesTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.1:jar (default-jar) @ aula-03-padroes-codificacao ---
+[INFO] Building jar: C:\Users\Walter\Desktop\Gest�o de Qualidade de Software\gestao-da-qualidade-de-software\aulas\aula-03-padroes-codificacao\target\aula-03-padroes-codificacao-1.0.0.jar
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-gate) @ aula-03-padroes-codificacao ---
+[INFO] Iniciando a auditoria...
+Auditoria completa.
+[INFO] You have 0 Checkstyle violations.
+[INFO] 
+[INFO] >>> pmd:3.26.0:check (pmd-gate) > :pmd @ aula-03-padroes-codificacao >>>
+[INFO] 
+[INFO] --- pmd:3.26.0:pmd (pmd) @ aula-03-padroes-codificacao ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.7.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO] 
+[INFO] <<< pmd:3.26.0:check (pmd-gate) < :pmd @ aula-03-padroes-codificacao <<<
+[INFO] 
+[INFO] 
+[INFO] --- pmd:3.26.0:check (pmd-gate) @ aula-03-padroes-codificacao ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:19 min
+[INFO] Finished at: 2026-11-10T15:36:53-03:00
+[INFO] ------------------------------------------------------------------------

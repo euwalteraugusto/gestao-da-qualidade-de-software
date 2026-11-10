@@ -1,0 +1,25 @@
+﻿[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< br.gqs:aula-03-padroes-codificacao >-----------------
+[INFO] Building Aula 03 - Padroes de Codificacao (Checkstyle + PMD) 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] Parameter 'encoding' is unknown for plugin 'maven-checkstyle-plugin:3.6.0:checkstyle (default-cli)'
+[INFO] 
+[INFO] --- checkstyle:3.6.0:checkstyle (default-cli) @ aula-03-padroes-codificacao ---
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO] Iniciando a auditoria...
+Auditoria completa.
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[WARNING] Unable to locate Test Source XRef to link to -- DISABLED
+[INFO] 
+[INFO] --- pmd:3.26.0:pmd (default-cli) @ aula-03-padroes-codificacao ---
+[WARNING] Unable to locate Source XRef to link to -- DISABLED
+[INFO] PMD version: 7.7.0
+[INFO] Rendering content with org.apache.maven.skins:maven-fluido-skin:jar:2.0.0-M9 skin
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:15 min
+[INFO] Finished at: 2026-11-10T15:38:36-03:00
+[INFO] ------------------------------------------------------------------------

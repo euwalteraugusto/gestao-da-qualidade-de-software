@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>br.gqs</groupId>
+  <artifactId>aula-03-padroes-codificacao</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>Aula 03 - Padroes de Codificacao (Checkstyle + PMD)</name>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <junit.version>5.10.2</junit.version>
+
+    <!--
+      Escopo da analise estatica. Por padrao analisa apenas o codigo "limpo"
+      (modelo + depois). O codigo "antes" (ruim, de proposito) e analisado so
+      para gerar o relatorio comparativo:
+        mvn verify -Dquality.includes="**/antes/**" -Dquality.fail=false
+    -->
+    <quality.includes>**/modelo/**,**/depois/**</quality.includes>
+    <quality.fail>true</quality.fail>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+
+      <!--
+        Checkstyle com as regras do Google (google_checks.xml, embutido no Checkstyle).
+        O slide usa a versao 3.2.1 do plugin (Checkstyle 9.3, de 2022); aqui o plugin
+        e o motor do Checkstyle foram atualizados.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.6.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>10.17.0</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+          <encoding>UTF-8</encoding>
+          <includes>${quality.includes}</includes>
+          <consoleOutput>true</consoleOutput>
+          <violationSeverity>warning</violationSeverity>
+          <failOnViolation>${quality.fail}</failOnViolation>
+          <includeTestSourceDirectory>false</includeTestSourceDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>checkstyle-gate</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- PMD com regras escolhidas em config/pmd-ruleset.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.26.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>${project.basedir}/config/pmd-ruleset.xml</ruleset>
+          </rulesets>
+          <includes>${quality.includes}</includes>
+          <printFailingErrors>true</printFailingErrors>
+          <failOnViolation>${quality.fail}</failOnViolation>
+          <failurePriority>5</failurePriority>
+          <includeTests>false</includeTests>
+        </configuration>
+        <executions>
+          <execution>
+            <id>pmd-gate</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

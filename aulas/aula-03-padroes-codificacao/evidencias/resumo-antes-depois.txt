@@ -1,0 +1,21 @@
+﻿RESUMO ANTES x DEPOIS (gerado a partir dos XML desta pasta)
+
+== antes ==
+Checkstyle (google_checks): 52 violacoes
+   35 x IndentationCheck
+   8 x WhitespaceAroundCheck
+   6 x WhitespaceAfterCheck
+   2 x MissingJavadocTypeCheck
+   1 x MissingJavadocMethodCheck
+PMD: 14 violacoes
+   6 x ShortVariable
+   3 x SystemPrintln
+   2 x LiteralsFirstInComparisons
+   1 x AvoidDeeplyNestedIfStmts
+   1 x CognitiveComplexity
+   1 x CyclomaticComplexity
+
+== depois ==
+Checkstyle (google_checks): 0 violacoes
+PMD: 0 violacoes
+
