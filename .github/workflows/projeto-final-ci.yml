@@ -1,5 +1,8 @@
 name: Projeto Final - CI
 
+# Fluxo (aula 15): Commit -> Build -> Testes (unitarios + integracao + Testcontainers)
+# -> cobertura JaCoCo >= 80% (falha o build se menor) -> [main] Deploy em staging (Heroku).
+# A analise SonarQube fica em projeto-final-sonar.yml (condicionada ao secret SONAR_TOKEN).
 on:
   push:
     paths:
@@ -29,8 +32,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build e testes (mvn verify + JaCoCo)
+      - name: Docker disponivel para Testcontainers
+        run: docker version --format '{{.Server.Version}}'
+
+      - name: Build, testes e verificacao de cobertura (mvn verify)
         run: mvn -B clean verify
+
+      - name: Publicar relatorios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: projeto-final/target/surefire-reports/
+          if-no-files-found: ignore
 
       - name: Publicar relatorio JaCoCo
         if: always()
@@ -39,3 +53,37 @@ jobs:
           name: jacoco-report
           path: projeto-final/target/site/jacoco/
           if-no-files-found: ignore
+
+      - name: Publicar jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: projeto-final-jar
+          path: projeto-final/target/projeto-final.jar
+
+  deploy-heroku:
+    # Tarefa pos-aula 15: estagio de deploy (somente na main e somente se houver secrets).
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+    steps:
+      - name: Aviso (sem secrets do Heroku)
+        if: env.HEROKU_API_KEY == '' || env.HEROKU_APP_NAME == ''
+        run: echo "::notice::HEROKU_API_KEY/HEROKU_APP_NAME nao configurados - deploy pulado."
+
+      - name: Baixar jar do build
+        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: projeto-final-jar
+          path: dist
+
+      - name: Deploy no Heroku (heroku deploy:jar)
+        if: env.HEROKU_API_KEY != '' && env.HEROKU_APP_NAME != ''
+        run: |
+          command -v heroku >/dev/null || curl -fsSL https://cli-assets.heroku.com/install.sh | sh
+          heroku plugins:install java
+          heroku deploy:jar dist/projeto-final.jar --app "$HEROKU_APP_NAME" --jdk 17

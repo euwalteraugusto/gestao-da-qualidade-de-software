@@ -1,5 +1,6 @@
 package com.example.projeto.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,6 +12,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Entidade JPA Produto (modelo de dominio do MVP).
@@ -43,5 +45,20 @@ public class Produto {
     public Produto(String nome, BigDecimal preco) {
         this.nome = nome;
         this.preco = preco;
+    }
+
+    /**
+     * Preco com 2 casas decimais (arredondamento HALF_UP).
+     * <p>
+     * Correcao apontada pela analise estatica (aula 15): a versao original chamava
+     * {@code preco.setScale(...)} sem verificar nulo (possivel NullPointerException).
+     * Com preco nulo retorna {@code 0.00} (o slide retornava {@code BigDecimal.ZERO},
+     * com escala 0, inconsistente com o caso normal).
+     */
+    @JsonIgnore
+    public BigDecimal getPrecoFormatado() {
+        return preco != null
+                ? preco.setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
     }
 }
