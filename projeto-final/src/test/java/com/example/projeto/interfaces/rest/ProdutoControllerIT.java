@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -77,6 +78,24 @@ class ProdutoControllerIT {
 
         mockMvc.perform(delete("/produtos/{id}", p.getId()))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deveBuscarProdutosPorNome() throws Exception {
+        repository.save(new Produto("Smartphone Xiaomi"));
+        repository.save(new Produto("Notebook Dell"));
+
+        mockMvc.perform(get("/produtos/buscar?nome=xiaomi"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].nome", containsString("Xiaomi")));
+    }
+
+    @Test
+    void deveRetornarListaVaziaQuandoBuscaNaoEncontra() throws Exception {
+        mockMvc.perform(get("/produtos/buscar?nome=inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test

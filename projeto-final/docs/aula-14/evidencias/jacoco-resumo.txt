@@ -1,0 +1,8 @@
+﻿# Resumo JaCoCo (target/site/jacoco/jacoco.csv) - aula 14
+Instrucoes: 89,7% (78/87)
+Linhas:     83,3% (20/24)
+Branches:   100,0% (2/2)
+
+Por classe (linhas cobertas/total):
+  com.example.projeto.interfaces.rest.ProdutoController: 17/17
+  com.example.projeto.domain.model.Produto: 3/7

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +34,12 @@ public class ProdutoController {
     @GetMapping
     public List<Produto> listar() {
         return repository.findAll();
+    }
+
+    /** US-001: GET /produtos/buscar?nome=Xiaomi */
+    @GetMapping("/buscar")
+    public List<Produto> buscarPorNome(@RequestParam String nome) {
+        return repository.findByNomeContainingIgnoreCase(nome);
     }
 
     @GetMapping("/{id}")

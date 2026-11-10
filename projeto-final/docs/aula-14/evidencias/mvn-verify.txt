@@ -1,0 +1,14 @@
+﻿# Comando: mvn -B -ntp clean verify  (executado em 2026-11-10 15:49:47)
+# JDK: 17.0.21 Temurin / Maven 3.9.9 / Windows 10
+# Exit code: 0
+
+[INFO] Building projeto-final 0.2.0
+[INFO] --- jacoco:0.8.12:prepare-agent (prepare-agent) @ projeto-final ---
+[INFO] argLine set to "-javaagent:projeto-final\\target\\jacoco.exec,excludes=com/example/projeto/ProjetoApplication.class"
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 143.4 s -- in com.example.projeto.interfaces.rest.ProdutoControllerIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.31 s -- in com.example.projeto.interfaces.rest.ProdutoControllerTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Building jar: projeto-final\target\projeto-final.jar
+[INFO] --- jacoco:0.8.12:report (report) @ projeto-final ---
+[INFO] Loading execution data file projeto-final\target\jacoco.exec
+[INFO] BUILD SUCCESS

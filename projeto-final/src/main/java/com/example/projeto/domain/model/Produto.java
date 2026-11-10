@@ -35,4 +35,13 @@ public class Produto {
 
     @Column(precision = 10, scale = 2)
     private BigDecimal preco;
+
+    public Produto(String nome) {
+        this.nome = nome;
+    }
+
+    public Produto(String nome, BigDecimal preco) {
+        this.nome = nome;
+        this.preco = preco;
+    }
 }

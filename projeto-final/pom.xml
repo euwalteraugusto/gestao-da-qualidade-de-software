@@ -13,7 +13,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>projeto-final</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>projeto-final</name>
     <description>Projeto Final IQS - API de Produtos (Spring Boot 3)</description>
 
@@ -23,6 +23,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jacoco.version>0.8.12</jacoco.version>
         <springdoc.version>2.6.0</springdoc.version>
+        <!-- SonarQube/SonarCloud: token e URL vem de variaveis de ambiente/secrets, nunca do pom -->
+        <sonar.projectKey>gqs-projeto-final</sonar.projectKey>
+        <sonar.projectName>IQS - Projeto Final (Produtos)</sonar.projectName>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>

@@ -1,0 +1,57 @@
+name: Projeto Final - SonarQube
+
+# Analise estatica (aula 14 - tarefa pos-aula / aula 15).
+# So executa a analise se o secret SONAR_TOKEN existir; caso contrario o job
+# termina com sucesso registrando que a analise foi pulada.
+on:
+  pull_request:
+    paths:
+      - 'projeto-final/**'
+      - '.github/workflows/projeto-final-sonar.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'projeto-final/**'
+      - '.github/workflows/projeto-final-sonar.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projeto-final
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+    steps:
+      - name: Aviso (sem secret SONAR_TOKEN)
+        if: env.SONAR_TOKEN == ''
+        run: echo "::notice::SONAR_TOKEN nao configurado - analise SonarQube pulada."
+        working-directory: .
+
+      - uses: actions/checkout@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          fetch-depth: 0   # historico completo melhora a analise de blame/novo codigo
+
+      - name: Configurar JDK 17
+        if: env.SONAR_TOKEN != ''
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build, testes e analise SonarQube
+        if: env.SONAR_TOKEN != ''
+        run: |
+          EXTRA=""
+          if [ -n "$SONAR_ORGANIZATION" ]; then EXTRA="-Dsonar.organization=$SONAR_ORGANIZATION"; fi
+          mvn -B clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.host.url="${SONAR_HOST_URL:-https://sonarcloud.io}" \
+            -Dsonar.token="$SONAR_TOKEN" $EXTRA
